@@ -69,8 +69,8 @@ export async function streamChat(messages, onChunk, onDone, onError) {
 
 export const modelInfo = {
   id: 'gemini',
-  name: 'Gemini 3.1',
+  name: 'Gemini 1.5 Flash',
   provider: 'Google',
-  description: 'Google\'s most capable AI model'
+  description: 'Fast and efficient multimodal model from Google'
 };
 

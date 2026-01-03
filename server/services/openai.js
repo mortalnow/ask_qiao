@@ -53,8 +53,8 @@ export async function streamChat(messages, onChunk, onDone, onError) {
 
 export const modelInfo = {
   id: 'chatgpt',
-  name: 'ChatGPT 5.2',
+  name: 'GPT-4o',
   provider: 'OpenAI',
-  description: 'Latest GPT model with advanced reasoning'
+  description: 'OpenAI\'s latest flagship model with vision and reasoning'
 };
 
