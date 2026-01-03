@@ -1,51 +1,56 @@
 #!/usr/bin/env node
 
-import db from '../server/db/init.js';
+import mongoose from '../server/db/init.js';
+import { User, InviteCode } from '../server/db/models.js';
 
-console.log('\n🎟️  Invite Code Usage Report\n');
+async function run() {
+  console.log('\n🎟️  Invite Code Usage Report\n');
 
-// Get all invite codes with user info
-const codes = db.prepare(`
-  SELECT 
-    ic.code,
-    ic.created_at as code_created,
-    ic.used_at,
-    u.username,
-    u.created_at as user_created
-  FROM invite_codes ic
-  LEFT JOIN users u ON ic.used_by = u.id
-  ORDER BY ic.created_at DESC
-`).all();
+  try {
+    // Wait for connection
+    if (mongoose.connection.readyState !== 1) {
+      await new Promise((resolve) => {
+        mongoose.connection.once('open', resolve);
+      });
+    }
 
-if (codes.length === 0) {
-  console.log('No invite codes found.');
-  process.exit(0);
+    // Get all invite codes with user info
+    const codes = await InviteCode.find()
+      .populate('used_by', 'username created_at')
+      .sort({ created_at: -1 });
+
+    if (codes.length === 0) {
+      console.log('No invite codes found.');
+      process.exit(0);
+    }
+
+    console.log('All Invite Codes:\n');
+
+    codes.forEach((ic, index) => {
+      const status = ic.used_by ? '✅ USED' : '⏳ UNUSED';
+      const usedBy = ic.used_by ? `by ${ic.used_by.username}` : '';
+      const usedAt = ic.used_at ? new Date(ic.used_at).toLocaleString() : '';
+      
+      console.log(`${index + 1}. ${ic.code} - ${status} ${usedBy}`);
+      if (ic.used_by) {
+        console.log(`   User created: ${new Date(ic.used_by.created_at).toLocaleString()}`);
+        console.log(`   Code used at: ${usedAt}`);
+      }
+      console.log(`   Code created: ${new Date(ic.created_at).toLocaleString()}`);
+      console.log('');
+    });
+
+    // Summary
+    const total = await InviteCode.countDocuments();
+    const used = await InviteCode.countDocuments({ used_by: { $ne: null } });
+    const unused = total - used;
+
+    console.log(`📊 Summary: ${total} total codes (${unused} unused, ${used} used)\n`);
+    process.exit(0);
+  } catch (err) {
+    console.error('❌ Error:', err.message);
+    process.exit(1);
+  }
 }
 
-console.log('All Invite Codes:\n');
-
-codes.forEach((code, index) => {
-  const status = code.username ? '✅ USED' : '⏳ UNUSED';
-  const usedBy = code.username ? `by ${code.username}` : '';
-  const usedAt = code.used_at ? new Date(code.used_at).toLocaleString() : '';
-  
-  console.log(`${index + 1}. ${code.code} - ${status} ${usedBy}`);
-  if (code.username) {
-    console.log(`   User created: ${new Date(code.user_created).toLocaleString()}`);
-    console.log(`   Code used at: ${usedAt}`);
-  }
-  console.log(`   Code created: ${new Date(code.code_created).toLocaleString()}`);
-  console.log('');
-});
-
-// Summary
-const stats = db.prepare(`
-  SELECT 
-    COUNT(*) as total,
-    SUM(CASE WHEN used_by IS NULL THEN 1 ELSE 0 END) as unused,
-    SUM(CASE WHEN used_by IS NOT NULL THEN 1 ELSE 0 END) as used
-  FROM invite_codes
-`).get();
-
-console.log(`📊 Summary: ${stats.total} total codes (${stats.unused} unused, ${stats.used} used)\n`);
-
+run();

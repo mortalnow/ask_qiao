@@ -5,6 +5,7 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
 import { config } from './config.js';
+import { connectDB } from './db/init.js';
 import authRoutes from './routes/auth.js';
 import chatRoutes from './routes/chat.js';
 import adminRoutes from './routes/admin.js';
@@ -32,36 +33,49 @@ const chatLimiter = rateLimit({
   message: { error: 'Too many chat requests, please slow down' }
 });
 
-// Apply rate limiting
-// Note: More specific routes should come first
-app.use('/api/chat', chatLimiter);
-app.use('/api', apiLimiter);
-
-// API Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/chat', chatRoutes);
-app.use('/api/admin', adminRoutes);
-
-// Serve static files from public directory
-const publicPath = join(__dirname, '..', 'public');
-app.use(express.static(publicPath));
-
-// SPA fallback - serve index.html for non-API routes
-app.get('*', (req, res) => {
-  if (!req.path.startsWith('/api')) {
-    res.sendFile(join(publicPath, 'index.html'));
-  }
-});
-
-// Error handling middleware
-app.use((err, req, res, next) => {
-  console.error('Server error:', err);
-  res.status(500).json({ error: 'Internal server error' });
-});
-
 // Start server
-app.listen(config.port, () => {
-  console.log(`🚀 Server running at http://localhost:${config.port}`);
-  console.log(`📱 Open in browser to access the chat interface`);
-});
+async function startServer() {
+  try {
+    // Connect to database
+    await connectDB();
+
+    // Apply rate limiting
+    // Note: More specific routes should come first
+    app.use('/api/chat', chatLimiter);
+    app.use('/api', apiLimiter);
+
+    // API Routes
+    app.use('/api/auth', authRoutes);
+    app.use('/api/chat', chatRoutes);
+    app.use('/api/admin', adminRoutes);
+
+    // Serve static files from public directory
+    const publicPath = join(__dirname, '..', 'public');
+    app.use(express.static(publicPath));
+
+    // SPA fallback - serve index.html for non-API routes
+    app.get('*', (req, res) => {
+      if (!req.path.startsWith('/api')) {
+        res.sendFile(join(publicPath, 'index.html'));
+      }
+    });
+
+    // Error handling middleware
+    app.use((err, req, res, next) => {
+      console.error('Server error:', err);
+      res.status(500).json({ error: 'Internal server error' });
+    });
+
+    app.listen(config.port, () => {
+      console.log(`🚀 Server running at http://localhost:${config.port}`);
+      console.log(`📱 Open in browser to access the chat interface`);
+    });
+  } catch (error) {
+    console.error('Failed to start server:', error);
+    process.exit(1);
+  }
+}
+
+startServer();
+
 

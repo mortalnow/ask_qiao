@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import bcrypt from 'bcrypt';
-import db from '../db/init.js';
+import { User, InviteCode } from '../db/models.js';
 import { generateToken, authenticateToken } from '../middleware/auth.js';
 import { isValidCodeFormat } from '../utils/inviteCode.js';
 
@@ -33,7 +33,7 @@ router.post('/verify', async (req, res) => {
     }
 
     // Check if code exists and is unused
-    const inviteCode = db.prepare('SELECT * FROM invite_codes WHERE code = ?').get(code);
+    const inviteCode = await InviteCode.findOne({ code });
 
     if (!inviteCode) {
       return res.status(404).json({ error: 'Invalid invite code' });
@@ -44,7 +44,7 @@ router.post('/verify', async (req, res) => {
     }
 
     // Check if username is taken
-    const existingUser = db.prepare('SELECT * FROM users WHERE username = ?').get(trimmedUsername);
+    const existingUser = await User.findOne({ username: trimmedUsername });
     if (existingUser) {
       return res.status(400).json({ error: 'Username is already taken' });
     }
@@ -53,28 +53,46 @@ router.post('/verify', async (req, res) => {
     const saltRounds = 10;
     const passwordHash = await bcrypt.hash(password, saltRounds);
 
-    // Create user and mark code as used (transaction)
-    const createUser = db.transaction(() => {
-      const result = db.prepare('INSERT INTO users (username, password_hash) VALUES (?, ?)')
-        .run(trimmedUsername, passwordHash);
-      const userId = result.lastInsertRowid;
+    // Create user and mark code as used (using MongoDB session for transaction)
+    const session = await User.startSession();
+    session.startTransaction();
 
-      db.prepare('UPDATE invite_codes SET used_by = ?, used_at = CURRENT_TIMESTAMP WHERE id = ?')
-        .run(userId, inviteCode.id);
+    try {
+      const user = await User.create([{
+        username: trimmedUsername,
+        password_hash: passwordHash
+      }], { session });
 
-      return { id: userId, username: trimmedUsername };
-    });
+      await InviteCode.updateOne(
+        { _id: inviteCode._id },
+        { 
+          used_by: user[0]._id,
+          used_at: new Date()
+        },
+        { session }
+      );
 
-    const user = createUser();
-    const userRecord = db.prepare('SELECT id, username, is_admin FROM users WHERE id = ?').get(user.id);
-    const token = generateToken(userRecord);
+      await session.commitTransaction();
+      session.endSession();
 
-    res.json({
-      success: true,
-      token,
-      user: { id: userRecord.id, username: userRecord.username, isAdmin: userRecord.is_admin || false },
-      message: 'Account created successfully'
-    });
+      const userRecord = await User.findById(user[0]._id).select('_id username is_admin');
+      const token = generateToken({
+        id: userRecord._id.toString(),
+        username: userRecord.username,
+        is_admin: userRecord.is_admin || false
+      });
+
+      res.json({
+        success: true,
+        token,
+        user: { id: userRecord._id.toString(), username: userRecord.username, isAdmin: userRecord.is_admin || false },
+        message: 'Account created successfully'
+      });
+    } catch (error) {
+      await session.abortTransaction();
+      session.endSession();
+      throw error;
+    }
   } catch (err) {
     console.error('Auth error:', err);
     res.status(500).json({ error: 'Authentication failed' });
@@ -95,7 +113,7 @@ router.post('/login', async (req, res) => {
     }
 
     // Find user
-    const user = db.prepare('SELECT * FROM users WHERE username = ?').get(username.trim());
+    const user = await User.findOne({ username: username.trim() });
 
     if (!user) {
       return res.status(401).json({ error: 'Invalid username or password' });
@@ -116,12 +134,16 @@ router.post('/login', async (req, res) => {
     }
 
     // Generate token
-    const token = generateToken({ id: user.id, username: user.username, is_admin: user.is_admin || false });
+    const token = generateToken({ 
+      id: user._id.toString(), 
+      username: user.username, 
+      is_admin: user.is_admin || false 
+    });
 
     res.json({
       success: true,
       token,
-      user: { id: user.id, username: user.username, isAdmin: user.is_admin || false }
+      user: { id: user._id.toString(), username: user.username, isAdmin: user.is_admin || false }
     });
   } catch (err) {
     console.error('Login error:', err);
@@ -133,9 +155,9 @@ router.post('/login', async (req, res) => {
  * GET /api/auth/me
  * Get current user info
  */
-router.get('/me', authenticateToken, (req, res) => {
+router.get('/me', authenticateToken, async (req, res) => {
   try {
-    const user = db.prepare('SELECT id, username, is_admin, created_at FROM users WHERE id = ?').get(req.user.id);
+    const user = await User.findById(req.user.id).select('_id username is_admin created_at');
 
     if (!user) {
       return res.status(404).json({ error: 'User not found' });
@@ -143,7 +165,7 @@ router.get('/me', authenticateToken, (req, res) => {
 
     res.json({ 
       user: { 
-        id: user.id, 
+        id: user._id.toString(), 
         username: user.username, 
         isAdmin: user.is_admin || false,
         created_at: user.created_at 

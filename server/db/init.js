@@ -1,44 +1,58 @@
-import Database from 'better-sqlite3';
-import { fileURLToPath } from 'url';
-import { dirname, join } from 'path';
+import mongoose from 'mongoose';
+import { config } from '../config.js';
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = dirname(__filename);
+// MongoDB connection string
+const getMongoUri = () => {
+  const username = encodeURIComponent(process.env.MONGODB_USER || 'mortalnow_db_user');
+  const password = encodeURIComponent(process.env.MONGODB_PASSWORD || 'KOB7ukeIHwhgGhfF');
+  const cluster = process.env.MONGODB_CLUSTER || 'cluster0';
+  const dbName = process.env.MONGODB_DB_NAME || 'talk_to_qiao';
+  
+  // Handle both formats: "cluster0" or "cluster0.xxxxx.mongodb.net"
+  const clusterHost = cluster.includes('.mongodb.net') 
+    ? cluster 
+    : `${cluster}.mongodb.net`;
+  
+  return `mongodb+srv://${username}:${password}@${clusterHost}/${dbName}?retryWrites=true&w=majority`;
+};
 
-const dbPath = join(__dirname, 'database.sqlite');
-const db = new Database(dbPath);
+let isConnected = false;
 
-// Initialize database schema
-db.exec(`
-  CREATE TABLE IF NOT EXISTS users (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    username TEXT UNIQUE NOT NULL,
-    password_hash TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
+// Connect to MongoDB
+export const connectDB = async () => {
+  if (isConnected) {
+    return;
+  }
 
-  CREATE TABLE IF NOT EXISTS invite_codes (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
-    code TEXT UNIQUE NOT NULL,
-    used_by INTEGER REFERENCES users(id),
-    used_at DATETIME,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-  );
-`);
+  try {
+    const uri = getMongoUri();
+    await mongoose.connect(uri);
+    isConnected = true;
+    console.log('✅ Connected to MongoDB Atlas');
+  } catch (error) {
+    console.error('❌ MongoDB connection error:', error);
+    throw error;
+  }
+};
 
-// Migration: Add password_hash column if it doesn't exist (for existing databases)
-try {
-  db.exec(`ALTER TABLE users ADD COLUMN password_hash TEXT;`);
-} catch (err) {
-  // Column already exists, ignore
-}
+// Disconnect from MongoDB
+export const disconnectDB = async () => {
+  if (!isConnected) {
+    return;
+  }
 
-// Migration: Add is_admin column if it doesn't exist
-try {
-  db.exec(`ALTER TABLE users ADD COLUMN is_admin INTEGER DEFAULT 0;`);
-} catch (err) {
-  // Column already exists, ignore
-}
+  try {
+    await mongoose.disconnect();
+    isConnected = false;
+    console.log('✅ Disconnected from MongoDB');
+  } catch (error) {
+    console.error('❌ MongoDB disconnection error:', error);
+    throw error;
+  }
+};
 
-export default db;
+// Initialize connection on import
+connectDB().catch(console.error);
 
+// Export mongoose connection for scripts that need it
+export default mongoose;

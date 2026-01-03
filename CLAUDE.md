@@ -7,7 +7,7 @@ This is an AI skin/wrapper that provides users with a unified interface to commu
 ## Tech Stack
 
 - **Backend**: Node.js + Express.js
-- **Database**: SQLite (file-based, simple)
+- **Database**: MongoDB Atlas (cloud-hosted)
 - **Frontend**: Vanilla JS + HTML/CSS (PWA)
 - **AI SDKs**: `openai`, `@google/generative-ai`
 - **Auth**: JWT tokens
@@ -17,7 +17,7 @@ This is an AI skin/wrapper that provides users with a unified interface to commu
 ```
 Client (Web/Mobile/PWA) → Express Server → AI Providers (OpenAI, Gemini)
                               ↓
-                         SQLite DB (users, invite_codes)
+                      MongoDB Atlas (users, invite_codes)
 ```
 
 ## Key Features
@@ -35,7 +35,7 @@ server/           # Express backend
   routes/         # API endpoints (auth, chat)
   middleware/     # JWT verification
   services/       # AI provider integrations
-  db/             # SQLite setup
+  db/             # MongoDB Atlas setup
 public/           # Frontend PWA
   css/            # Styles
   js/             # Client-side logic
@@ -54,10 +54,14 @@ scripts/          # CLI utilities (invite code generation)
 ## Environment Variables
 
 Required in `.env`:
-- `PORT` - Server port (default: 3000)
+- `PORT` - Server port (default: 3002)
 - `JWT_SECRET` - Secret for JWT signing
 - `OPENAI_API_KEY` - OpenAI API key
 - `GOOGLE_AI_API_KEY` - Google Gemini API key
+- `MONGODB_USER` - MongoDB Atlas username
+- `MONGODB_PASSWORD` - MongoDB Atlas password
+- `MONGODB_CLUSTER` - MongoDB Atlas cluster address (default: cluster0)
+- `MONGODB_DB_NAME` - Database name (default: talk_to_qiao)
 
 ## Development Commands
 

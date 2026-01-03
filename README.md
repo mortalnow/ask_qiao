@@ -34,6 +34,12 @@ PORT=3002
 JWT_SECRET=your-super-secret-jwt-key-change-this
 OPENAI_API_KEY=sk-your-openai-api-key
 GOOGLE_AI_API_KEY=your-google-ai-api-key
+
+# MongoDB Atlas Configuration
+MONGODB_USER=your-mongodb-username
+MONGODB_PASSWORD=your-mongodb-password
+MONGODB_CLUSTER=your-cluster-address.mongodb.net
+MONGODB_DB_NAME=talk_to_qiao
 ```
 
 ### 3. Generate Invite Codes
@@ -74,7 +80,8 @@ talk_to_qiao/
 │   │   ├── openai.js      # ChatGPT integration
 │   │   └── gemini.js      # Gemini integration
 │   ├── db/
-│   │   └── init.js        # SQLite setup
+│   │   ├── init.js        # MongoDB Atlas connection
+│   │   └── models.js      # Mongoose schemas
 │   └── utils/
 │       └── inviteCode.js  # Code generation
 ├── public/                 # Frontend PWA
@@ -126,7 +133,7 @@ talk_to_qiao/
 ## Tech Stack
 
 - **Backend**: Node.js, Express.js
-- **Database**: SQLite (better-sqlite3)
+- **Database**: MongoDB Atlas (Mongoose)
 - **AI**: OpenAI SDK, Google Generative AI SDK
 - **Auth**: JWT (jsonwebtoken)
 - **Frontend**: Vanilla JS, CSS (no frameworks)
