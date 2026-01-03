@@ -72,7 +72,9 @@ npm start            # Start production server
 node scripts/generate-invite.js  # Generate new invite code
 node scripts/init-mongodb.js      # Initialize MongoDB database
 node scripts/check-admin.js       # Check/create admin account
+node scripts/check-user.js       # Check user credentials and diagnose login issues
 node scripts/test-mongodb-connection.js # Test MongoDB connection
+node scripts/test-production-login.js   # Test production API login endpoint
 node scripts/set-password.js      # Set password for existing user
 ```
 
@@ -93,6 +95,12 @@ The project uses MongoDB Atlas for user and invite code storage. To initialize:
 3. Run initialization script: `node scripts/init-mongodb.js <cluster-hostname>`
 4. Script creates collections with indexes and admin user (`mortalnow@gmail.com` / `111111`)
 5. For more admin tasks, see `scripts/README-admin.md`
+
+## Troubleshooting Tools
+
+- `scripts/check-user.js` - Diagnose login issues by checking if user exists and verifying credentials
+- `scripts/test-production-login.js` - Test the production API login endpoint directly
+- `LOGIN_ISSUE_DIAGNOSIS.md` - Comprehensive guide for resolving login problems, especially when production and local databases differ
 
 ## Security Considerations
 

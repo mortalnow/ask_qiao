@@ -117,8 +117,10 @@ talk_to_qiao/
 │   ├── generate-invite.js  # CLI for invite codes
 │   ├── init-mongodb.js     # MongoDB initialization script
 │   ├── check-admin.js      # Admin account management
+│   ├── check-user.js       # Check user credentials and diagnose login issues
 │   ├── set-password.js     # User password management
 │   ├── test-mongodb-connection.js # DB connectivity test
+│   ├── test-production-login.js  # Test production API login endpoint
 │   └── README-admin.md     # Admin documentation guide
 ├── package.json
 └── README.md
@@ -132,6 +134,16 @@ talk_to_qiao/
 | GET | `/api/auth/me` | Yes | Get current user |
 | POST | `/api/chat` | Yes | Send message (SSE stream) |
 | GET | `/api/chat/models` | Yes | List available models |
+
+## Troubleshooting
+
+### Login Issues
+
+If you can't login to the production site, check:
+1. Ensure the production database is initialized: `node scripts/init-mongodb.js`
+2. Verify user exists: `node scripts/check-user.js <username> <password>`
+3. Test production API: `node scripts/test-production-login.js <username> <password>`
+4. See `LOGIN_ISSUE_DIAGNOSIS.md` for detailed troubleshooting steps
 
 ## Security
 
