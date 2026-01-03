@@ -86,8 +86,10 @@ Open http://localhost:3002 in your browser.
 
 ```
 talk_to_qiao/
+├── api/                    # Vercel serverless function
+│   └── index.js           # Express app wrapper for Vercel
 ├── server/                 # Backend
-│   ├── index.js           # Express server entry
+│   ├── index.js           # Express server entry (local dev)
 │   ├── config.js          # Environment config
 │   ├── routes/
 │   │   ├── auth.js        # Authentication endpoints
@@ -118,10 +120,12 @@ talk_to_qiao/
 │   ├── init-mongodb.js     # MongoDB initialization script
 │   ├── check-admin.js      # Admin account management
 │   ├── check-user.js       # Check user credentials and diagnose login issues
+│   ├── verify-mongodb-config.js # Verify MongoDB connection configuration
 │   ├── set-password.js     # User password management
 │   ├── test-mongodb-connection.js # DB connectivity test
 │   ├── test-production-login.js  # Test production API login endpoint
 │   └── README-admin.md     # Admin documentation guide
+├── vercel.json             # Vercel deployment configuration
 ├── package.json
 └── README.md
 ```
@@ -135,6 +139,24 @@ talk_to_qiao/
 | POST | `/api/chat` | Yes | Send message (SSE stream) |
 | GET | `/api/chat/models` | Yes | List available models |
 
+## Deployment
+
+### Vercel Deployment
+
+The app is configured for Vercel deployment with serverless functions:
+
+1. **Environment Variables**: Set all required environment variables in Vercel dashboard:
+   - `MONGODB_USER`, `MONGODB_PASSWORD`, `MONGODB_CLUSTER`, `MONGODB_DB_NAME`
+   - `JWT_SECRET`, `OPENAI_API_KEY`, `GOOGLE_AI_API_KEY`
+
+2. **Deploy**: Push to GitHub and Vercel will auto-deploy, or use `vercel` CLI
+
+3. **Files**:
+   - `api/index.js` - Serverless function wrapper for Express app
+   - `vercel.json` - Vercel routing configuration
+
+See `VERCEL_DEPLOYMENT_FIX.md` for detailed deployment troubleshooting.
+
 ## Troubleshooting
 
 ### Login Issues
@@ -142,8 +164,10 @@ talk_to_qiao/
 If you can't login to the production site, check:
 1. Ensure the production database is initialized: `node scripts/init-mongodb.js`
 2. Verify user exists: `node scripts/check-user.js <username> <password>`
-3. Test production API: `node scripts/test-production-login.js <username> <password>`
-4. See `LOGIN_ISSUE_DIAGNOSIS.md` for detailed troubleshooting steps
+3. Verify MongoDB config: `node scripts/verify-mongodb-config.js`
+4. Test production API: `node scripts/test-production-login.js <username> <password>`
+5. See `LOGIN_ISSUE_DIAGNOSIS.md` for detailed troubleshooting steps
+6. See `VERCEL_DEPLOYMENT_FIX.md` for Vercel-specific issues (404 errors, routing)
 
 ## Security
 

@@ -31,6 +31,8 @@ Client (Web/Mobile/PWA) → Express Server → AI Providers (OpenAI, Gemini)
 ## Project Structure
 
 ```
+api/              # Vercel serverless function wrapper
+  index.js        # Express app wrapper for Vercel deployment
 server/           # Express backend
   routes/         # API endpoints (auth, chat)
   middleware/     # JWT verification
@@ -40,6 +42,7 @@ public/           # Frontend PWA
   css/            # Styles
   js/             # Client-side logic
 scripts/          # CLI utilities (invite code generation, DB initialization)
+vercel.json       # Vercel deployment configuration
 ```
 
 ## API Endpoints
@@ -68,15 +71,28 @@ Required in `.env`:
 ```bash
 npm install          # Install dependencies
 npm run dev          # Start dev server with hot reload
-npm start            # Start production server
+npm start            # Start production server (local)
 node scripts/generate-invite.js  # Generate new invite code
 node scripts/init-mongodb.js      # Initialize MongoDB database
 node scripts/check-admin.js       # Check/create admin account
 node scripts/check-user.js       # Check user credentials and diagnose login issues
+node scripts/verify-mongodb-config.js # Verify MongoDB connection configuration
 node scripts/test-mongodb-connection.js # Test MongoDB connection
 node scripts/test-production-login.js   # Test production API login endpoint
 node scripts/set-password.js      # Set password for existing user
 ```
+
+## Deployment
+
+### Vercel Deployment
+
+The app uses Vercel serverless functions for deployment:
+- `api/index.js` - Wraps Express app as serverless function
+- `vercel.json` - Configures routing and builds
+- All API routes (`/api/*`) are handled by the serverless function
+- Static files are served with proper caching headers
+
+**Important**: Ensure all environment variables are set in Vercel dashboard before deploying.
 
 ## Coding Conventions
 
@@ -99,8 +115,10 @@ The project uses MongoDB Atlas for user and invite code storage. To initialize:
 ## Troubleshooting Tools
 
 - `scripts/check-user.js` - Diagnose login issues by checking if user exists and verifying credentials
+- `scripts/verify-mongodb-config.js` - Verify MongoDB connection configuration and environment variables
 - `scripts/test-production-login.js` - Test the production API login endpoint directly
 - `LOGIN_ISSUE_DIAGNOSIS.md` - Comprehensive guide for resolving login problems, especially when production and local databases differ
+- `VERCEL_DEPLOYMENT_FIX.md` - Guide for fixing Vercel deployment issues (404 errors, routing problems)
 
 ## Security Considerations
 
