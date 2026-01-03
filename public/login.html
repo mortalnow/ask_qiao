@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#0a0a0f">
+  <title>Talk to Qiao - Login</title>
+  <link rel="manifest" href="/manifest.json">
+  <link rel="icon" type="image/svg+xml" href="/icons/icon.svg">
+  <link rel="apple-touch-icon" href="/icons/icon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="login-page">
+  <div class="login-container">
+    <div class="login-glow"></div>
+    
+    <div class="login-card">
+      <div class="login-header">
+        <div class="logo">
+          <span class="logo-icon">◈</span>
+          <h1>Talk to Qiao</h1>
+        </div>
+        <p class="tagline">Multi-model AI chat interface</p>
+      </div>
+
+      <!-- Tabs -->
+      <div class="auth-tabs">
+        <button class="auth-tab active" data-tab="login">Login</button>
+        <button class="auth-tab" data-tab="register">Register</button>
+      </div>
+
+      <!-- Login Form -->
+      <form id="login-form" class="login-form active" data-form="login">
+        <div class="form-group">
+          <label for="login-username">Username</label>
+          <input 
+            type="text" 
+            id="login-username" 
+            name="username"
+            placeholder="your_username"
+            autocomplete="username"
+            minlength="2"
+            maxlength="30"
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="login-password">Password</label>
+          <input 
+            type="password" 
+            id="login-password" 
+            name="password"
+            placeholder="••••••••"
+            autocomplete="current-password"
+            minlength="6"
+            required
+          >
+        </div>
+
+        <button type="submit" class="btn-primary">
+          <span class="btn-text">Log In</span>
+          <span class="btn-loader"></span>
+        </button>
+
+        <div id="login-error-message" class="error-message"></div>
+      </form>
+
+      <!-- Register Form -->
+      <form id="register-form" class="login-form" data-form="register">
+        <div class="form-group">
+          <label for="invite-code">Invite Code</label>
+          <input 
+            type="text" 
+            id="invite-code" 
+            name="code"
+            placeholder="ABC123-XYZ789"
+            autocomplete="off"
+            spellcheck="false"
+            pattern="[A-Z0-9]{6}-[A-Z0-9]{6}"
+            required
+          >
+          <span class="input-hint">Format: XXXXXX-XXXXXX</span>
+        </div>
+
+        <div class="form-group">
+          <label for="register-username">Choose a Username</label>
+          <input 
+            type="text" 
+            id="register-username" 
+            name="username"
+            placeholder="your_name"
+            autocomplete="username"
+            minlength="2"
+            maxlength="30"
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="register-password">Password</label>
+          <input 
+            type="password" 
+            id="register-password" 
+            name="password"
+            placeholder="••••••••"
+            autocomplete="new-password"
+            minlength="6"
+            required
+          >
+          <span class="input-hint">Minimum 6 characters</span>
+        </div>
+
+        <button type="submit" class="btn-primary">
+          <span class="btn-text">Create Account</span>
+          <span class="btn-loader"></span>
+        </button>
+
+        <div id="register-error-message" class="error-message"></div>
+      </form>
+
+      <div class="login-footer">
+        <p>Invite-only access • Powered by GPT & Gemini</p>
+      </div>
+    </div>
+  </div>
+
+  <script src="/js/api.js"></script>
+  <script src="/js/auth.js"></script>
+  <script>
+    // Register service worker
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js')
+        .catch(err => console.log('SW registration failed:', err));
+    }
+  </script>
+</body>
+</html>
+
