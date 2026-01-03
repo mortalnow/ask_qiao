@@ -27,7 +27,7 @@ export async function streamChat(messages, onChunk, onDone, onError) {
 
   try {
     const stream = await client.chat.completions.create({
-      model: 'gpt-4o', // Using gpt-4o (latest stable)
+      model: 'gpt-5.2-chat-latest', // Using GPT-5.2 (OpenAI's latest flagship model)
       messages: messages.map(m => ({
         role: m.role,
         content: m.content
@@ -53,8 +53,8 @@ export async function streamChat(messages, onChunk, onDone, onError) {
 
 export const modelInfo = {
   id: 'chatgpt',
-  name: 'GPT-4o',
+  name: 'GPT-5.2',
   provider: 'OpenAI',
-  description: 'OpenAI\'s latest flagship model with vision and reasoning'
+  description: 'OpenAI最新旗舰模型，最强大的推理和编码能力'
 };
 

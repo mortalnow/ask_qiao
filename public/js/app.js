@@ -30,7 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Model display names
   const modelNames = {
-    chatgpt: 'GPT-4o',
+    chatgpt: 'GPT-5.2',
     gemini: 'Gemini 1.5 Flash'
   };
 
@@ -370,8 +370,8 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="model-cards">
             <div class="model-card" data-model="chatgpt">
               <span class="model-badge openai">OpenAI</span>
-              <h3>GPT-4o</h3>
-              <p>强大的推理与视觉能力</p>
+              <h3>GPT-5.2</h3>
+              <p>最强大的推理和编码能力</p>
             </div>
             <div class="model-card" data-model="gemini">
               <span class="model-badge google">Google</span>
