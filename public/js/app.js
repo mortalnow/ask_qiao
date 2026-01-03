@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Model display names
   const modelNames = {
     chatgpt: 'GPT-5.2',
-    gemini: 'Gemini 1.5 Flash'
+    gemini: 'Gemini 3 Flash'
   };
 
   // Model icons
@@ -375,8 +375,8 @@ document.addEventListener('DOMContentLoaded', () => {
             </div>
             <div class="model-card" data-model="gemini">
               <span class="model-badge google">Google</span>
-              <h3>Gemini 1.5 Flash</h3>
-              <p>快速的多模态响应</p>
+              <h3>Gemini 3 Flash</h3>
+              <p>快速高效的多模态响应</p>
             </div>
           </div>
         </div>

@@ -7,8 +7,8 @@ let model = null;
 function getModel() {
   if (!genAI && config.googleAiApiKey) {
     genAI = new GoogleGenerativeAI(config.googleAiApiKey);
-    // Use gemini-1.5-flash (stable and fast)
-    model = genAI.getGenerativeModel({ model: 'gemini-1.5-flash' });
+    // Use gemini-3-flash-preview (latest Gemini 3 model - fast and efficient)
+    model = genAI.getGenerativeModel({ model: 'gemini-3-flash-preview' });
   }
   return model;
 }
@@ -69,8 +69,8 @@ export async function streamChat(messages, onChunk, onDone, onError) {
 
 export const modelInfo = {
   id: 'gemini',
-  name: 'Gemini 1.5 Flash',
+  name: 'Gemini 3 Flash',
   provider: 'Google',
-  description: 'Fast and efficient multimodal model from Google'
+  description: 'Google最新模型，快速高效的多模态响应'
 };
 
