@@ -39,7 +39,7 @@ server/           # Express backend
 public/           # Frontend PWA
   css/            # Styles
   js/             # Client-side logic
-scripts/          # CLI utilities (invite code generation)
+scripts/          # CLI utilities (invite code generation, DB initialization)
 ```
 
 ## API Endpoints
@@ -70,6 +70,7 @@ npm install          # Install dependencies
 npm run dev          # Start dev server with hot reload
 npm start            # Start production server
 node scripts/generate-invite.js  # Generate new invite code
+node scripts/init-mongodb.js      # Initialize MongoDB database
 ```
 
 ## Coding Conventions
@@ -80,6 +81,15 @@ node scripts/generate-invite.js  # Generate new invite code
 - Mobile-first responsive CSS
 - No external CSS frameworks (keep it lightweight for PWA)
 
+## MongoDB Setup
+
+The project uses MongoDB Atlas for user and invite code storage. To initialize:
+
+1. Ensure MongoDB Atlas cluster is accessible
+2. Set environment variables: `MONGODB_USER`, `MONGODB_PASSWORD`, `MONGODB_CLUSTER`, `MONGODB_DB_NAME`
+3. Run initialization script: `node scripts/init-mongodb.js <cluster-hostname>`
+4. Script creates collections with indexes and admin user (`mortalnow@gmail.com` / `111111`)
+
 ## Security Considerations
 
 - All API routes (except auth) require valid JWT
@@ -87,4 +97,5 @@ node scripts/generate-invite.js  # Generate new invite code
 - API keys stored in environment variables only
 - Rate limiting on chat endpoints
 - Input sanitization before sending to AI providers
+- Passwords hashed with bcrypt (10 rounds)
 

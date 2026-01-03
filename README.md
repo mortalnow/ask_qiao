@@ -42,7 +42,25 @@ MONGODB_CLUSTER=your-cluster-address.mongodb.net
 MONGODB_DB_NAME=talk_to_qiao
 ```
 
-### 3. Generate Invite Codes
+### 3. Initialize MongoDB Database
+
+Initialize the database with required collections and admin user:
+
+```bash
+node scripts/init-mongodb.js
+```
+
+Or specify the cluster hostname:
+
+```bash
+node scripts/init-mongodb.js cluster0.xxxxx.mongodb.net
+```
+
+This script will:
+- Create required collections (`users`, `invitecodes`) with indexes
+- Create admin user: `mortalnow@gmail.com` / `111111`
+
+### 4. Generate Invite Codes
 
 ```bash
 npm run generate-invite
@@ -50,7 +68,7 @@ npm run generate-invite
 npm run generate-invite 5
 ```
 
-### 4. Start the Server
+### 5. Start the Server
 
 ```bash
 # Development (with hot reload)
@@ -60,7 +78,7 @@ npm run dev
 npm start
 ```
 
-### 5. Access the App
+### 6. Access the App
 
 Open http://localhost:3002 in your browser.
 
@@ -96,7 +114,8 @@ talk_to_qiao/
 │       ├── auth.js        # Auth handling
 │       └── app.js         # Chat logic
 ├── scripts/
-│   └── generate-invite.js # CLI for invite codes
+│   ├── generate-invite.js  # CLI for invite codes
+│   └── init-mongodb.js     # MongoDB initialization script
 ├── package.json
 └── README.md
 ```
