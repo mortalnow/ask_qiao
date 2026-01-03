@@ -49,12 +49,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Validate
     if (!username || !password) {
-      showLoginError('Please fill in all fields');
+      showLoginError('请填写所有字段');
       return;
     }
 
     if (username.length < 2 || username.length > 30) {
-      showLoginError('Username must be 2-30 characters');
+      showLoginError('用户名必须为 2-30 个字符');
       return;
     }
 
@@ -100,22 +100,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Validate
     if (!code || !username || !password) {
-      showRegisterError('Please fill in all fields');
+      showRegisterError('请填写所有字段');
       return;
     }
 
     if (!/^[A-Z0-9]{6}-[A-Z0-9]{6}$/.test(code)) {
-      showRegisterError('Invalid invite code format');
+      showRegisterError('邀请码格式无效');
       return;
     }
 
     if (username.length < 2 || username.length > 30) {
-      showRegisterError('Username must be 2-30 characters');
+      showRegisterError('用户名必须为 2-30 个字符');
       return;
     }
 
     if (password.length < 6) {
-      showRegisterError('Password must be at least 6 characters');
+      showRegisterError('密码至少需要 6 个字符');
       return;
     }
 

@@ -1,18 +1,18 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#0a0a0f">
-  <title>Talk to Qiao</title>
+  <title>与桥对话</title>
   <link rel="manifest" href="/manifest.json">
   <link rel="icon" type="image/svg+xml" href="/icons/icon.svg">
   <link rel="apple-touch-icon" href="/icons/icon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body>
@@ -21,7 +21,7 @@
     <header class="chat-header">
       <div class="header-left">
         <span class="logo-icon">◈</span>
-        <h1>Talk to Qiao</h1>
+        <h1>与桥对话</h1>
       </div>
       <div class="header-right">
         <div class="model-selector">
@@ -31,17 +31,17 @@
           </select>
           <span class="select-arrow">▾</span>
         </div>
-        <a id="admin-link" href="/admin.html" class="btn-icon" title="Admin Panel" style="display: none;">
+        <a id="admin-link" href="/admin.html" class="btn-icon" title="管理面板" style="display: none;">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
           </svg>
         </a>
-        <button id="clear-chat" class="btn-icon" title="Clear chat">
+        <button id="clear-chat" class="btn-icon" title="清空对话">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z"/>
           </svg>
         </button>
-        <button id="logout-btn" class="btn-icon" title="Logout">
+        <button id="logout-btn" class="btn-icon" title="退出登录">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>
           </svg>
@@ -53,18 +53,18 @@
     <main class="chat-messages" id="chat-messages">
       <div class="welcome-message">
         <div class="welcome-icon">◈</div>
-        <h2>Welcome to Talk to Qiao</h2>
-        <p>Select a model and start chatting. You can switch models anytime.</p>
+        <h2>欢迎使用与桥对话</h2>
+        <p>选择一个模型开始对话，您可以随时切换模型。</p>
         <div class="model-cards">
           <div class="model-card" data-model="chatgpt">
             <span class="model-badge openai">OpenAI</span>
             <h3>GPT-4o</h3>
-            <p>Advanced reasoning & vision</p>
+            <p>强大的推理与视觉能力</p>
           </div>
           <div class="model-card" data-model="gemini">
             <span class="model-badge google">Google</span>
             <h3>Gemini 1.5 Flash</h3>
-            <p>Fast multimodal responses</p>
+            <p>快速的多模态响应</p>
           </div>
         </div>
       </div>
@@ -74,9 +74,9 @@
     <footer class="chat-input-area">
       <form id="chat-form" class="chat-form">
         <div class="input-wrapper">
-          <textarea 
-            id="message-input" 
-            placeholder="Type your message..."
+          <textarea
+            id="message-input"
+            placeholder="输入您的消息..."
             rows="1"
             maxlength="32000"
           ></textarea>
@@ -88,7 +88,7 @@
         </div>
         <div class="input-footer">
           <span id="char-count">0 / 32000</span>
-          <span class="current-model">Using: <strong id="current-model-label">GPT-4o</strong></span>
+          <span class="current-model">当前模型：<strong id="current-model-label">GPT-4o</strong></span>
         </div>
       </form>
     </footer>

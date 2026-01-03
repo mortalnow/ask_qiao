@@ -1,18 +1,18 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="zh-CN">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#0a0a0f">
-  <title>Talk to Qiao - Login</title>
+  <title>与桥对话 - 登录</title>
   <link rel="manifest" href="/manifest.json">
   <link rel="icon" type="image/svg+xml" href="/icons/icon.svg">
   <link rel="apple-touch-icon" href="/icons/icon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@300;400;500;600&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
 </head>
 <body class="login-page">
@@ -23,26 +23,26 @@
       <div class="login-header">
         <div class="logo">
           <span class="logo-icon">◈</span>
-          <h1>Talk to Qiao</h1>
+          <h1>与桥对话</h1>
         </div>
-        <p class="tagline">Multi-model AI chat interface</p>
+        <p class="tagline">多模型 AI 对话界面</p>
       </div>
 
       <!-- Tabs -->
       <div class="auth-tabs">
-        <button class="auth-tab active" data-tab="login">Login</button>
-        <button class="auth-tab" data-tab="register">Register</button>
+        <button class="auth-tab active" data-tab="login">登录</button>
+        <button class="auth-tab" data-tab="register">注册</button>
       </div>
 
       <!-- Login Form -->
       <form id="login-form" class="login-form active" data-form="login">
         <div class="form-group">
-          <label for="login-username">Username</label>
-          <input 
-            type="text" 
-            id="login-username" 
+          <label for="login-username">用户名</label>
+          <input
+            type="text"
+            id="login-username"
             name="username"
-            placeholder="your_username"
+            placeholder="输入用户名"
             autocomplete="username"
             minlength="2"
             maxlength="30"
@@ -51,10 +51,10 @@
         </div>
 
         <div class="form-group">
-          <label for="login-password">Password</label>
-          <input 
-            type="password" 
-            id="login-password" 
+          <label for="login-password">密码</label>
+          <input
+            type="password"
+            id="login-password"
             name="password"
             placeholder="••••••••"
             autocomplete="current-password"
@@ -64,7 +64,7 @@
         </div>
 
         <button type="submit" class="btn-primary">
-          <span class="btn-text">Log In</span>
+          <span class="btn-text">登录</span>
           <span class="btn-loader"></span>
         </button>
 
@@ -74,10 +74,10 @@
       <!-- Register Form -->
       <form id="register-form" class="login-form" data-form="register">
         <div class="form-group">
-          <label for="invite-code">Invite Code</label>
-          <input 
-            type="text" 
-            id="invite-code" 
+          <label for="invite-code">邀请码</label>
+          <input
+            type="text"
+            id="invite-code"
             name="code"
             placeholder="ABC123-XYZ789"
             autocomplete="off"
@@ -85,16 +85,16 @@
             pattern="[A-Z0-9]{6}-[A-Z0-9]{6}"
             required
           >
-          <span class="input-hint">Format: XXXXXX-XXXXXX</span>
+          <span class="input-hint">格式：XXXXXX-XXXXXX</span>
         </div>
 
         <div class="form-group">
-          <label for="register-username">Choose a Username</label>
-          <input 
-            type="text" 
-            id="register-username" 
+          <label for="register-username">选择用户名</label>
+          <input
+            type="text"
+            id="register-username"
             name="username"
-            placeholder="your_name"
+            placeholder="输入用户名"
             autocomplete="username"
             minlength="2"
             maxlength="30"
@@ -103,21 +103,21 @@
         </div>
 
         <div class="form-group">
-          <label for="register-password">Password</label>
-          <input 
-            type="password" 
-            id="register-password" 
+          <label for="register-password">密码</label>
+          <input
+            type="password"
+            id="register-password"
             name="password"
             placeholder="••••••••"
             autocomplete="new-password"
             minlength="6"
             required
           >
-          <span class="input-hint">Minimum 6 characters</span>
+          <span class="input-hint">至少 6 个字符</span>
         </div>
 
         <button type="submit" class="btn-primary">
-          <span class="btn-text">Create Account</span>
+          <span class="btn-text">创建账户</span>
           <span class="btn-loader"></span>
         </button>
 
@@ -125,7 +125,7 @@
       </form>
 
       <div class="login-footer">
-        <p>Invite-only access • Powered by GPT & Gemini</p>
+        <p>仅限邀请访问 • 由 GPT 和 Gemini 驱动</p>
       </div>
     </div>
   </div>

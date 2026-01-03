@@ -103,7 +103,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Logout
     logoutBtn.addEventListener('click', () => {
-      if (confirm('Are you sure you want to logout?')) {
+      if (confirm('确定要退出登录吗？')) {
         window.API.logout();
       }
     });
@@ -288,7 +288,7 @@ document.addEventListener('DOMContentLoaded', () => {
           }
           
           currentStreamingMessage.innerHTML = `
-            <span style="color: var(--error)">Error: ${error.message}</span>
+            <span style="color: var(--error)">错误：${error.message}</span>
           `;
           
           // Remove failed message from history
@@ -310,7 +310,7 @@ document.addEventListener('DOMContentLoaded', () => {
         console.error('Send message error:', err);
         if (currentStreamingMessage) {
           currentStreamingMessage.innerHTML = `
-            <span style="color: var(--error)">Error: ${err.message}</span>
+            <span style="color: var(--error)">错误：${err.message}</span>
           `;
         }
       }
@@ -365,18 +365,18 @@ document.addEventListener('DOMContentLoaded', () => {
       messagesContainer.innerHTML = `
         <div class="welcome-message">
           <div class="welcome-icon">◈</div>
-          <h2>Welcome to Talk to Qiao</h2>
-          <p>Select a model and start chatting. You can switch models anytime.</p>
+          <h2>欢迎使用与桥对话</h2>
+          <p>选择一个模型开始对话，您可以随时切换模型。</p>
           <div class="model-cards">
             <div class="model-card" data-model="chatgpt">
               <span class="model-badge openai">OpenAI</span>
               <h3>GPT-4o</h3>
-              <p>Advanced reasoning & vision</p>
+              <p>强大的推理与视觉能力</p>
             </div>
             <div class="model-card" data-model="gemini">
               <span class="model-badge google">Google</span>
               <h3>Gemini 1.5 Flash</h3>
-              <p>Fast multimodal responses</p>
+              <p>快速的多模态响应</p>
             </div>
           </div>
         </div>
@@ -467,8 +467,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function clearChat() {
     if (isStreaming) return;
-    
-    if (chatHistory.length === 0 || confirm('Clear all messages?')) {
+
+    if (chatHistory.length === 0 || confirm('确定要清空所有消息吗？')) {
       chatHistory = [];
       saveChatHistory();
       renderChatHistory();
