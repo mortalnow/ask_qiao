@@ -365,7 +365,7 @@ document.addEventListener('DOMContentLoaded', () => {
       messagesContainer.innerHTML = `
         <div class="welcome-message">
           <div class="welcome-icon">◈</div>
-          <h2>欢迎使用与桥对话</h2>
+          <h2>欢迎使用与Qiao对话</h2>
           <p>选择一个模型开始对话，您可以随时切换模型。</p>
           <div class="model-cards">
             <div class="model-card" data-model="chatgpt">
