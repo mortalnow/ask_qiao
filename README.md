@@ -115,7 +115,11 @@ talk_to_qiao/
 │       └── app.js         # Chat logic
 ├── scripts/
 │   ├── generate-invite.js  # CLI for invite codes
-│   └── init-mongodb.js     # MongoDB initialization script
+│   ├── init-mongodb.js     # MongoDB initialization script
+│   ├── check-admin.js      # Admin account management
+│   ├── set-password.js     # User password management
+│   ├── test-mongodb-connection.js # DB connectivity test
+│   └── README-admin.md     # Admin documentation guide
 ├── package.json
 └── README.md
 ```

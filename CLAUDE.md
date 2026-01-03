@@ -71,6 +71,9 @@ npm run dev          # Start dev server with hot reload
 npm start            # Start production server
 node scripts/generate-invite.js  # Generate new invite code
 node scripts/init-mongodb.js      # Initialize MongoDB database
+node scripts/check-admin.js       # Check/create admin account
+node scripts/test-mongodb-connection.js # Test MongoDB connection
+node scripts/set-password.js      # Set password for existing user
 ```
 
 ## Coding Conventions
@@ -89,6 +92,7 @@ The project uses MongoDB Atlas for user and invite code storage. To initialize:
 2. Set environment variables: `MONGODB_USER`, `MONGODB_PASSWORD`, `MONGODB_CLUSTER`, `MONGODB_DB_NAME`
 3. Run initialization script: `node scripts/init-mongodb.js <cluster-hostname>`
 4. Script creates collections with indexes and admin user (`mortalnow@gmail.com` / `111111`)
+5. For more admin tasks, see `scripts/README-admin.md`
 
 ## Security Considerations
 
