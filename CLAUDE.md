@@ -176,6 +176,11 @@ The project uses MongoDB Atlas for user and invite code storage. To initialize:
 - Form values are not persisted (privacy-focused, matches chat behavior)
 
 **Bug Fix** (same day):
+- Issue: Prompt builder button didn't respond to clicks
+- Cause: Service Worker cached old `app.js` without prompt builder code
+- Fix: Updated `sw.js` cache version from `v1` to `v2` to force refresh
+
+**Bug Fix** (same day):
 - Issue: Prompt Builder button visible but not clickable
 - Cause: Service Worker cached old `app.js` without prompt builder code
 - Fix: Updated `sw.js` cache version from `v1` to `v2` to force refresh

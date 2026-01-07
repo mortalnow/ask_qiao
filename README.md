@@ -206,6 +206,7 @@ If you can't login to the production site, check:
   - Required fields: PERSONA, TASK, CONTEXT
   - Optional fields: FORMAT, REFERENCES
   - Collapsible form with generate/clear actions
+- **Fixed**: Service Worker cache issue preventing new JS from loading (v1 → v2)
 - **Fixed**: Service Worker cache issue preventing Prompt Builder from working
   - Updated cache version (v1 → v2) to force refresh
 
