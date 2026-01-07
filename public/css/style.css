@@ -558,7 +558,16 @@ body {
    ============================================ */
 
 .prompt-builder-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
   margin-bottom: var(--spacing-sm);
+}
+
+.prompt-builder-desc {
+  color: var(--text-muted);
+  font-size: 0.8rem;
+  font-style: italic;
 }
 
 .btn-prompt-builder {

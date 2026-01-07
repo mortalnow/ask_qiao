@@ -38,8 +38,9 @@ const translations = {
     'chat.currentModel': '当前模型：',
     
     // Prompt Builder
-    'promptBuilder.title': '提示词构建器',
-    'promptBuilder.toggle': '提示词构建器',
+    'promptBuilder.title': '问题构建器',
+    'promptBuilder.toggle': '问题构建器',
+    'promptBuilder.desc': '填表来问，获得更好的AI回复',
     'promptBuilder.clear': '清空',
     'promptBuilder.generate': '生成提示词',
     'promptBuilder.optional': '（可选）',
@@ -120,6 +121,7 @@ const translations = {
     // Prompt Builder
     'promptBuilder.title': 'Prompt Builder',
     'promptBuilder.toggle': 'Prompt Builder',
+    'promptBuilder.desc': 'Build structured prompts for better AI responses',
     'promptBuilder.clear': 'Clear',
     'promptBuilder.generate': 'Generate Prompt',
     'promptBuilder.optional': '(optional)',
