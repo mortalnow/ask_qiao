@@ -1227,22 +1227,55 @@ body {
 
 @media (max-width: 480px) {
   .chat-header {
-    padding: var(--spacing-sm);
-    padding-top: calc(var(--spacing-sm) + var(--safe-top));
+    padding: var(--spacing-xs) var(--spacing-sm);
+    padding-top: calc(var(--spacing-xs) + var(--safe-top));
+    gap: var(--spacing-xs);
   }
 
+  /* Hide title text on mobile, keep only logo icon */
   .header-left h1 {
-    font-size: 1rem;
+    display: none;
+  }
+
+  .header-left {
+    flex-shrink: 0;
+  }
+
+  .logo-icon {
+    font-size: 1.25rem;
+  }
+
+  .header-right {
+    flex: 1;
+    justify-content: flex-end;
+    gap: var(--spacing-xs);
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .model-selector select {
-    font-size: 0.8rem;
-    padding: 6px 28px 6px 10px;
+    font-size: 0.75rem;
+    padding: 6px 24px 6px 8px;
+    max-width: 100px;
+  }
+
+  .select-arrow {
+    right: var(--spacing-sm);
   }
 
   .btn-icon {
-    width: 36px;
-    height: 36px;
+    width: 32px;
+    height: 32px;
+    flex-shrink: 0;
+  }
+
+  .btn-icon svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  #lang-toggle span {
+    font-size: 0.65rem;
   }
 
   .chat-messages {
@@ -1282,5 +1315,28 @@ body {
   .prompt-builder-actions .btn-secondary,
   .prompt-builder-actions .btn-primary {
     width: 100%;
+  }
+}
+
+/* Extra small screens (iPhone SE, etc.) */
+@media (max-width: 375px) {
+  .model-selector select {
+    max-width: 80px;
+    font-size: 0.7rem;
+    padding: 5px 20px 5px 6px;
+  }
+
+  .btn-icon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .btn-icon svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .header-right {
+    gap: 2px;
   }
 }
