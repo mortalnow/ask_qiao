@@ -12,9 +12,20 @@ const translations = {
     
     // Header
     'header.admin': '管理面板',
+    'header.newChat': '新对话',
+    'header.history': '历史记录',
     'header.clearChat': '清空对话',
     'header.logout': '退出登录',
     'header.language': '语言',
+    
+    // History sidebar
+    'history.title': '对话历史',
+    'history.empty': '暂无历史对话',
+    'history.delete': '删除',
+    'history.today': '今天',
+    'history.yesterday': '昨天',
+    'history.earlier': '更早',
+    'history.deleteConfirm': '确定要删除这个对话吗？',
     
     // Welcome message
     'welcome.title': '欢迎使用与Qiao对话',
@@ -81,9 +92,20 @@ const translations = {
     
     // Header
     'header.admin': 'Admin Panel',
+    'header.newChat': 'New Chat',
+    'header.history': 'History',
     'header.clearChat': 'Clear Chat',
     'header.logout': 'Logout',
     'header.language': 'Language',
+    
+    // History sidebar
+    'history.title': 'Chat History',
+    'history.empty': 'No conversations yet',
+    'history.delete': 'Delete',
+    'history.today': 'Today',
+    'history.yesterday': 'Yesterday',
+    'history.earlier': 'Earlier',
+    'history.deleteConfirm': 'Are you sure you want to delete this conversation?',
     
     // Welcome message
     'welcome.title': 'Welcome to Talk to Qiao',

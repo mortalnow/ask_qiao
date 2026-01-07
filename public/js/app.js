@@ -40,12 +40,24 @@ document.addEventListener('DOMContentLoaded', () => {
   const generatePromptBtn = document.getElementById('generate-prompt');
   const clearPromptFormBtn = document.getElementById('clear-prompt-form');
 
+  // History Sidebar Elements
+  const newChatBtn = document.getElementById('new-chat-btn');
+  const historyBtn = document.getElementById('history-btn');
+  const historySidebar = document.getElementById('history-sidebar');
+  const closeHistoryBtn = document.getElementById('close-history');
+  const historyList = document.getElementById('history-list');
+  const historyOverlay = document.getElementById('history-overlay');
+
   // State
   let chatHistory = [];
   let isStreaming = false;
   let currentStreamingMessage = null;
   let currentStreamAbortController = null;
   let currentStreamFullResponse = '';
+  
+  // Session management
+  let currentSessionId = null;
+  let sessions = {};
 
   // Model display names
   const modelNames = {
@@ -73,16 +85,21 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('Failed to check admin status:', err);
     }
 
-    // Load chat history from local storage
-    const savedHistory = localStorage.getItem('chat_history');
-    if (savedHistory) {
-      try {
-        chatHistory = JSON.parse(savedHistory);
-        renderChatHistory();
-      } catch (e) {
-        console.error('Failed to load chat history:', e);
-      }
+    // Load sessions from local storage
+    loadSessions();
+    
+    // Load current session or create new one
+    const savedSessionId = localStorage.getItem('current_session_id');
+    if (savedSessionId && sessions[savedSessionId]) {
+      currentSessionId = savedSessionId;
+      chatHistory = sessions[savedSessionId].messages || [];
+    } else {
+      // Create a new session
+      startNewSession();
     }
+    
+    renderChatHistory();
+    renderHistoryList();
 
     // Update model label
     updateModelLabel();
@@ -153,6 +170,28 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (clearPromptFormBtn) {
       clearPromptFormBtn.addEventListener('click', clearPromptForm);
+    }
+    
+    // New Chat Button
+    if (newChatBtn) {
+      newChatBtn.addEventListener('click', () => {
+        if (isStreaming) return;
+        startNewSession();
+        renderChatHistory();
+        renderHistoryList();
+        messageInput.focus();
+      });
+    }
+    
+    // History Sidebar
+    if (historyBtn) {
+      historyBtn.addEventListener('click', toggleHistorySidebar);
+    }
+    if (closeHistoryBtn) {
+      closeHistoryBtn.addEventListener('click', toggleHistorySidebar);
+    }
+    if (historyOverlay) {
+      historyOverlay.addEventListener('click', toggleHistorySidebar);
     }
   }
 
@@ -516,7 +555,240 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function saveChatHistory() {
-    localStorage.setItem('chat_history', JSON.stringify(chatHistory));
+    if (!currentSessionId) return;
+    
+    // Update current session
+    if (!sessions[currentSessionId]) {
+      sessions[currentSessionId] = {
+        id: currentSessionId,
+        title: getSessionTitle(chatHistory),
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        messages: chatHistory
+      };
+    } else {
+      sessions[currentSessionId].messages = chatHistory;
+      sessions[currentSessionId].updatedAt = Date.now();
+      sessions[currentSessionId].title = getSessionTitle(chatHistory);
+    }
+    
+    // Save sessions to localStorage
+    saveSessions();
+  }
+  
+  // Session Management Functions
+  function generateSessionId() {
+    return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+  }
+  
+  function getSessionTitle(messages) {
+    // Get first user message as title
+    const firstUserMsg = messages.find(m => m.role === 'user');
+    if (firstUserMsg && firstUserMsg.content) {
+      // Truncate to first 50 characters
+      const title = firstUserMsg.content.substring(0, 50);
+      return title.length < firstUserMsg.content.length ? title + '...' : title;
+    }
+    return window.i18n ? window.i18n.t('header.newChat') : '新对话';
+  }
+  
+  function loadSessions() {
+    const savedSessions = localStorage.getItem('chat_sessions');
+    if (savedSessions) {
+      try {
+        sessions = JSON.parse(savedSessions);
+      } catch (e) {
+        console.error('Failed to load sessions:', e);
+        sessions = {};
+      }
+    }
+    
+    // Migrate old chat_history if exists
+    const oldHistory = localStorage.getItem('chat_history');
+    if (oldHistory && Object.keys(sessions).length === 0) {
+      try {
+        const messages = JSON.parse(oldHistory);
+        if (messages && messages.length > 0) {
+          const migrationId = generateSessionId();
+          sessions[migrationId] = {
+            id: migrationId,
+            title: getSessionTitle(messages),
+            createdAt: Date.now(),
+            updatedAt: Date.now(),
+            messages: messages
+          };
+          currentSessionId = migrationId;
+          chatHistory = messages;
+          saveSessions();
+          localStorage.removeItem('chat_history'); // Remove old format
+        }
+      } catch (e) {
+        console.error('Failed to migrate old history:', e);
+      }
+    }
+  }
+  
+  function saveSessions() {
+    localStorage.setItem('chat_sessions', JSON.stringify(sessions));
+    localStorage.setItem('current_session_id', currentSessionId);
+  }
+  
+  function startNewSession() {
+    // Save current session first if it has messages
+    if (currentSessionId && chatHistory.length > 0) {
+      saveChatHistory();
+    }
+    
+    // Create new session
+    currentSessionId = generateSessionId();
+    chatHistory = [];
+    saveSessions();
+  }
+  
+  function switchToSession(sessionId) {
+    if (isStreaming) return;
+    if (!sessions[sessionId]) return;
+    
+    // Save current session
+    if (currentSessionId && chatHistory.length > 0) {
+      saveChatHistory();
+    }
+    
+    // Switch to selected session
+    currentSessionId = sessionId;
+    chatHistory = sessions[sessionId].messages || [];
+    saveSessions();
+    
+    renderChatHistory();
+    toggleHistorySidebar();
+  }
+  
+  function deleteSession(sessionId, event) {
+    event.stopPropagation();
+    
+    const msg = window.i18n ? window.i18n.t('history.deleteConfirm') : '确定要删除这个对话吗？';
+    if (!confirm(msg)) return;
+    
+    delete sessions[sessionId];
+    
+    // If deleting current session, start a new one
+    if (sessionId === currentSessionId) {
+      startNewSession();
+      renderChatHistory();
+    }
+    
+    saveSessions();
+    renderHistoryList();
+  }
+  
+  function toggleHistorySidebar() {
+    if (historySidebar) {
+      historySidebar.classList.toggle('open');
+    }
+    if (historyOverlay) {
+      historyOverlay.classList.toggle('visible');
+    }
+  }
+  
+  function renderHistoryList() {
+    if (!historyList) return;
+    
+    const sessionArray = Object.values(sessions)
+      .filter(s => s.messages && s.messages.length > 0)
+      .sort((a, b) => b.updatedAt - a.updatedAt);
+    
+    if (sessionArray.length === 0) {
+      const emptyText = window.i18n ? window.i18n.t('history.empty') : '暂无历史对话';
+      historyList.innerHTML = `<div class="history-empty">${emptyText}</div>`;
+      return;
+    }
+    
+    // Group by date
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const yesterday = new Date(today);
+    yesterday.setDate(yesterday.getDate() - 1);
+    
+    const groups = {
+      today: [],
+      yesterday: [],
+      earlier: []
+    };
+    
+    sessionArray.forEach(session => {
+      const sessionDate = new Date(session.updatedAt);
+      sessionDate.setHours(0, 0, 0, 0);
+      
+      if (sessionDate.getTime() === today.getTime()) {
+        groups.today.push(session);
+      } else if (sessionDate.getTime() === yesterday.getTime()) {
+        groups.yesterday.push(session);
+      } else {
+        groups.earlier.push(session);
+      }
+    });
+    
+    const t = window.i18n ? window.i18n.t.bind(window.i18n) : (k) => k;
+    
+    let html = '';
+    
+    if (groups.today.length > 0) {
+      html += renderHistoryGroup(t('history.today'), groups.today);
+    }
+    if (groups.yesterday.length > 0) {
+      html += renderHistoryGroup(t('history.yesterday'), groups.yesterday);
+    }
+    if (groups.earlier.length > 0) {
+      html += renderHistoryGroup(t('history.earlier'), groups.earlier);
+    }
+    
+    historyList.innerHTML = html;
+    
+    // Add click handlers
+    historyList.querySelectorAll('.history-item').forEach(item => {
+      const sessionId = item.dataset.sessionId;
+      item.addEventListener('click', () => switchToSession(sessionId));
+      
+      const deleteBtn = item.querySelector('.history-item-delete');
+      if (deleteBtn) {
+        deleteBtn.addEventListener('click', (e) => deleteSession(sessionId, e));
+      }
+    });
+  }
+  
+  function renderHistoryGroup(title, sessions) {
+    let html = `<div class="history-group">
+      <div class="history-group-title">${title}</div>`;
+    
+    sessions.forEach(session => {
+      const isActive = session.id === currentSessionId;
+      const model = session.messages.find(m => m.model)?.model || 'chatgpt';
+      const icon = modelIcons[model] || '◈';
+      const time = new Date(session.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      
+      html += `
+        <div class="history-item ${isActive ? 'active' : ''}" data-session-id="${session.id}">
+          <div class="history-item-icon">${icon}</div>
+          <div class="history-item-content">
+            <div class="history-item-title">${escapeHtml(session.title)}</div>
+            <div class="history-item-meta">${time}</div>
+          </div>
+          <button class="history-item-delete" title="${window.i18n ? window.i18n.t('history.delete') : '删除'}">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z"/>
+            </svg>
+          </button>
+        </div>`;
+    });
+    
+    html += '</div>';
+    return html;
+  }
+  
+  function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
   }
 
   function clearChat() {
@@ -525,8 +797,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const msg = window.i18n ? window.i18n.t('confirm.clearChat') : '确定要清空所有消息吗？';
     if (chatHistory.length === 0 || confirm(msg)) {
       chatHistory = [];
-      saveChatHistory();
+      if (currentSessionId && sessions[currentSessionId]) {
+        delete sessions[currentSessionId];
+      }
+      startNewSession();
+      saveSessions();
       renderChatHistory();
+      renderHistoryList();
     }
   }
 
