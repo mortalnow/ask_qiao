@@ -7,7 +7,7 @@ export const config = {
   openaiApiKey: process.env.OPENAI_API_KEY,
   googleAiApiKey: process.env.GOOGLE_AI_API_KEY,
   mongodbCluster: process.env.MONGODB_CLUSTER || 'cluster0',
-  mongodbDbName: process.env.MONGODB_DB_NAME || 'talk_to_qiao',
+  mongodbDbName: process.env.MONGODB_DB_NAME || 'ask_qiao',
   
   // Model configuration - use 'latest' for auto-discovery or specify exact model name
   openaiModel: process.env.OPENAI_MODEL || 'latest',

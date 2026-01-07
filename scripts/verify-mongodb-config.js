@@ -11,7 +11,7 @@ function getMongoUri() {
   const username = encodeURIComponent(process.env.MONGODB_USER || 'mortalnow_db_user');
   const password = encodeURIComponent(process.env.MONGODB_PASSWORD || 'KOB7ukeIHwhgGhfF');
   const cluster = process.env.MONGODB_CLUSTER || 'cluster0';
-  const dbName = process.env.MONGODB_DB_NAME || 'talk_to_qiao';
+  const dbName = process.env.MONGODB_DB_NAME || 'ask_qiao';
   
   // Handle both formats: "cluster0" or "cluster0.xxxxx.mongodb.net"
   const clusterHost = cluster.includes('.mongodb.net') 
@@ -32,7 +32,7 @@ console.log('Environment Variables:');
 console.log(`  MONGODB_USER: ${process.env.MONGODB_USER || 'mortalnow_db_user (default)'}`);
 console.log(`  MONGODB_PASSWORD: ${process.env.MONGODB_PASSWORD ? '*** (set)' : 'KOB7ukeIHwhgGhfF (default)'}`);
 console.log(`  MONGODB_CLUSTER: ${process.env.MONGODB_CLUSTER || 'cluster0 (default)'}`);
-console.log(`  MONGODB_DB_NAME: ${process.env.MONGODB_DB_NAME || 'talk_to_qiao (default)'}`);
+console.log(`  MONGODB_DB_NAME: ${process.env.MONGODB_DB_NAME || 'ask_qiao (default)'}`);
 
 const connInfo = getMongoUri();
 console.log('\n📡 Connection Details:');
@@ -42,7 +42,7 @@ console.log(`  Username: ${connInfo.username}`);
 console.log(`  Connection String: ${connInfo.uri}\n`);
 
 console.log('💡 Note:');
-console.log('  - If your cluster is "talk-to-qiao", set MONGODB_CLUSTER=talk-to-qiao.mongodb.net');
-console.log('  - Or if it\'s just "talk-to-qiao", the code will append ".mongodb.net"');
+console.log('  - If your cluster is "ask-qiao", set MONGODB_CLUSTER=ask-qiao.mongodb.net');
+console.log('  - Or if it\'s just "ask-qiao", the code will append ".mongodb.net"');
 console.log('  - Make sure these environment variables are set in Vercel dashboard\n');
 

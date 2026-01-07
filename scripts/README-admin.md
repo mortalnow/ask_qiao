@@ -27,7 +27,7 @@ Create or update your `.env` file:
 MONGODB_USER=your-mongodb-username
 MONGODB_PASSWORD=your-mongodb-password
 MONGODB_CLUSTER=cluster0.xxxxx.mongodb.net  # Full address OR just "cluster0"
-MONGODB_DB_NAME=talk_to_qiao
+MONGODB_DB_NAME=ask_qiao
 ```
 
 ## Checking/Creating Admin Account

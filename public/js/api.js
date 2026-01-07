@@ -1,5 +1,5 @@
 /**
- * API Client for Talk to Qiao
+ * API Client for Ask Qiao
  * Handles all communication with the backend
  */
 

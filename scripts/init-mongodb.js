@@ -29,8 +29,8 @@ const MONGODB_USER = process.env.MONGODB_USER || 'mortalnow';
 const MONGODB_PASSWORD = process.env.MONGODB_PASSWORD || 'Fuck@atlas';
 // Get cluster hostname from command line arg, env var, or use default
 const clusterArg = process.argv[2];
-const MONGODB_CLUSTER = clusterArg || process.env.MONGODB_CLUSTER || 'talk-to-qiao.1lvanu7.mongodb.net';
-const MONGODB_DB_NAME = process.env.MONGODB_DB_NAME || 'talk_to_qiao';
+const MONGODB_CLUSTER = clusterArg || process.env.MONGODB_CLUSTER || 'ask-qiao.1lvanu7.mongodb.net';
+const MONGODB_DB_NAME = process.env.MONGODB_DB_NAME || 'ask_qiao';
 
 // Build MongoDB URI
 const getMongoUri = () => {
@@ -140,7 +140,7 @@ async function main() {
     if (error.code === 'ENOTFOUND' || error.message.includes('getaddrinfo')) {
       console.error('\n💡 How to find your MongoDB Atlas cluster hostname:');
       console.error('   1. Go to https://cloud.mongodb.com/');
-      console.error('   2. Select your cluster "talk-to-qiao"');
+      console.error('   2. Select your cluster "ask-qiao"');
       console.error('   3. Click "Connect" button');
       console.error('   4. Choose "Connect your application"');
       console.error('   5. Copy the connection string');

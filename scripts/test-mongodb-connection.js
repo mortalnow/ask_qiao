@@ -14,7 +14,7 @@ async function testConnection() {
   // Show connection details (without password)
   const username = process.env.MONGODB_USER || 'mortalnow_db_user';
   const cluster = process.env.MONGODB_CLUSTER || 'cluster0';
-  const dbName = process.env.MONGODB_DB_NAME || 'talk_to_qiao';
+  const dbName = process.env.MONGODB_DB_NAME || 'ask_qiao';
   
   console.log('📡 Connection Configuration:');
   console.log(`   Username: ${username}`);

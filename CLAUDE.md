@@ -64,7 +64,7 @@ Required in `.env`:
 - `MONGODB_USER` - MongoDB Atlas username
 - `MONGODB_PASSWORD` - MongoDB Atlas password
 - `MONGODB_CLUSTER` - MongoDB Atlas cluster address (default: cluster0)
-- `MONGODB_DB_NAME` - Database name (default: talk_to_qiao)
+- `MONGODB_DB_NAME` - Database name (default: ask_qiao)
 
 ## Development Commands
 

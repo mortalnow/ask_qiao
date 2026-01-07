@@ -1,9 +1,9 @@
 /**
- * Service Worker for Talk to Qiao PWA
+ * Service Worker for Ask Qiao PWA
  * Handles caching for offline shell support
  */
 
-const CACHE_NAME = 'talk-to-qiao-v7';
+const CACHE_NAME = 'ask-qiao-v1';
 const STATIC_ASSETS = [
   '/',
   '/index.html',

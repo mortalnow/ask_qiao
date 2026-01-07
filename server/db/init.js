@@ -6,7 +6,7 @@ const getMongoUri = () => {
   const username = encodeURIComponent(process.env.MONGODB_USER || 'mortalnow_db_user');
   const password = encodeURIComponent(process.env.MONGODB_PASSWORD || 'KOB7ukeIHwhgGhfF');
   const cluster = process.env.MONGODB_CLUSTER || 'cluster0';
-  const dbName = process.env.MONGODB_DB_NAME || 'talk_to_qiao';
+  const dbName = process.env.MONGODB_DB_NAME || 'ask_qiao';
   
   // Handle both formats: "cluster0" or "cluster0.xxxxx.mongodb.net"
   const clusterHost = cluster.includes('.mongodb.net') 

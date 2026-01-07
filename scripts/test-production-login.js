@@ -5,7 +5,7 @@
  * Usage: node scripts/test-production-login.js [username] [password]
  */
 
-const PRODUCTION_URL = 'https://talk-to-qiao.vercel.app';
+const PRODUCTION_URL = 'https://ask-qiao.vercel.app';
 
 async function testLogin(username, password) {
   console.log('\n🔍 Testing production login...\n');

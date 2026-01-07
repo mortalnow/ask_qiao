@@ -56,7 +56,7 @@ flowchart TB
 ## Project Structure
 
 ```
-talk_to_qiao/
+ask_qiao/
 ├── server/
 │   ├── index.js              # Express server entry
 │   ├── config.js             # Environment config

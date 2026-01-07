@@ -1,5 +1,5 @@
 {
-  "name": "talk-to-qiao",
+  "name": "ask-qiao",
   "version": "1.0.0",
   "description": "AI Chat Wrapper - Multi-model chat interface",
   "type": "module",

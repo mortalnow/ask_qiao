@@ -1,4 +1,4 @@
-# Talk to Qiao
+# Ask Qiao
 
 A multi-model AI chat wrapper with a modern PWA interface. Chat with ChatGPT 5.2 and Gemini 3.1 through a unified, invite-only interface.
 
@@ -40,7 +40,7 @@ GOOGLE_AI_API_KEY=your-google-ai-api-key
 MONGODB_USER=your-mongodb-username
 MONGODB_PASSWORD=your-mongodb-password
 MONGODB_CLUSTER=your-cluster-address.mongodb.net
-MONGODB_DB_NAME=talk_to_qiao
+MONGODB_DB_NAME=ask_qiao
 ```
 
 ### 3. Initialize MongoDB Database
@@ -86,7 +86,7 @@ Open http://localhost:3002 in your browser.
 ## Project Structure
 
 ```
-talk_to_qiao/
+ask_qiao/
 ├── api/                    # Vercel serverless function
 │   └── index.js           # Express app wrapper for Vercel
 ├── server/                 # Backend

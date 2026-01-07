@@ -20,7 +20,7 @@ async function main() {
     // Show connection info
     const username = process.env.MONGODB_USER || 'mortalnow_db_user';
     const cluster = process.env.MONGODB_CLUSTER || 'cluster0';
-    const dbName = process.env.MONGODB_DB_NAME || 'talk_to_qiao';
+    const dbName = process.env.MONGODB_DB_NAME || 'ask_qiao';
     console.log(`📡 Connection info:`);
     console.log(`   User: ${username}`);
     console.log(`   Cluster: ${cluster}`);

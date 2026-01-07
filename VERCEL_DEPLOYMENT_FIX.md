@@ -1,7 +1,7 @@
 # Vercel Deployment Fix - 404 Error Resolution
 
 ## Problem
-Getting `Server error: 404` when trying to login at https://talk-to-qiao.vercel.app/login.html
+Getting `Server error: 404` when trying to login at https://ask-qiao.vercel.app/login.html
 
 ## Root Cause
 Vercel requires Express.js apps to be wrapped as serverless functions. The original setup didn't have the proper Vercel configuration, causing all API requests to return 404.
@@ -22,8 +22,8 @@ Vercel requires Express.js apps to be wrapped as serverless functions. The origi
 
 ### 3. Verified MongoDB Configuration
 - Database connection settings are correct
-- Cluster: `talk-to-qiao.1lvanu7.mongodb.net`
-- Database: `talk_to_qiao`
+- Cluster: `ask-qiao.1lvanu7.mongodb.net`
+- Database: `ask_qiao`
 - Collection: `users`
 
 ## What to Check in Vercel Dashboard
@@ -35,8 +35,8 @@ Ensure these are set:
 ```
 MONGODB_USER=mortalnow
 MONGODB_PASSWORD=your_password
-MONGODB_CLUSTER=talk-to-qiao.1lvanu7.mongodb.net
-MONGODB_DB_NAME=talk_to_qiao
+MONGODB_CLUSTER=ask-qiao.1lvanu7.mongodb.net
+MONGODB_DB_NAME=ask_qiao
 JWT_SECRET=your_jwt_secret
 OPENAI_API_KEY=your_openai_key
 GOOGLE_AI_API_KEY=your_google_key
@@ -58,7 +58,7 @@ After redeployment, check:
 
 ### Test API Endpoint
 ```bash
-curl https://talk-to-qiao.vercel.app/api/auth/login \
+curl https://ask-qiao.vercel.app/api/auth/login \
   -X POST \
   -H "Content-Type: application/json" \
   -d '{"username":"mortalnow@gmail.com","password":"111111"}'
@@ -68,7 +68,7 @@ Expected: JSON response (either success with token or error message)
 Not Expected: 404 error
 
 ### Test Login Page
-Visit: https://talk-to-qiao.vercel.app/login.html
+Visit: https://ask-qiao.vercel.app/login.html
 
 Should see the login form, not a 404 error.
 

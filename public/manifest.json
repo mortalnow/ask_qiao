@@ -1,6 +1,6 @@
 {
-  "name": "Talk to Qiao",
-  "short_name": "TalkQiao",
+  "name": "Ask Qiao",
+  "short_name": "AskQiao",
   "description": "Multi-model AI chat interface",
   "start_url": "/",
   "display": "standalone",

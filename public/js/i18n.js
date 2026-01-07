@@ -6,8 +6,8 @@
 const translations = {
   'zh-CN': {
     // App title
-    'app.title': '与Qiao对话',
-    'app.title.login': '与Qiao对话 - 登录',
+    'app.title': '问Qiao',
+    'app.title.login': '问Qiao - 登录',
     'app.tagline': '多模型 AI 对话界面',
     
     // Header
@@ -28,7 +28,7 @@ const translations = {
     'history.deleteConfirm': '确定要删除这个对话吗？',
     
     // Welcome message
-    'welcome.title': '欢迎使用与Qiao对话',
+    'welcome.title': '欢迎使用问Qiao',
     'welcome.subtitle': '选择一个模型开始对话，您可以随时切换模型。',
     'welcome.gpt.desc': '最强大的推理和编码能力',
     'welcome.gemini.desc': '快速高效的多模态响应',
@@ -86,8 +86,8 @@ const translations = {
   
   'en-US': {
     // App title
-    'app.title': 'Talk to Qiao',
-    'app.title.login': 'Talk to Qiao - Login',
+    'app.title': 'Ask Qiao',
+    'app.title.login': 'Ask Qiao - Login',
     'app.tagline': 'Multi-model AI Chat Interface',
     
     // Header
@@ -108,7 +108,7 @@ const translations = {
     'history.deleteConfirm': 'Are you sure you want to delete this conversation?',
     
     // Welcome message
-    'welcome.title': 'Welcome to Talk to Qiao',
+    'welcome.title': 'Welcome to Ask Qiao',
     'welcome.subtitle': 'Select a model to start chatting. You can switch models anytime.',
     'welcome.gpt.desc': 'Most powerful reasoning and coding',
     'welcome.gemini.desc': 'Fast and efficient multimodal responses',

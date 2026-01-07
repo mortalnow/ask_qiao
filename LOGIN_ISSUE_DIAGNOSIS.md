@@ -1,7 +1,7 @@
 # Login Issue Diagnosis
 
 ## Problem
-Cannot login to production site (https://talk-to-qiao.vercel.app) with:
+Cannot login to production site (https://ask-qiao.vercel.app) with:
 - Username: `mortalnow@gmail.com`
 - Password: `111111`
 
@@ -31,7 +31,7 @@ The production MongoDB database on Vercel is likely **empty or pointing to a dif
    MONGODB_USER=your_prod_user \
    MONGODB_PASSWORD=your_prod_password \
    MONGODB_CLUSTER=your_prod_cluster.mongodb.net \
-   MONGODB_DB_NAME=talk_to_qiao \
+   MONGODB_DB_NAME=ask_qiao \
    node scripts/init-mongodb.js
    ```
 
@@ -71,7 +71,7 @@ The production MongoDB database on Vercel is likely **empty or pointing to a dif
 
 1. **Check Vercel environment variables** match your local `.env`:
    - Ensure `MONGODB_CLUSTER` points to the same database
-   - Ensure `MONGODB_DB_NAME` is the same (`talk_to_qiao`)
+   - Ensure `MONGODB_DB_NAME` is the same (`ask_qiao`)
    - Ensure credentials are correct
 
 2. **If they don't match**, either:
@@ -81,7 +81,7 @@ The production MongoDB database on Vercel is likely **empty or pointing to a dif
 ### Option 4: Register via Invite Code (Alternative)
 
 If you have invite codes, you can register a new account:
-1. Go to https://talk-to-qiao.vercel.app/login.html
+1. Go to https://ask-qiao.vercel.app/login.html
 2. Click "Register" tab
 3. Enter an invite code, username, and password
 4. This will create the account in the production database
