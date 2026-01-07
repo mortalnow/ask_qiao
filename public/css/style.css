@@ -560,6 +560,8 @@ body {
   padding: var(--spacing-lg);
   margin-bottom: var(--spacing-md);
   animation: slideDown 0.3s ease;
+  max-height: 400px;
+  overflow-y: auto;
 }
 
 @keyframes slideDown {
