@@ -128,9 +128,11 @@ body {
 }
 
 .logo-icon {
-  font-size: 1.5rem;
-  color: var(--accent-primary);
-  text-shadow: 0 0 20px var(--accent-glow);
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 0 15px var(--accent-glow);
 }
 
 .header-right {
@@ -568,6 +570,9 @@ body {
   color: var(--text-muted);
   font-size: 0.8rem;
   font-style: italic;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .btn-prompt-builder {
@@ -584,6 +589,15 @@ body {
   padding: var(--spacing-xs) var(--spacing-md);
   cursor: pointer;
   transition: all var(--transition-fast);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.btn-icon-img {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  object-fit: cover;
 }
 
 .btn-prompt-builder:hover {
@@ -820,6 +834,11 @@ body {
   justify-content: center;
   gap: var(--spacing-sm);
   margin-bottom: var(--spacing-sm);
+}
+
+.logo .logo-icon {
+  width: 48px;
+  height: 48px;
 }
 
 .logo h1 {
@@ -1234,6 +1253,13 @@ body {
    Responsive Adjustments
    ============================================ */
 
+/* Hide description on tablets and phones */
+@media (max-width: 600px) {
+  .prompt-builder-desc {
+    display: none;
+  }
+}
+
 @media (max-width: 480px) {
   .chat-header {
     padding: var(--spacing-xs) var(--spacing-sm);
@@ -1251,7 +1277,8 @@ body {
   }
 
   .logo-icon {
-    font-size: 1.25rem;
+    width: 28px;
+    height: 28px;
   }
 
   .header-right {

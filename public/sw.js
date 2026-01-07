@@ -3,7 +3,7 @@
  * Handles caching for offline shell support
  */
 
-const CACHE_NAME = 'ask-qiao-v2';
+const CACHE_NAME = 'ask-qiao-v7';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -14,7 +14,7 @@ const STATIC_ASSETS = [
   '/js/app.js',
   '/js/i18n.js',
   '/manifest.json',
-  '/icons/icon.svg'
+  '/icons/qiao.png'
 ];
 
 // Install event - cache static assets
