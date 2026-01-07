@@ -6,7 +6,7 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="theme-color" content="#0a0a0f">
-  <title>与Qiao对话 - 登录</title>
+  <title data-i18n="app.title.login">与Qiao对话 - 登录</title>
   <link rel="manifest" href="/manifest.json">
   <link rel="icon" type="image/svg+xml" href="/icons/icon.svg">
   <link rel="apple-touch-icon" href="/icons/icon.svg">
@@ -23,25 +23,29 @@
       <div class="login-header">
         <div class="logo">
           <span class="logo-icon">◈</span>
-          <h1>与Qiao对话</h1>
+          <h1 data-i18n="app.title">与Qiao对话</h1>
         </div>
-        <p class="tagline">多模型 AI 对话界面</p>
+        <p class="tagline" data-i18n="app.tagline">多模型 AI 对话界面</p>
+        <button id="lang-toggle-login" class="btn-lang-toggle" title="切换语言 / Switch Language">
+          <span>EN</span>
+        </button>
       </div>
 
       <!-- Tabs -->
       <div class="auth-tabs">
-        <button class="auth-tab active" data-tab="login">登录</button>
-        <button class="auth-tab" data-tab="register">注册</button>
+        <button class="auth-tab active" data-tab="login" data-i18n="login.tab.login">登录</button>
+        <button class="auth-tab" data-tab="register" data-i18n="login.tab.register">注册</button>
       </div>
 
       <!-- Login Form -->
       <form id="login-form" class="login-form active" data-form="login">
         <div class="form-group">
-          <label for="login-username">用户名</label>
+          <label for="login-username" data-i18n="login.username">用户名</label>
           <input
             type="text"
             id="login-username"
             name="username"
+            data-i18n-placeholder="login.username.placeholder"
             placeholder="输入用户名"
             autocomplete="username"
             minlength="2"
@@ -51,7 +55,7 @@
         </div>
 
         <div class="form-group">
-          <label for="login-password">密码</label>
+          <label for="login-password" data-i18n="login.password">密码</label>
           <input
             type="password"
             id="login-password"
@@ -64,7 +68,7 @@
         </div>
 
         <button type="submit" class="btn-primary">
-          <span class="btn-text">登录</span>
+          <span class="btn-text" data-i18n="login.submit">登录</span>
           <span class="btn-loader"></span>
         </button>
 
@@ -74,26 +78,28 @@
       <!-- Register Form -->
       <form id="register-form" class="login-form" data-form="register">
         <div class="form-group">
-          <label for="invite-code">邀请码</label>
+          <label for="invite-code" data-i18n="login.inviteCode">邀请码</label>
           <input
             type="text"
             id="invite-code"
             name="code"
+            data-i18n-placeholder="login.inviteCode.placeholder"
             placeholder="ABC123-XYZ789"
             autocomplete="off"
             spellcheck="false"
             pattern="[A-Z0-9]{6}-[A-Z0-9]{6}"
             required
           >
-          <span class="input-hint">格式：XXXXXX-XXXXXX</span>
+          <span class="input-hint" data-i18n="login.inviteCode.hint">格式：XXXXXX-XXXXXX</span>
         </div>
 
         <div class="form-group">
-          <label for="register-username">选择用户名</label>
+          <label for="register-username" data-i18n="login.chooseUsername">选择用户名</label>
           <input
             type="text"
             id="register-username"
             name="username"
+            data-i18n-placeholder="login.username.placeholder"
             placeholder="输入用户名"
             autocomplete="username"
             minlength="2"
@@ -103,7 +109,7 @@
         </div>
 
         <div class="form-group">
-          <label for="register-password">密码</label>
+          <label for="register-password" data-i18n="login.password">密码</label>
           <input
             type="password"
             id="register-password"
@@ -113,11 +119,11 @@
             minlength="6"
             required
           >
-          <span class="input-hint">至少 6 个字符</span>
+          <span class="input-hint" data-i18n="login.password.hint">至少 6 个字符</span>
         </div>
 
         <button type="submit" class="btn-primary">
-          <span class="btn-text">创建账户</span>
+          <span class="btn-text" data-i18n="login.createAccount">创建账户</span>
           <span class="btn-loader"></span>
         </button>
 
@@ -125,14 +131,30 @@
       </form>
 
       <div class="login-footer">
-        <p>仅限邀请访问 • 由 GPT 和 Gemini 驱动</p>
+        <p data-i18n="login.footer">仅限邀请访问 • 由 GPT 和 Gemini 驱动</p>
       </div>
     </div>
   </div>
 
+  <script src="/js/i18n.js"></script>
   <script src="/js/api.js"></script>
   <script src="/js/auth.js"></script>
   <script>
+    // Initialize i18n
+    if (window.i18n) {
+      window.i18n.init();
+    }
+    
+    // Language toggle for login page
+    const langToggle = document.getElementById('lang-toggle-login');
+    if (langToggle) {
+      langToggle.addEventListener('click', () => {
+        if (window.i18n) {
+          window.i18n.toggleLanguage();
+        }
+      });
+    }
+    
     // Register service worker
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js')
@@ -141,4 +163,3 @@
   </script>
 </body>
 </html>
-

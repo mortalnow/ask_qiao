@@ -9,6 +9,11 @@ document.addEventListener('DOMContentLoaded', () => {
     return;
   }
 
+  // Initialize i18n
+  if (window.i18n) {
+    window.i18n.init();
+  }
+
   // DOM Elements
   const messagesContainer = document.getElementById('chat-messages');
   const chatForm = document.getElementById('chat-form');
@@ -20,6 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const clearChatBtn = document.getElementById('clear-chat');
   const logoutBtn = document.getElementById('logout-btn');
   const adminLink = document.getElementById('admin-link');
+  const langToggleBtn = document.getElementById('lang-toggle');
   
   // Prompt Builder Elements
   const promptBuilderBtn = document.getElementById('prompt-builder-btn');
@@ -116,10 +122,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Logout
     logoutBtn.addEventListener('click', () => {
-      if (confirm('确定要退出登录吗？')) {
+      const msg = window.i18n ? window.i18n.t('confirm.logout') : '确定要退出登录吗？';
+      if (confirm(msg)) {
         window.API.logout();
       }
     });
+
+    // Language toggle
+    if (langToggleBtn) {
+      langToggleBtn.addEventListener('click', () => {
+        if (window.i18n) {
+          window.i18n.toggleLanguage();
+          // Re-render chat history to update welcome message if visible
+          if (chatHistory.length === 0) {
+            renderChatHistory();
+          }
+        }
+      });
+    }
 
     // Prompt Builder
     if (promptBuilderBtn) {
@@ -388,22 +408,29 @@ document.addEventListener('DOMContentLoaded', () => {
     messagesContainer.innerHTML = '';
 
     if (chatHistory.length === 0) {
+      // Get translations
+      const t = window.i18n ? window.i18n.t.bind(window.i18n) : (k) => k;
+      const welcomeTitle = t('welcome.title');
+      const welcomeSubtitle = t('welcome.subtitle');
+      const gptDesc = t('welcome.gpt.desc');
+      const geminiDesc = t('welcome.gemini.desc');
+      
       // Show welcome message
       messagesContainer.innerHTML = `
         <div class="welcome-message">
           <div class="welcome-icon">◈</div>
-          <h2>欢迎使用与Qiao对话</h2>
-          <p>选择一个模型开始对话，您可以随时切换模型。</p>
+          <h2>${welcomeTitle}</h2>
+          <p>${welcomeSubtitle}</p>
           <div class="model-cards">
             <div class="model-card" data-model="chatgpt">
               <span class="model-badge openai">OpenAI</span>
               <h3>GPT-5.2</h3>
-              <p>最强大的推理和编码能力</p>
+              <p>${gptDesc}</p>
             </div>
             <div class="model-card" data-model="gemini">
               <span class="model-badge google">Google</span>
               <h3>Gemini 3 Flash</h3>
-              <p>快速高效的多模态响应</p>
+              <p>${geminiDesc}</p>
             </div>
           </div>
         </div>
@@ -495,7 +522,8 @@ document.addEventListener('DOMContentLoaded', () => {
   function clearChat() {
     if (isStreaming) return;
 
-    if (chatHistory.length === 0 || confirm('确定要清空所有消息吗？')) {
+    const msg = window.i18n ? window.i18n.t('confirm.clearChat') : '确定要清空所有消息吗？';
+    if (chatHistory.length === 0 || confirm(msg)) {
       chatHistory = [];
       saveChatHistory();
       renderChatHistory();
@@ -525,7 +553,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Validate required fields
     if (!persona || !task || !context) {
-      alert('请填写所有必填字段：[PERSONA]、[TASK] 和 [CONTEXT]');
+      const msg = window.i18n ? window.i18n.t('promptBuilder.validation') : '请填写所有必填字段：[PERSONA]、[TASK] 和 [CONTEXT]';
+      alert(msg);
       return;
     }
 
@@ -561,7 +590,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function clearPromptForm() {
-    if (confirm('确定要清空所有字段吗？')) {
+    const msg = window.i18n ? window.i18n.t('promptBuilder.clearConfirm') : '确定要清空所有字段吗？';
+    if (confirm(msg)) {
       if (personaInput) personaInput.value = '';
       if (taskInput) taskInput.value = '';
       if (contextInput) contextInput.value = '';

@@ -3,7 +3,7 @@
  * Handles caching for offline shell support
  */
 
-const CACHE_NAME = 'talk-to-qiao-v3';
+const CACHE_NAME = 'talk-to-qiao-v4';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -12,6 +12,7 @@ const STATIC_ASSETS = [
   '/js/api.js',
   '/js/auth.js',
   '/js/app.js',
+  '/js/i18n.js',
   '/manifest.json',
   '/icons/icon.svg'
 ];
