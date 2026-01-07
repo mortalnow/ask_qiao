@@ -3,7 +3,7 @@
  * Handles caching for offline shell support
  */
 
-const CACHE_NAME = 'ask-qiao-v7';
+const CACHE_NAME = 'ask-qiao-v8';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
