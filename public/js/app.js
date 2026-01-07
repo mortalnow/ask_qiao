@@ -20,6 +20,19 @@ document.addEventListener('DOMContentLoaded', () => {
   const clearChatBtn = document.getElementById('clear-chat');
   const logoutBtn = document.getElementById('logout-btn');
   const adminLink = document.getElementById('admin-link');
+  
+  // Prompt Builder Elements
+  const promptBuilderBtn = document.getElementById('prompt-builder-btn');
+  const promptBuilder = document.getElementById('prompt-builder');
+  const closePromptBuilderBtn = document.getElementById('close-prompt-builder');
+  const promptForm = document.getElementById('prompt-form');
+  const personaInput = document.getElementById('persona-input');
+  const taskInput = document.getElementById('task-input');
+  const contextInput = document.getElementById('context-input');
+  const formatInput = document.getElementById('format-input');
+  const referencesInput = document.getElementById('references-input');
+  const generatePromptBtn = document.getElementById('generate-prompt');
+  const clearPromptFormBtn = document.getElementById('clear-prompt-form');
 
   // State
   let chatHistory = [];
@@ -107,6 +120,20 @@ document.addEventListener('DOMContentLoaded', () => {
         window.API.logout();
       }
     });
+
+    // Prompt Builder
+    if (promptBuilderBtn) {
+      promptBuilderBtn.addEventListener('click', togglePromptBuilder);
+    }
+    if (closePromptBuilderBtn) {
+      closePromptBuilderBtn.addEventListener('click', togglePromptBuilder);
+    }
+    if (generatePromptBtn) {
+      generatePromptBtn.addEventListener('click', generatePrompt);
+    }
+    if (clearPromptFormBtn) {
+      clearPromptFormBtn.addEventListener('click', clearPromptForm);
+    }
   }
 
   function updateModelLabel() {
@@ -472,6 +499,77 @@ document.addEventListener('DOMContentLoaded', () => {
       chatHistory = [];
       saveChatHistory();
       renderChatHistory();
+    }
+  }
+
+  // Prompt Builder Functions
+  function togglePromptBuilder() {
+    if (promptBuilder) {
+      const isVisible = promptBuilder.style.display !== 'none';
+      promptBuilder.style.display = isVisible ? 'none' : 'block';
+      
+      if (!isVisible) {
+        // Focus first input when opening
+        setTimeout(() => {
+          personaInput?.focus();
+        }, 100);
+      }
+    }
+  }
+
+  function generatePrompt() {
+    // Get required fields
+    const persona = personaInput?.value.trim() || '';
+    const task = taskInput?.value.trim() || '';
+    const context = contextInput?.value.trim() || '';
+
+    // Validate required fields
+    if (!persona || !task || !context) {
+      alert('请填写所有必填字段：[PERSONA]、[TASK] 和 [CONTEXT]');
+      return;
+    }
+
+    // Get optional fields
+    const format = formatInput?.value.trim() || '';
+    const references = referencesInput?.value.trim() || '';
+
+    // Build prompt based on template
+    let prompt = `[PERSONA]\n${persona}\n\n[TASK]\n${task}\n\n[CONTEXT]\n${context}`;
+
+    if (format) {
+      prompt += `\n\n[FORMAT]\n${format}`;
+    }
+
+    if (references) {
+      prompt += `\n\n[REFERENCES]\n${references}`;
+    }
+
+    // Populate main input
+    if (messageInput) {
+      messageInput.value = prompt;
+      handleInputChange();
+      
+      // Close prompt builder
+      togglePromptBuilder();
+      
+      // Focus main input
+      messageInput.focus();
+      
+      // Scroll to input
+      messageInput.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+  }
+
+  function clearPromptForm() {
+    if (confirm('确定要清空所有字段吗？')) {
+      if (personaInput) personaInput.value = '';
+      if (taskInput) taskInput.value = '';
+      if (contextInput) contextInput.value = '';
+      if (formatInput) formatInput.value = '';
+      if (referencesInput) referencesInput.value = '';
+      
+      // Focus first input
+      personaInput?.focus();
     }
   }
 });

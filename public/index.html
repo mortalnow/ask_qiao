@@ -72,6 +72,99 @@
 
     <!-- Input Area -->
     <footer class="chat-input-area">
+      <!-- Prompt Builder Toggle -->
+      <div class="prompt-builder-toggle">
+        <button type="button" id="prompt-builder-btn" class="btn-prompt-builder">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+          <span>提示词构建器</span>
+        </button>
+      </div>
+
+      <!-- Prompt Builder Form -->
+      <div id="prompt-builder" class="prompt-builder" style="display: none;">
+        <div class="prompt-builder-header">
+          <h3>提示词构建器</h3>
+          <button type="button" id="close-prompt-builder" class="btn-icon-small">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 6L6 18M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+        <form id="prompt-form" class="prompt-form">
+          <div class="prompt-field">
+            <label for="persona-input">
+              <span class="label-text">[PERSONA]</span>
+              <span class="label-required">*</span>
+            </label>
+            <textarea
+              id="persona-input"
+              placeholder="例如：You are a senior software engineer with 10 years of experience in full-stack development."
+              rows="2"
+            ></textarea>
+            <div class="field-hint">定义AI的角色和专业领域</div>
+          </div>
+
+          <div class="prompt-field">
+            <label for="task-input">
+              <span class="label-text">[TASK]</span>
+              <span class="label-required">*</span>
+            </label>
+            <textarea
+              id="task-input"
+              placeholder="例如：I need you to create a responsive navigation component with dark mode support."
+              rows="3"
+            ></textarea>
+            <div class="field-hint">描述您需要完成的具体任务</div>
+          </div>
+
+          <div class="prompt-field">
+            <label for="context-input">
+              <span class="label-text">[CONTEXT]</span>
+              <span class="label-required">*</span>
+            </label>
+            <textarea
+              id="context-input"
+              placeholder="例如：Background: This is for a modern web application using React and Tailwind CSS.&#10;Audience: Frontend developers who will maintain this code."
+              rows="3"
+            ></textarea>
+            <div class="field-hint">提供背景信息和目标受众</div>
+          </div>
+
+          <div class="prompt-field optional">
+            <label for="format-input">
+              <span class="label-text">[FORMAT]</span>
+              <span class="label-optional">（可选）</span>
+            </label>
+            <textarea
+              id="format-input"
+              placeholder="例如：Output format: Code with comments&#10;Length: ~200 lines&#10;Tone: Professional and clear"
+              rows="3"
+            ></textarea>
+            <div class="field-hint">指定输出格式、长度和风格（可选）</div>
+          </div>
+
+          <div class="prompt-field optional">
+            <label for="references-input">
+              <span class="label-text">[REFERENCES]</span>
+              <span class="label-optional">（可选）</span>
+            </label>
+            <textarea
+              id="references-input"
+              placeholder="例如：Here's an example of what I'm looking for:&#10;[粘贴示例代码或描述期望的风格]"
+              rows="3"
+            ></textarea>
+            <div class="field-hint">提供参考示例或期望的风格（可选）</div>
+          </div>
+
+          <div class="prompt-builder-actions">
+            <button type="button" id="clear-prompt-form" class="btn-secondary">清空</button>
+            <button type="button" id="generate-prompt" class="btn-primary">生成提示词</button>
+          </div>
+        </form>
+      </div>
+
       <form id="chat-form" class="chat-form">
         <div class="input-wrapper">
           <textarea

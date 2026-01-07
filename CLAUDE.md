@@ -129,3 +129,49 @@ The project uses MongoDB Atlas for user and invite code storage. To initialize:
 - Input sanitization before sending to AI providers
 - Passwords hashed with bcrypt (10 rounds)
 
+---
+
+## Development Log
+
+### 2026-01-07: Prompt Builder Feature
+
+**Goal**: Add a structured prompt builder based on `prompt.md` template to help users construct better prompts.
+
+**Template Structure** (`prompt.md`):
+- `[PERSONA]` - Define AI role/expertise
+- `[TASK]` - Specific action and requirements
+- `[CONTEXT]` - Background and audience
+- `[FORMAT]` - Output format, length, tone (optional)
+- `[REFERENCES]` - Examples or desired style (optional)
+
+**Implementation**:
+
+1. **HTML** (`public/index.html`):
+   - Added toggle button "提示词构建器" above input area
+   - Created collapsible form with 5 textarea fields
+   - Required fields marked with `*`, optional fields marked as "（可选）"
+   - Actions: "清空" (clear) and "生成提示词" (generate)
+
+2. **CSS** (`public/css/style.css`):
+   - New styles for `.prompt-builder`, `.prompt-field`, `.btn-prompt-builder`
+   - Slide-down animation on open
+   - Accent colors for labels (mono font for field names)
+   - Responsive styles for mobile (stacked action buttons)
+
+3. **JavaScript** (`public/js/app.js`):
+   - `togglePromptBuilder()` - Show/hide form
+   - `generatePrompt()` - Validate required fields, build formatted prompt
+   - `clearPromptForm()` - Reset all fields with confirmation
+   - Generated prompt populates main input and closes builder
+
+**Files Modified**:
+- `public/index.html` - Added prompt builder form (lines 76-167)
+- `public/css/style.css` - Added prompt builder styles (lines 516-717, 1034-1055)
+- `public/js/app.js` - Added prompt builder logic
+
+**Design Decisions**:
+- Fields are references/guides, not strict requirements
+- Required fields ensure minimum structure for effective prompts
+- Optional fields allow advanced customization
+- Form values are not persisted (privacy-focused, matches chat behavior)
+

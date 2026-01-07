@@ -5,6 +5,7 @@ A multi-model AI chat wrapper with a modern PWA interface. Chat with ChatGPT 5.2
 ## Features
 
 - **Multi-model chat**: Switch between AI models (ChatGPT, Gemini) per message
+- **Prompt Builder**: Structured prompt construction with PERSONA, TASK, CONTEXT fields
 - **Invite-only access**: Secure single-use invite codes
 - **PWA support**: Install on iOS/Android via "Add to Home Screen"
 - **Streaming responses**: Real-time message display
@@ -105,7 +106,7 @@ talk_to_qiao/
 │   └── utils/
 │       └── inviteCode.js  # Code generation
 ├── public/                 # Frontend PWA
-│   ├── index.html         # Chat interface
+│   ├── index.html         # Chat interface (with Prompt Builder)
 │   ├── login.html         # Login page
 │   ├── manifest.json      # PWA manifest
 │   ├── sw.js              # Service worker
@@ -114,7 +115,8 @@ talk_to_qiao/
 │   └── js/
 │       ├── api.js         # API client
 │       ├── auth.js        # Auth handling
-│       └── app.js         # Chat logic
+│       └── app.js         # Chat logic + Prompt Builder
+├── prompt.md               # Prompt template reference
 ├── scripts/
 │   ├── generate-invite.js  # CLI for invite codes
 │   ├── init-mongodb.js     # MongoDB initialization script
@@ -197,10 +199,14 @@ If you can't login to the production site, check:
 - **Auth**: JWT (jsonwebtoken)
 - **Frontend**: Vanilla JS, CSS (no frameworks)
 
+## Changelog
+
+### 2026-01-07
+- **Added**: Prompt Builder feature for structured prompt construction
+  - Required fields: PERSONA, TASK, CONTEXT
+  - Optional fields: FORMAT, REFERENCES
+  - Collapsible form with generate/clear actions
+
 ## License
 
 Private - Invite-only access
-
-# talk_to_qiao
-# talk_to_qiao
-# talk_to_qiao

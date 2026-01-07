@@ -197,8 +197,15 @@ GOOGLE_AI_API_KEY=AI...
 - [ ] Mobile/iOS optimizations
 
 ### Phase 5: Polish and Security
-- [ ] Rate limiting
-- [ ] Input sanitization
-- [ ] Error handling
-- [ ] README documentation
+- [x] Rate limiting
+- [x] Input sanitization
+- [x] Error handling
+- [x] README documentation
+
+### Phase 6: User Experience Enhancements
+- [x] Prompt Builder (2026-01-07)
+  - Structured prompt construction form
+  - Required fields: PERSONA, TASK, CONTEXT
+  - Optional fields: FORMAT, REFERENCES
+  - Template based on `prompt.md`
 
