@@ -35,15 +35,15 @@ const translations = {
     
     // Prompt Builder Fields
     'promptBuilder.persona.hint': '定义AI的角色和专业领域',
-    'promptBuilder.persona.placeholder': '例如：你是一位拥有10年全栈开发经验的资深软件工程师，精通React、Node.js和云架构设计。',
+    'promptBuilder.persona.placeholder': '例如：你是一位经验丰富的写作助手，擅长帮助用户撰写清晰、有条理的文章。',
     'promptBuilder.task.hint': '描述您需要完成的具体任务',
-    'promptBuilder.task.placeholder': '例如：我需要你帮我设计一个支持深色模式的响应式导航组件，要求代码简洁、可复用。',
+    'promptBuilder.task.placeholder': '例如：请帮我写一封给客户的感谢邮件，表达对他们支持的感激之情。',
     'promptBuilder.context.hint': '提供背景信息和目标受众',
-    'promptBuilder.context.placeholder': '例如：背景：这是一个使用React和Tailwind CSS的现代Web应用。\n受众：负责维护代码的前端开发者。',
+    'promptBuilder.context.placeholder': '例如：背景：客户刚刚完成了一笔大订单。\n受众：长期合作的商业客户。',
     'promptBuilder.format.hint': '指定输出格式、长度和风格（可选）',
-    'promptBuilder.format.placeholder': '例如：输出格式：带注释的代码\n长度：约200行\n风格：专业且清晰',
+    'promptBuilder.format.placeholder': '例如：输出格式：正式邮件\n长度：200-300字\n风格：专业但友好',
     'promptBuilder.references.hint': '提供参考示例或期望的风格（可选）',
-    'promptBuilder.references.placeholder': '例如：以下是我期望的效果示例：\n[粘贴示例代码或描述期望的风格]',
+    'promptBuilder.references.placeholder': '例如：参考风格：简洁大方，避免过于正式的措辞',
     
     // Validation
     'promptBuilder.validation': '请填写所有必填字段：[PERSONA]、[TASK] 和 [CONTEXT]',
@@ -104,15 +104,15 @@ const translations = {
     
     // Prompt Builder Fields
     'promptBuilder.persona.hint': 'Define the AI\'s role and expertise',
-    'promptBuilder.persona.placeholder': 'E.g., You are a senior software engineer with 10 years of full-stack development experience, proficient in React, Node.js, and cloud architecture.',
+    'promptBuilder.persona.placeholder': 'E.g., You are a helpful writing assistant skilled at crafting clear, well-organized content.',
     'promptBuilder.task.hint': 'Describe the specific task you need completed',
-    'promptBuilder.task.placeholder': 'E.g., I need you to design a responsive navigation component with dark mode support. The code should be clean and reusable.',
+    'promptBuilder.task.placeholder': 'E.g., Please help me write a thank-you email to a customer expressing gratitude for their support.',
     'promptBuilder.context.hint': 'Provide background info and target audience',
-    'promptBuilder.context.placeholder': 'E.g., Background: This is for a modern web app using React and Tailwind CSS.\nAudience: Frontend developers who will maintain this code.',
+    'promptBuilder.context.placeholder': 'E.g., Background: The customer just completed a large order.\nAudience: A long-term business partner.',
     'promptBuilder.format.hint': 'Specify output format, length, and tone (optional)',
-    'promptBuilder.format.placeholder': 'E.g., Output format: Code with comments\nLength: ~200 lines\nTone: Professional and clear',
+    'promptBuilder.format.placeholder': 'E.g., Output format: Formal email\nLength: 200-300 words\nTone: Professional but friendly',
     'promptBuilder.references.hint': 'Provide reference examples or desired style (optional)',
-    'promptBuilder.references.placeholder': 'E.g., Here\'s an example of what I\'m looking for:\n[Paste example code or describe desired style]',
+    'promptBuilder.references.placeholder': 'E.g., Style reference: Keep it concise and warm, avoid overly formal language',
     
     // Validation
     'promptBuilder.validation': 'Please fill in all required fields: [PERSONA], [TASK], and [CONTEXT]',
