@@ -13,11 +13,26 @@ const models = {
 
 /**
  * GET /api/models
- * List available AI models
+ * List available AI models with their current active versions
  */
-router.get('/models', authenticateToken, (req, res) => {
-  const availableModels = Object.values(models).map(service => service.modelInfo);
-  res.json({ models: availableModels });
+router.get('/models', authenticateToken, async (req, res) => {
+  try {
+    // Get dynamic model info (includes actual model names being used)
+    const modelInfoPromises = Object.entries(models).map(async ([key, service]) => {
+      if (service.getModelInfo) {
+        return await service.getModelInfo();
+      }
+      return service.modelInfo;
+    });
+    
+    const availableModels = await Promise.all(modelInfoPromises);
+    res.json({ models: availableModels });
+  } catch (err) {
+    console.error('Error fetching model info:', err);
+    // Fallback to static info
+    const availableModels = Object.values(models).map(service => service.modelInfo);
+    res.json({ models: availableModels });
+  }
 });
 
 /**

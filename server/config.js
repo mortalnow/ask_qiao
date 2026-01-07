@@ -8,5 +8,9 @@ export const config = {
   googleAiApiKey: process.env.GOOGLE_AI_API_KEY,
   mongodbCluster: process.env.MONGODB_CLUSTER || 'cluster0',
   mongodbDbName: process.env.MONGODB_DB_NAME || 'talk_to_qiao',
+  
+  // Model configuration - use 'latest' for auto-discovery or specify exact model name
+  openaiModel: process.env.OPENAI_MODEL || 'latest',
+  geminiModel: process.env.GEMINI_MODEL || 'latest',
 };
 
