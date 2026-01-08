@@ -22,7 +22,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const modelSelect = document.getElementById('model-select');
   const currentModelLabel = document.getElementById('current-model-label');
   const charCount = document.getElementById('char-count');
-  const clearChatBtn = document.getElementById('clear-chat');
   const logoutBtn = document.getElementById('logout-btn');
   const adminLink = document.getElementById('admin-link');
   const langToggleBtn = document.getElementById('lang-toggle');
@@ -65,11 +64,12 @@ document.addEventListener('DOMContentLoaded', () => {
     gemini: 'Gemini 3 Flash'
   };
 
-  // Model icons
+  // Model icons - use img for assistant avatars
   const modelIcons = {
-    chatgpt: '◈',
-    gemini: '◇'
+    chatgpt: '<img src="/icons/qiao.png" alt="Qiao" class="avatar-img">',
+    gemini: '<img src="/icons/qiao.png" alt="Qiao" class="avatar-img">'
   };
+  const defaultAssistantIcon = '<img src="/icons/qiao.png" alt="Qiao" class="avatar-img">';
 
   // Initialize
   init();
@@ -133,9 +133,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Form submit
     chatForm.addEventListener('submit', handleSubmit);
-
-    // Clear chat
-    clearChatBtn.addEventListener('click', clearChat);
 
     // Logout
     logoutBtn.addEventListener('click', () => {
@@ -414,7 +411,7 @@ document.addEventListener('DOMContentLoaded', () => {
     message.className = `message ${role}`;
 
     const avatarClass = model ? (model === 'chatgpt' ? 'openai' : 'google') : '';
-    const avatarIcon = role === 'user' ? '👤' : modelIcons[model] || '◈';
+    const avatarIcon = role === 'user' ? '👤' : modelIcons[model] || defaultAssistantIcon;
     const modelLabel = model ? modelNames[model] : '';
 
     message.innerHTML = `
@@ -457,7 +454,7 @@ document.addEventListener('DOMContentLoaded', () => {
       // Show welcome message
       messagesContainer.innerHTML = `
         <div class="welcome-message">
-          <div class="welcome-icon">◈</div>
+          <img class="welcome-icon" src="/icons/qiao.png" alt="Qiao">
           <h2>${welcomeTitle}</h2>
           <p>${welcomeSubtitle}</p>
           <div class="model-cards">
@@ -496,7 +493,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
       const model = msg.model;
       const avatarClass = model ? (model === 'chatgpt' ? 'openai' : 'google') : '';
-      const avatarIcon = msg.role === 'user' ? '👤' : modelIcons[model] || '◈';
+      const avatarIcon = msg.role === 'user' ? '👤' : modelIcons[model] || defaultAssistantIcon;
       const modelLabel = model ? modelNames[model] : '';
 
       message.innerHTML = `
@@ -763,7 +760,7 @@ document.addEventListener('DOMContentLoaded', () => {
     sessions.forEach(session => {
       const isActive = session.id === currentSessionId;
       const model = session.messages.find(m => m.model)?.model || 'chatgpt';
-      const icon = modelIcons[model] || '◈';
+      const icon = modelIcons[model] || defaultAssistantIcon;
       const time = new Date(session.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
       
       html += `

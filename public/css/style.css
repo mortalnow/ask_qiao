@@ -107,7 +107,7 @@ body {
 .chat-header {
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
   padding: var(--spacing-md);
   padding-top: calc(var(--spacing-md) + var(--safe-top));
   background: var(--bg-secondary);
@@ -139,6 +139,18 @@ body {
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
+  width: 100%;
+  justify-content: flex-end;
+}
+
+.btn-history {
+  width: 48px;
+  height: 48px;
+  margin-right: auto;
+}
+
+.admin-link {
+  display: none;
 }
 
 /* Model Selector */
@@ -254,9 +266,11 @@ body {
 }
 
 .welcome-icon {
-  font-size: 4rem;
-  color: var(--accent-primary);
-  text-shadow: 0 0 40px var(--accent-glow);
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  box-shadow: 0 0 40px var(--accent-glow);
   margin-bottom: var(--spacing-lg);
   animation: pulse 3s infinite;
 }
@@ -366,6 +380,13 @@ body {
 
 .message.assistant .message-avatar.google {
   color: var(--google-color);
+}
+
+.message-avatar .avatar-img {
+  width: 100%;
+  height: 100%;
+  border-radius: var(--radius-md);
+  object-fit: cover;
 }
 
 .message-content {
@@ -1203,7 +1224,7 @@ body {
 .history-item-delete {
   position: absolute;
   right: var(--spacing-sm);
-  opacity: 0;
+  opacity: 0.5;
   background: transparent;
   border: none;
   color: var(--text-muted);
