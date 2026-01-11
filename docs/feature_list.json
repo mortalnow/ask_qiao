@@ -1,0 +1,1018 @@
+{
+  "project": "Ask Qiao",
+  "version": "1.0.0",
+  "lastUpdated": "2026-01-11",
+  "features": [
+    {
+      "id": "AUTH-001",
+      "category": "authentication",
+      "description": "User login with username and password",
+      "steps": [
+        "Navigate to login page (/login.html)",
+        "Click on 'Login' tab if not already selected",
+        "Enter valid username (2-30 characters)",
+        "Enter valid password (minimum 6 characters)",
+        "Click 'Login' button",
+        "Verify redirect to main chat interface",
+        "Verify JWT token is stored in localStorage"
+      ],
+      "passes": false
+    },
+    {
+      "id": "AUTH-002",
+      "category": "authentication",
+      "description": "User registration with invite code",
+      "steps": [
+        "Navigate to login page (/login.html)",
+        "Click on 'Register' tab",
+        "Enter valid invite code (format: XXXXXX-XXXXXX)",
+        "Enter desired username (2-30 characters)",
+        "Enter password (minimum 6 characters)",
+        "Click 'Create Account' button",
+        "Verify account creation success",
+        "Verify redirect to main chat interface",
+        "Verify invite code is marked as used in database"
+      ],
+      "passes": false
+    },
+    {
+      "id": "AUTH-003",
+      "category": "authentication",
+      "description": "Invite code auto-formatting on input",
+      "steps": [
+        "Navigate to login page (/login.html)",
+        "Click on 'Register' tab",
+        "Type lowercase letters in invite code field",
+        "Verify letters are converted to uppercase",
+        "Continue typing past 6 characters",
+        "Verify hyphen is automatically inserted after 6th character",
+        "Verify non-alphanumeric characters are stripped"
+      ],
+      "passes": false
+    },
+    {
+      "id": "AUTH-004",
+      "category": "authentication",
+      "description": "User logout functionality",
+      "steps": [
+        "Login with valid credentials",
+        "Navigate to main chat interface",
+        "Click the logout button in header",
+        "Confirm logout in confirmation dialog",
+        "Verify redirect to login page",
+        "Verify auth token is cleared from localStorage",
+        "Verify cannot access main interface without re-login"
+      ],
+      "passes": false
+    },
+    {
+      "id": "AUTH-005",
+      "category": "authentication",
+      "description": "Authentication redirect for unauthenticated users",
+      "steps": [
+        "Clear localStorage and cookies",
+        "Navigate directly to main chat interface (/)",
+        "Verify automatic redirect to login page",
+        "Navigate directly to admin panel (/admin.html)",
+        "Verify automatic redirect to login page"
+      ],
+      "passes": false
+    },
+    {
+      "id": "AUTH-006",
+      "category": "authentication",
+      "description": "JWT token expiration handling (7-day expiry)",
+      "steps": [
+        "Login with valid credentials",
+        "Verify JWT token is stored",
+        "Wait for token expiration (or simulate with expired token)",
+        "Attempt to make an API request",
+        "Verify 401/403 response is handled",
+        "Verify automatic redirect to login page"
+      ],
+      "passes": false
+    },
+    {
+      "id": "CHAT-001",
+      "category": "functional",
+      "description": "Send message and receive AI response",
+      "steps": [
+        "Login and navigate to main chat interface",
+        "Type a message in the input textarea",
+        "Verify character count updates",
+        "Verify send button becomes enabled",
+        "Click send button or press Enter",
+        "Verify message appears in chat area with user avatar",
+        "Verify typing indicator shows while AI is responding",
+        "Verify AI response streams in real-time",
+        "Verify response appears with model icon and timestamp"
+      ],
+      "passes": false
+    },
+    {
+      "id": "CHAT-002",
+      "category": "functional",
+      "description": "Send message with Enter key (Shift+Enter for new line)",
+      "steps": [
+        "Navigate to main chat interface",
+        "Type a message in input textarea",
+        "Press Enter key",
+        "Verify message is sent",
+        "Type another message",
+        "Press Shift+Enter",
+        "Verify new line is inserted instead of sending"
+      ],
+      "passes": false
+    },
+    {
+      "id": "CHAT-003",
+      "category": "functional",
+      "description": "Switch between AI models (GPT-5.2 and Gemini 3 Flash)",
+      "steps": [
+        "Navigate to main chat interface",
+        "Verify default model is displayed in header",
+        "Open model selector dropdown",
+        "Select 'Gemini 3 Flash'",
+        "Verify model label updates in header and footer",
+        "Send a message",
+        "Verify response shows Gemini model badge",
+        "Switch back to 'GPT-5.2'",
+        "Send another message",
+        "Verify response shows OpenAI model badge"
+      ],
+      "passes": false
+    },
+    {
+      "id": "CHAT-004",
+      "category": "functional",
+      "description": "Model selection via welcome screen model cards",
+      "steps": [
+        "Navigate to main chat interface with empty history",
+        "Verify welcome message with model cards is displayed",
+        "Click on GPT-5.2 model card",
+        "Verify model selector updates to GPT-5.2",
+        "Verify input is focused",
+        "Refresh page to reset",
+        "Click on Gemini 3 Flash model card",
+        "Verify model selector updates to Gemini"
+      ],
+      "passes": false
+    },
+    {
+      "id": "CHAT-005",
+      "category": "functional",
+      "description": "Streaming response display with real-time updates",
+      "steps": [
+        "Navigate to main chat interface",
+        "Send a message that requires a longer response",
+        "Verify typing indicator appears initially",
+        "Verify text streams in character by character",
+        "Verify markdown formatting is applied in real-time",
+        "Verify auto-scroll to bottom as content arrives"
+      ],
+      "passes": false
+    },
+    {
+      "id": "CHAT-006",
+      "category": "functional",
+      "description": "Markdown formatting in messages (code blocks, bold, italic)",
+      "steps": [
+        "Navigate to main chat interface",
+        "Ask AI to respond with code examples",
+        "Verify code blocks are rendered with proper styling",
+        "Verify inline code has distinct formatting",
+        "Verify **bold** text is rendered as bold",
+        "Verify *italic* text is rendered as italic",
+        "Verify line breaks are properly rendered"
+      ],
+      "passes": false
+    },
+    {
+      "id": "CHAT-007",
+      "category": "functional",
+      "description": "Character count display and 32000 character limit",
+      "steps": [
+        "Navigate to main chat interface",
+        "Verify initial character count shows '0 / 32000'",
+        "Type text in input field",
+        "Verify character count updates in real-time",
+        "Attempt to paste text exceeding 32000 characters",
+        "Verify input is limited to 32000 characters"
+      ],
+      "passes": false
+    },
+    {
+      "id": "CHAT-008",
+      "category": "functional",
+      "description": "Auto-resize textarea based on content",
+      "steps": [
+        "Navigate to main chat interface",
+        "Verify textarea starts at minimum height",
+        "Type multiple lines of text",
+        "Verify textarea height expands to fit content",
+        "Verify textarea has maximum height limit (150px)",
+        "Delete text",
+        "Verify textarea shrinks back to minimum height"
+      ],
+      "passes": false
+    },
+    {
+      "id": "CHAT-009",
+      "category": "functional",
+      "description": "Cancel streaming and combine with new message",
+      "steps": [
+        "Navigate to main chat interface",
+        "Send a message that will have a long response",
+        "While AI is streaming, type a new message",
+        "Press Enter or click send",
+        "Verify current stream is cancelled",
+        "Verify new message is combined with previous user message",
+        "Verify AI processes the combined message"
+      ],
+      "passes": false
+    },
+    {
+      "id": "CHAT-010",
+      "category": "functional",
+      "description": "Error handling for failed AI requests",
+      "steps": [
+        "Disable network connection or simulate API failure",
+        "Send a message",
+        "Verify error message is displayed in red",
+        "Verify failed message is removed from history",
+        "Verify input is re-enabled for retry"
+      ],
+      "passes": false
+    },
+    {
+      "id": "SESSION-001",
+      "category": "functional",
+      "description": "New chat button creates a fresh conversation",
+      "steps": [
+        "Navigate to main chat interface",
+        "Send several messages to create a conversation",
+        "Click the 'New Chat' (+) button in header",
+        "Verify chat area clears and shows welcome message",
+        "Verify new session ID is generated",
+        "Verify previous conversation appears in history sidebar"
+      ],
+      "passes": false
+    },
+    {
+      "id": "SESSION-002",
+      "category": "functional",
+      "description": "Conversation history persistence in localStorage",
+      "steps": [
+        "Navigate to main chat interface",
+        "Send several messages",
+        "Refresh the page",
+        "Verify conversation history is restored",
+        "Verify messages display correctly with proper formatting",
+        "Verify model badges are preserved"
+      ],
+      "passes": false
+    },
+    {
+      "id": "SESSION-003",
+      "category": "functional",
+      "description": "History sidebar displays past conversations",
+      "steps": [
+        "Create multiple conversations with different first messages",
+        "Click the history button (clock icon) in header",
+        "Verify sidebar slides in from left",
+        "Verify conversations are listed with truncated titles",
+        "Verify conversations are grouped by date (Today, Yesterday, Earlier)",
+        "Verify active conversation is highlighted"
+      ],
+      "passes": false
+    },
+    {
+      "id": "SESSION-004",
+      "category": "functional",
+      "description": "Switch between conversations via history sidebar",
+      "steps": [
+        "Create at least two different conversations",
+        "Open history sidebar",
+        "Click on a different conversation",
+        "Verify sidebar closes",
+        "Verify selected conversation loads in chat area",
+        "Verify messages are displayed correctly"
+      ],
+      "passes": false
+    },
+    {
+      "id": "SESSION-005",
+      "category": "functional",
+      "description": "Delete conversation from history",
+      "steps": [
+        "Create a conversation with messages",
+        "Open history sidebar",
+        "Click delete button on a conversation",
+        "Confirm deletion in dialog",
+        "Verify conversation is removed from list",
+        "Verify new session is started if deleted conversation was active"
+      ],
+      "passes": false
+    },
+    {
+      "id": "SESSION-006",
+      "category": "functional",
+      "description": "Session title derived from first user message",
+      "steps": [
+        "Start a new conversation",
+        "Send a message with a specific first line",
+        "Open history sidebar",
+        "Verify conversation title matches first 50 characters of message",
+        "Verify long messages are truncated with ellipsis"
+      ],
+      "passes": false
+    },
+    {
+      "id": "SESSION-007",
+      "category": "functional",
+      "description": "History overlay closes sidebar on click",
+      "steps": [
+        "Open history sidebar",
+        "Click on the dark overlay area",
+        "Verify sidebar closes",
+        "Verify main interface is accessible again"
+      ],
+      "passes": false
+    },
+    {
+      "id": "PROMPT-001",
+      "category": "functional",
+      "description": "Prompt Builder toggle opens/closes form",
+      "steps": [
+        "Navigate to main chat interface",
+        "Locate 'Prompt Builder' button above input area",
+        "Click the button",
+        "Verify prompt builder form slides open",
+        "Verify PERSONA field is focused",
+        "Click close button (X) or toggle button again",
+        "Verify form closes"
+      ],
+      "passes": false
+    },
+    {
+      "id": "PROMPT-002",
+      "category": "functional",
+      "description": "Generate prompt with required fields (PERSONA, TASK, CONTEXT)",
+      "steps": [
+        "Open Prompt Builder",
+        "Fill in PERSONA field",
+        "Fill in TASK field",
+        "Fill in CONTEXT field",
+        "Click 'Generate Prompt' button",
+        "Verify structured prompt appears in main input",
+        "Verify prompt builder closes",
+        "Verify input is focused"
+      ],
+      "passes": false
+    },
+    {
+      "id": "PROMPT-003",
+      "category": "functional",
+      "description": "Prompt Builder validation for required fields",
+      "steps": [
+        "Open Prompt Builder",
+        "Leave one or more required fields empty",
+        "Click 'Generate Prompt' button",
+        "Verify validation error alert appears",
+        "Verify prompt is not generated until all required fields are filled"
+      ],
+      "passes": false
+    },
+    {
+      "id": "PROMPT-004",
+      "category": "functional",
+      "description": "Prompt Builder optional fields (FORMAT, REFERENCES)",
+      "steps": [
+        "Open Prompt Builder",
+        "Fill in all required fields",
+        "Add content to FORMAT field",
+        "Add content to REFERENCES field",
+        "Generate prompt",
+        "Verify optional fields are included in generated prompt",
+        "Repeat without optional fields",
+        "Verify optional fields are omitted when empty"
+      ],
+      "passes": false
+    },
+    {
+      "id": "PROMPT-005",
+      "category": "functional",
+      "description": "Clear Prompt Builder form with confirmation",
+      "steps": [
+        "Open Prompt Builder",
+        "Fill in multiple fields",
+        "Click 'Clear' button",
+        "Verify confirmation dialog appears",
+        "Confirm clear action",
+        "Verify all fields are emptied",
+        "Verify PERSONA field is focused"
+      ],
+      "passes": false
+    },
+    {
+      "id": "I18N-001",
+      "category": "i18n",
+      "description": "Language toggle between Chinese and English",
+      "steps": [
+        "Navigate to main chat interface",
+        "Note current language (Chinese is default for zh browsers)",
+        "Click language toggle button in header",
+        "Verify all UI text switches language",
+        "Verify button text changes (EN ↔ 中)",
+        "Refresh page",
+        "Verify language preference is persisted"
+      ],
+      "passes": false
+    },
+    {
+      "id": "I18N-002",
+      "category": "i18n",
+      "description": "Language toggle on login page",
+      "steps": [
+        "Navigate to login page",
+        "Click language toggle button",
+        "Verify all labels, placeholders, and buttons change language",
+        "Verify footer text changes",
+        "Verify page title changes"
+      ],
+      "passes": false
+    },
+    {
+      "id": "I18N-003",
+      "category": "i18n",
+      "description": "Browser language auto-detection",
+      "steps": [
+        "Clear localStorage language preference",
+        "Set browser language to Chinese",
+        "Navigate to app",
+        "Verify Chinese is auto-selected",
+        "Clear localStorage and set browser to English",
+        "Navigate to app",
+        "Verify English is auto-selected"
+      ],
+      "passes": false
+    },
+    {
+      "id": "I18N-004",
+      "category": "i18n",
+      "description": "Localized confirmation dialogs",
+      "steps": [
+        "Set language to English",
+        "Click logout button",
+        "Verify confirmation dialog is in English",
+        "Set language to Chinese",
+        "Click logout button",
+        "Verify confirmation dialog is in Chinese"
+      ],
+      "passes": false
+    },
+    {
+      "id": "ADMIN-001",
+      "category": "admin",
+      "description": "Admin panel access control (admin users only)",
+      "steps": [
+        "Login as regular (non-admin) user",
+        "Navigate to /admin.html",
+        "Verify access denied alert appears",
+        "Verify redirect to main chat interface",
+        "Login as admin user",
+        "Navigate to /admin.html",
+        "Verify admin panel loads successfully"
+      ],
+      "passes": false
+    },
+    {
+      "id": "ADMIN-002",
+      "category": "admin",
+      "description": "Admin link visibility in header for admin users",
+      "steps": [
+        "Login as regular user",
+        "Verify admin link is not visible in header",
+        "Logout and login as admin user",
+        "Verify admin link appears in header",
+        "Click admin link",
+        "Verify navigation to admin panel"
+      ],
+      "passes": false
+    },
+    {
+      "id": "ADMIN-003",
+      "category": "admin",
+      "description": "Generate invite codes",
+      "steps": [
+        "Login as admin and navigate to admin panel",
+        "Enter number of codes to generate (1-50)",
+        "Click 'Generate' button",
+        "Verify loading state on button",
+        "Verify success alert shows number of codes generated",
+        "Verify new codes appear in invite list",
+        "Verify codes are marked as 'Available'"
+      ],
+      "passes": false
+    },
+    {
+      "id": "ADMIN-004",
+      "category": "admin",
+      "description": "View invite code statistics",
+      "steps": [
+        "Navigate to admin panel",
+        "Verify statistics cards are displayed",
+        "Verify 'Total Codes' count is correct",
+        "Verify 'Unused' count matches available codes",
+        "Verify 'Used' count matches codes with users"
+      ],
+      "passes": false
+    },
+    {
+      "id": "ADMIN-005",
+      "category": "admin",
+      "description": "View invite code list with details",
+      "steps": [
+        "Navigate to admin panel",
+        "Verify invite codes are listed",
+        "Verify each code shows creation date",
+        "For unused codes, verify 'Available' status",
+        "For used codes, verify user and usage date",
+        "Verify used codes appear faded/grayed out"
+      ],
+      "passes": false
+    },
+    {
+      "id": "ADMIN-006",
+      "category": "admin",
+      "description": "Delete unused invite codes",
+      "steps": [
+        "Navigate to admin panel with at least one unused code",
+        "Click 'Delete' button on an unused code",
+        "Confirm deletion in dialog",
+        "Verify code is removed from list",
+        "Verify statistics update accordingly"
+      ],
+      "passes": false
+    },
+    {
+      "id": "ADMIN-007",
+      "category": "admin",
+      "description": "Cannot delete used invite codes",
+      "steps": [
+        "Navigate to admin panel with a used code",
+        "Verify used codes do not have delete button",
+        "Attempt to delete via API directly",
+        "Verify server returns error"
+      ],
+      "passes": false
+    },
+    {
+      "id": "PWA-001",
+      "category": "pwa",
+      "description": "Service Worker registration",
+      "steps": [
+        "Open browser developer tools",
+        "Navigate to main chat interface",
+        "Check Application > Service Workers",
+        "Verify service worker is registered and active",
+        "Verify cache name is 'ask-qiao-vXX'"
+      ],
+      "passes": false
+    },
+    {
+      "id": "PWA-002",
+      "category": "pwa",
+      "description": "Static assets caching for offline shell",
+      "steps": [
+        "Navigate to main chat interface",
+        "Open developer tools > Application > Cache Storage",
+        "Verify static assets are cached (HTML, CSS, JS, icons)",
+        "Enable offline mode in developer tools",
+        "Refresh page",
+        "Verify app shell loads from cache"
+      ],
+      "passes": false
+    },
+    {
+      "id": "PWA-003",
+      "category": "pwa",
+      "description": "PWA installability (Add to Home Screen)",
+      "steps": [
+        "Open app in Chrome/Safari on mobile",
+        "Verify install prompt appears or is available",
+        "On iOS: tap Share > Add to Home Screen",
+        "On Android: tap menu > Add to Home Screen",
+        "Verify app icon is added to home screen",
+        "Open app from home screen",
+        "Verify app runs in standalone mode (no browser chrome)"
+      ],
+      "passes": false
+    },
+    {
+      "id": "PWA-004",
+      "category": "pwa",
+      "description": "PWA manifest configuration",
+      "steps": [
+        "Open developer tools > Application > Manifest",
+        "Verify name is 'Ask Qiao'",
+        "Verify display mode is 'standalone'",
+        "Verify theme color is set",
+        "Verify icons are configured",
+        "Verify start URL is '/'"
+      ],
+      "passes": false
+    },
+    {
+      "id": "PWA-005",
+      "category": "pwa",
+      "description": "Cache update on new version deployment",
+      "steps": [
+        "Load app to populate cache",
+        "Deploy new version with updated cache name",
+        "Reload the page",
+        "Verify new service worker is installed",
+        "Verify old cache is deleted",
+        "Verify new assets are served"
+      ],
+      "passes": false
+    },
+    {
+      "id": "SECURITY-001",
+      "category": "security",
+      "description": "API rate limiting (60 requests/minute)",
+      "steps": [
+        "Login and obtain valid token",
+        "Make 60 API requests in under 1 minute",
+        "Attempt 61st request",
+        "Verify 429 Too Many Requests response",
+        "Wait 1 minute",
+        "Verify requests are allowed again"
+      ],
+      "passes": false
+    },
+    {
+      "id": "SECURITY-002",
+      "category": "security",
+      "description": "Chat endpoint rate limiting (20 requests/minute)",
+      "steps": [
+        "Login and navigate to chat interface",
+        "Send 20 chat messages rapidly",
+        "Attempt 21st message",
+        "Verify rate limit error is displayed",
+        "Wait 1 minute",
+        "Verify messages can be sent again"
+      ],
+      "passes": false
+    },
+    {
+      "id": "SECURITY-003",
+      "category": "security",
+      "description": "JWT token required for protected endpoints",
+      "steps": [
+        "Clear authentication token",
+        "Attempt to access /api/chat endpoint",
+        "Verify 401 Unauthorized response",
+        "Attempt to access /api/auth/me endpoint",
+        "Verify 401 Unauthorized response",
+        "Attempt to access /api/admin endpoints",
+        "Verify 401 Unauthorized response"
+      ],
+      "passes": false
+    },
+    {
+      "id": "SECURITY-004",
+      "category": "security",
+      "description": "Single-use invite code enforcement",
+      "steps": [
+        "Generate a new invite code",
+        "Use code to register an account",
+        "Attempt to register another account with same code",
+        "Verify error: 'Invite code has already been used'"
+      ],
+      "passes": false
+    },
+    {
+      "id": "SECURITY-005",
+      "category": "security",
+      "description": "Password hashing with bcrypt",
+      "steps": [
+        "Register a new account",
+        "Check database for user record",
+        "Verify password_hash field contains bcrypt hash (starts with $2b$)",
+        "Verify plain text password is not stored"
+      ],
+      "passes": false
+    },
+    {
+      "id": "SECURITY-006",
+      "category": "security",
+      "description": "Input sanitization for chat messages",
+      "steps": [
+        "Send message containing HTML tags",
+        "Verify tags are escaped in display",
+        "Send message containing script tags",
+        "Verify no script execution occurs",
+        "Verify message length is limited to 32000 characters"
+      ],
+      "passes": false
+    },
+    {
+      "id": "SECURITY-007",
+      "category": "security",
+      "description": "Admin endpoint protection",
+      "steps": [
+        "Login as regular (non-admin) user",
+        "Attempt POST to /api/admin/invites",
+        "Verify 403 Forbidden response",
+        "Attempt GET to /api/admin/invites",
+        "Verify 403 Forbidden response"
+      ],
+      "passes": false
+    },
+    {
+      "id": "UI-001",
+      "category": "ui",
+      "description": "Responsive layout for mobile devices",
+      "steps": [
+        "Open app on mobile device or use responsive mode",
+        "Verify header elements are properly sized",
+        "Verify chat messages fill available width",
+        "Verify input area is fixed at bottom",
+        "Verify model selector is accessible",
+        "Verify history sidebar covers full screen on mobile"
+      ],
+      "passes": false
+    },
+    {
+      "id": "UI-002",
+      "category": "ui",
+      "description": "Welcome screen with model selection cards",
+      "steps": [
+        "Navigate to main interface with no chat history",
+        "Verify welcome message displays",
+        "Verify app icon/logo is shown",
+        "Verify GPT-5.2 and Gemini 3 Flash cards are displayed",
+        "Verify cards show provider badges and descriptions",
+        "Click a card to select model"
+      ],
+      "passes": false
+    },
+    {
+      "id": "UI-003",
+      "category": "ui",
+      "description": "Chat message bubbles with proper styling",
+      "steps": [
+        "Send a message",
+        "Verify user messages appear on right side with user avatar",
+        "Verify AI responses appear on left with model avatar",
+        "Verify timestamps are displayed",
+        "Verify model name badge shows on AI responses",
+        "Verify proper spacing between messages"
+      ],
+      "passes": false
+    },
+    {
+      "id": "UI-004",
+      "category": "ui",
+      "description": "Typing indicator during AI response",
+      "steps": [
+        "Send a message",
+        "Verify animated typing dots appear",
+        "Verify dots have pulsing animation",
+        "Verify typing indicator is replaced by actual response"
+      ],
+      "passes": false
+    },
+    {
+      "id": "UI-005",
+      "category": "ui",
+      "description": "Auto-scroll to bottom for new messages",
+      "steps": [
+        "Create a conversation long enough to require scrolling",
+        "Send a new message",
+        "Verify view auto-scrolls to bottom",
+        "Verify scroll happens smoothly as streaming content arrives"
+      ],
+      "passes": false
+    },
+    {
+      "id": "UI-006",
+      "category": "ui",
+      "description": "Send button state management",
+      "steps": [
+        "Verify send button is disabled when input is empty",
+        "Type a message",
+        "Verify send button becomes enabled",
+        "Send the message",
+        "Verify send button is disabled during streaming",
+        "Verify button re-enables after response completes"
+      ],
+      "passes": false
+    },
+    {
+      "id": "UI-007",
+      "category": "ui",
+      "description": "Login page tab switching",
+      "steps": [
+        "Navigate to login page",
+        "Verify 'Login' tab is active by default",
+        "Click 'Register' tab",
+        "Verify registration form appears",
+        "Verify login form is hidden",
+        "Click 'Login' tab",
+        "Verify login form appears again"
+      ],
+      "passes": false
+    },
+    {
+      "id": "UI-008",
+      "category": "ui",
+      "description": "Error message display on forms",
+      "steps": [
+        "Navigate to login page",
+        "Submit empty login form",
+        "Verify error message appears below form",
+        "Enter invalid credentials",
+        "Submit form",
+        "Verify specific error message is shown",
+        "Verify error clears when typing new input"
+      ],
+      "passes": false
+    },
+    {
+      "id": "UI-009",
+      "category": "ui",
+      "description": "Loading states on form submission",
+      "steps": [
+        "Navigate to login page",
+        "Enter valid credentials",
+        "Click submit button",
+        "Verify button shows loading state",
+        "Verify button is disabled during loading",
+        "Verify form inputs are disabled during loading"
+      ],
+      "passes": false
+    },
+    {
+      "id": "API-001",
+      "category": "api",
+      "description": "GET /api/auth/me returns current user info",
+      "steps": [
+        "Login and obtain valid token",
+        "Make GET request to /api/auth/me with token",
+        "Verify response contains user id, username",
+        "Verify response contains isAdmin flag",
+        "Verify response contains created_at timestamp"
+      ],
+      "passes": false
+    },
+    {
+      "id": "API-002",
+      "category": "api",
+      "description": "GET /api/chat/models returns available models",
+      "steps": [
+        "Login and obtain valid token",
+        "Make GET request to /api/chat/models with token",
+        "Verify response contains array of models",
+        "Verify each model has id, name, provider, description",
+        "Verify both chatgpt and gemini models are listed"
+      ],
+      "passes": false
+    },
+    {
+      "id": "API-003",
+      "category": "api",
+      "description": "POST /api/chat sends message with streaming response",
+      "steps": [
+        "Login and obtain valid token",
+        "Make POST request to /api/chat with message and model",
+        "Verify response headers include text/event-stream",
+        "Verify SSE events are received with chunk type",
+        "Verify done event is received at end",
+        "Verify complete response is assembled from chunks"
+      ],
+      "passes": false
+    },
+    {
+      "id": "API-004",
+      "category": "api",
+      "description": "POST /api/auth/login authenticates user",
+      "steps": [
+        "Make POST request with valid credentials",
+        "Verify success response with token",
+        "Verify response includes user object",
+        "Make POST request with invalid credentials",
+        "Verify 401 error response"
+      ],
+      "passes": false
+    },
+    {
+      "id": "API-005",
+      "category": "api",
+      "description": "POST /api/auth/verify registers new user with invite code",
+      "steps": [
+        "Generate a valid invite code",
+        "Make POST request with code, username, password",
+        "Verify success response with token",
+        "Verify user object is returned",
+        "Verify invite code is marked as used"
+      ],
+      "passes": false
+    },
+    {
+      "id": "DEPLOY-001",
+      "category": "deployment",
+      "description": "Vercel serverless function deployment",
+      "steps": [
+        "Push code to GitHub repository",
+        "Verify Vercel auto-deployment triggers",
+        "Verify all environment variables are configured",
+        "Verify API routes are accessible at /api/*",
+        "Verify static files are served correctly",
+        "Verify SPA routing works for client-side routes"
+      ],
+      "passes": false
+    },
+    {
+      "id": "DEPLOY-002",
+      "category": "deployment",
+      "description": "MongoDB Atlas connection in production",
+      "steps": [
+        "Verify MONGODB_* environment variables are set",
+        "Deploy to Vercel",
+        "Test login functionality",
+        "Verify database connection is established",
+        "Verify user data is persisted",
+        "Verify invite codes are managed correctly"
+      ],
+      "passes": false
+    },
+    {
+      "id": "MODEL-001",
+      "category": "ai",
+      "description": "OpenAI model auto-selection (latest GPT)",
+      "steps": [
+        "Configure OPENAI_MODEL as 'latest'",
+        "Start server",
+        "Send a chat message using GPT",
+        "Check server logs for auto-selected model name",
+        "Verify model caching works (1 hour TTL)"
+      ],
+      "passes": false
+    },
+    {
+      "id": "MODEL-002",
+      "category": "ai",
+      "description": "Gemini model auto-selection (latest Flash)",
+      "steps": [
+        "Configure GEMINI_MODEL as 'latest'",
+        "Start server",
+        "Send a chat message using Gemini",
+        "Check server logs for auto-selected model name",
+        "Verify model caching works (1 hour TTL)"
+      ],
+      "passes": false
+    },
+    {
+      "id": "MODEL-003",
+      "category": "ai",
+      "description": "Conversation history passed to AI for context",
+      "steps": [
+        "Start a new conversation",
+        "Send initial message and receive response",
+        "Send follow-up question referencing previous context",
+        "Verify AI response demonstrates context awareness",
+        "Verify history is properly formatted for each provider"
+      ],
+      "passes": false
+    }
+  ],
+  "categories": {
+    "authentication": "User authentication and authorization features",
+    "functional": "Core application functionality",
+    "i18n": "Internationalization and localization",
+    "admin": "Administrative panel features",
+    "pwa": "Progressive Web App capabilities",
+    "security": "Security measures and protections",
+    "ui": "User interface and visual elements",
+    "api": "Backend API endpoints",
+    "deployment": "Deployment and infrastructure",
+    "ai": "AI model integration features"
+  },
+  "summary": {
+    "total": 62,
+    "byCategory": {
+      "authentication": 6,
+      "functional": 18,
+      "i18n": 4,
+      "admin": 7,
+      "pwa": 5,
+      "security": 7,
+      "ui": 9,
+      "api": 5,
+      "deployment": 2,
+      "ai": 3
+    }
+  }
+}
