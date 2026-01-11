@@ -89,11 +89,16 @@ Open http://localhost:3002 in your browser.
 ask_qiao/
 ├── api/                    # Vercel serverless function
 │   └── index.js           # Express app wrapper for Vercel
+├── docs/                   # Documentation
+│   ├── PLAN.md            # Project planning and architecture
+│   ├── feature_list.json  # QA test cases (62 features)
+│   └── prompt_structure.md # Prompt Builder template reference
 ├── server/                 # Backend
 │   ├── index.js           # Express server entry (local dev)
 │   ├── config.js          # Environment config
 │   ├── routes/
 │   │   ├── auth.js        # Authentication endpoints
+│   │   ├── admin.js       # Admin panel endpoints
 │   │   └── chat.js        # Chat API endpoints
 │   ├── middleware/
 │   │   └── auth.js        # JWT middleware
@@ -108,6 +113,7 @@ ask_qiao/
 ├── public/                 # Frontend PWA
 │   ├── index.html         # Chat interface (with Prompt Builder)
 │   ├── login.html         # Login page
+│   ├── admin.html         # Admin panel
 │   ├── manifest.json      # PWA manifest
 │   ├── sw.js              # Service worker
 │   ├── css/
@@ -115,18 +121,20 @@ ask_qiao/
 │   └── js/
 │       ├── api.js         # API client
 │       ├── auth.js        # Auth handling
+│       ├── admin.js       # Admin panel logic
+│       ├── i18n.js        # Internationalization (zh-CN/en-US)
 │       └── app.js         # Chat logic + Prompt Builder
-├── prompt.md               # Prompt template reference
 ├── scripts/
 │   ├── generate-invite.js  # CLI for invite codes
 │   ├── init-mongodb.js     # MongoDB initialization script
 │   ├── check-admin.js      # Admin account management
-│   ├── check-user.js       # Check user credentials and diagnose login issues
-│   ├── verify-mongodb-config.js # Verify MongoDB connection configuration
+│   ├── check-user.js       # Check user credentials
+│   ├── verify-mongodb-config.js # Verify MongoDB config
 │   ├── set-password.js     # User password management
 │   ├── test-mongodb-connection.js # DB connectivity test
-│   ├── test-production-login.js  # Test production API login endpoint
+│   ├── test-production-login.js  # Test production login
 │   └── README-admin.md     # Admin documentation guide
+├── CLAUDE.md               # Project context for Claude Code
 ├── vercel.json             # Vercel deployment configuration
 ├── package.json
 └── README.md
@@ -157,8 +165,6 @@ The app is configured for Vercel deployment with serverless functions:
    - `api/index.js` - Serverless function wrapper for Express app
    - `vercel.json` - Vercel routing configuration
 
-See `VERCEL_DEPLOYMENT_FIX.md` for detailed deployment troubleshooting.
-
 ## Troubleshooting
 
 ### Login Issues
@@ -168,8 +174,6 @@ If you can't login to the production site, check:
 2. Verify user exists: `node scripts/check-user.js <username> <password>`
 3. Verify MongoDB config: `node scripts/verify-mongodb-config.js`
 4. Test production API: `node scripts/test-production-login.js <username> <password>`
-5. See `LOGIN_ISSUE_DIAGNOSIS.md` for detailed troubleshooting steps
-6. See `VERCEL_DEPLOYMENT_FIX.md` for Vercel-specific issues (404 errors, routing)
 
 ## Security
 
@@ -201,15 +205,22 @@ If you can't login to the production site, check:
 
 ## Changelog
 
+### 2026-01-11
+- **Added**: Comprehensive feature list with 62 test cases (`docs/feature_list.json`)
+- **Improved**: Project documentation organization
+  - Created `docs/` folder for documentation
+  - Moved planning and reference docs to `docs/`
+- **Cleanup**: Removed redundant files and old SQLite artifacts
+
 ### 2026-01-07
 - **Added**: Prompt Builder feature for structured prompt construction
   - Required fields: PERSONA, TASK, CONTEXT
   - Optional fields: FORMAT, REFERENCES
   - Collapsible form with generate/clear actions
-- **Fixed**: Service Worker cache issue preventing new JS from loading (v1 → v2)
-- **Fixed**: Service Worker cache issue preventing new JS from loading (v1 → v2)
+- **Added**: Internationalization (i18n) support for Chinese and English
+- **Added**: Conversation history sidebar with session management
+- **Added**: Admin panel for invite code management
 - **Fixed**: Service Worker cache issue preventing Prompt Builder from working
-  - Updated cache version (v1 → v2) to force refresh
 
 ## License
 

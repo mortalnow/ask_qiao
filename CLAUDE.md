@@ -33,14 +33,18 @@ Client (Web/Mobile/PWA) → Express Server → AI Providers (OpenAI, Gemini)
 ```
 api/              # Vercel serverless function wrapper
   index.js        # Express app wrapper for Vercel deployment
+docs/             # Documentation
+  PLAN.md         # Project planning and architecture
+  feature_list.json # QA test cases (62 features)
+  prompt_structure.md # Prompt Builder template
 server/           # Express backend
-  routes/         # API endpoints (auth, chat)
+  routes/         # API endpoints (auth, chat, admin)
   middleware/     # JWT verification
   services/       # AI provider integrations
   db/             # MongoDB Atlas setup
 public/           # Frontend PWA
   css/            # Styles
-  js/             # Client-side logic
+  js/             # Client-side logic (app, auth, admin, i18n)
 scripts/          # CLI utilities (invite code generation, DB initialization)
 vercel.json       # Vercel deployment configuration
 ```
@@ -117,8 +121,6 @@ The project uses MongoDB Atlas for user and invite code storage. To initialize:
 - `scripts/check-user.js` - Diagnose login issues by checking if user exists and verifying credentials
 - `scripts/verify-mongodb-config.js` - Verify MongoDB connection configuration and environment variables
 - `scripts/test-production-login.js` - Test the production API login endpoint directly
-- `LOGIN_ISSUE_DIAGNOSIS.md` - Comprehensive guide for resolving login problems, especially when production and local databases differ
-- `VERCEL_DEPLOYMENT_FIX.md` - Guide for fixing Vercel deployment issues (404 errors, routing problems)
 
 ## Security Considerations
 
@@ -133,11 +135,17 @@ The project uses MongoDB Atlas for user and invite code storage. To initialize:
 
 ## Development Log
 
+### 2026-01-11: Documentation & QA
+
+- Created comprehensive `feature_list.json` with 62 test cases across 10 categories
+- Organized documentation into `docs/` folder
+- Cleaned up redundant files (old SQLite database, .DS_Store files)
+
 ### 2026-01-07: Prompt Builder Feature
 
-**Goal**: Add a structured prompt builder based on `prompt.md` template to help users construct better prompts.
+**Goal**: Add a structured prompt builder based on `docs/prompt_structure.md` template.
 
-**Template Structure** (`prompt.md`):
+**Template Structure**:
 - `[PERSONA]` - Define AI role/expertise
 - `[TASK]` - Specific action and requirements
 - `[CONTEXT]` - Background and audience
@@ -145,48 +153,8 @@ The project uses MongoDB Atlas for user and invite code storage. To initialize:
 - `[REFERENCES]` - Examples or desired style (optional)
 
 **Implementation**:
+- HTML: Toggle button, collapsible form with 5 textarea fields
+- CSS: Slide-down animation, responsive styles
+- JS: `togglePromptBuilder()`, `generatePrompt()`, `clearPromptForm()`
 
-1. **HTML** (`public/index.html`):
-   - Added toggle button "提示词构建器" above input area
-   - Created collapsible form with 5 textarea fields
-   - Required fields marked with `*`, optional fields marked as "（可选）"
-   - Actions: "清空" (clear) and "生成提示词" (generate)
-
-2. **CSS** (`public/css/style.css`):
-   - New styles for `.prompt-builder`, `.prompt-field`, `.btn-prompt-builder`
-   - Slide-down animation on open
-   - Accent colors for labels (mono font for field names)
-   - Responsive styles for mobile (stacked action buttons)
-
-3. **JavaScript** (`public/js/app.js`):
-   - `togglePromptBuilder()` - Show/hide form
-   - `generatePrompt()` - Validate required fields, build formatted prompt
-   - `clearPromptForm()` - Reset all fields with confirmation
-   - Generated prompt populates main input and closes builder
-
-**Files Modified**:
-- `public/index.html` - Added prompt builder form (lines 76-167)
-- `public/css/style.css` - Added prompt builder styles (lines 516-717, 1034-1055)
-- `public/js/app.js` - Added prompt builder logic
-
-**Design Decisions**:
-- Fields are references/guides, not strict requirements
-- Required fields ensure minimum structure for effective prompts
-- Optional fields allow advanced customization
-- Form values are not persisted (privacy-focused, matches chat behavior)
-
-**Bug Fix** (same day):
-- Issue: Button visible but not responding to clicks
-- Cause: Service Worker caching old `app.js` without prompt builder code
-- Fix: Updated `sw.js` cache version from `v1` to `v2` to force refresh
-
-**Bug Fix** (same day):
-- Issue: Prompt builder button didn't respond to clicks
-- Cause: Service Worker cached old `app.js` without prompt builder code
-- Fix: Updated `sw.js` cache version from `v1` to `v2` to force refresh
-
-**Bug Fix** (same day):
-- Issue: Prompt Builder button visible but not clickable
-- Cause: Service Worker cached old `app.js` without prompt builder code
-- Fix: Updated `sw.js` cache version from `v1` to `v2` to force refresh
-
+**Bug Fix**: Service Worker caching old `app.js` - updated cache version to force refresh
