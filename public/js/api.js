@@ -52,12 +52,15 @@ async function apiRequest(endpoint, options = {}) {
 
   const response = await fetch(`${API_BASE}${endpoint}`, config);
   
-  // Handle 401/403 - clear token and redirect to login
-  if (response.status === 401 || response.status === 403) {
+  // Handle 401 - clear token and redirect to login
+  if (response.status === 401) {
     clearToken();
     window.location.href = '/login.html';
     throw new Error('Session expired');
   }
+  
+  // Handle 403 - could be usage limit exceeded, let caller handle it
+  // Don't auto-redirect for 403
 
   return response;
 }
@@ -163,10 +166,11 @@ async function getModels() {
  * @param {Array} history - Conversation history
  * @param {AbortSignal|null} signal - Optional abort signal to cancel the request
  * @param {Function} onChunk - Callback for each streamed chunk
- * @param {Function} onDone - Callback when complete
+ * @param {Function} onDone - Callback when complete (receives usage info)
  * @param {Function} onError - Callback for errors
+ * @param {Function} onUsageLimitExceeded - Callback when usage limit is exceeded
  */
-async function sendMessage(message, model, history, signal = null, onChunk, onDone, onError) {
+async function sendMessage(message, model, history, signal = null, onChunk, onDone, onError, onUsageLimitExceeded) {
   let reader = null;
   
   try {
@@ -178,6 +182,17 @@ async function sendMessage(message, model, history, signal = null, onChunk, onDo
 
     if (!response.ok) {
       const data = await response.json();
+      
+      // Handle usage limit exceeded
+      if (response.status === 403 && data.error === 'usage_limit_exceeded') {
+        if (onUsageLimitExceeded) {
+          onUsageLimitExceeded(data);
+        } else {
+          throw new Error('You have used all your free prompts. Please request an extension.');
+        }
+        return;
+      }
+      
       throw new Error(data.error || 'Chat request failed');
     }
 
@@ -212,7 +227,8 @@ async function sendMessage(message, model, history, signal = null, onChunk, onDo
             if (data.type === 'chunk') {
               onChunk(data.content);
             } else if (data.type === 'done') {
-              onDone();
+              // Pass usage info to onDone callback
+              onDone(data.usage || null);
               return;
             } else if (data.type === 'error') {
               throw new Error(data.message);
@@ -226,7 +242,7 @@ async function sendMessage(message, model, history, signal = null, onChunk, onDo
       }
     }
     
-    onDone();
+    onDone(null);
   } catch (err) {
     // Cancel reader if still active
     if (reader && !signal?.aborted) {
@@ -303,6 +319,124 @@ async function deleteInviteCode(id) {
   return data;
 }
 
+// ============================================
+// Extension Request Functions
+// ============================================
+
+/**
+ * Get user's usage status and extension request info
+ */
+async function getUsageStatus() {
+  const response = await apiRequest('/extension/status');
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || 'Failed to get usage status');
+  }
+
+  return data;
+}
+
+/**
+ * Submit extension request for more prompts
+ * @param {string} reason - Reason for requesting extension
+ * @param {number|null} requestedAmount - Number of prompts requested (null for unlimited)
+ */
+async function requestExtension(reason, requestedAmount = null) {
+  const response = await apiRequest('/extension/request', {
+    method: 'POST',
+    body: JSON.stringify({ reason, requested_amount: requestedAmount }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || 'Failed to submit extension request');
+  }
+
+  return data;
+}
+
+// ============================================
+// Admin Extension Management Functions
+// ============================================
+
+/**
+ * Admin: Get all extension requests
+ * @param {string} status - Optional filter: 'pending', 'approved', 'rejected'
+ */
+async function getExtensionRequests(status = null) {
+  const url = status ? `/admin/extensions?status=${status}` : '/admin/extensions';
+  const response = await apiRequest(url);
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || 'Failed to get extension requests');
+  }
+
+  return data;
+}
+
+/**
+ * Admin: Approve extension request
+ * @param {string} id - Request ID
+ * @param {number|null} grantedAmount - Number of prompts to grant (null if unlimited)
+ * @param {boolean} grantUnlimited - Whether to grant unlimited access
+ * @param {string} adminResponse - Optional response message
+ */
+async function approveExtension(id, grantedAmount, grantUnlimited = false, adminResponse = '') {
+  const response = await apiRequest(`/admin/extensions/${id}/approve`, {
+    method: 'POST',
+    body: JSON.stringify({ 
+      granted_amount: grantedAmount, 
+      grant_unlimited: grantUnlimited,
+      admin_response: adminResponse 
+    }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || 'Failed to approve extension request');
+  }
+
+  return data;
+}
+
+/**
+ * Admin: Reject extension request
+ * @param {string} id - Request ID
+ * @param {string} adminResponse - Reason for rejection
+ */
+async function rejectExtension(id, adminResponse = '') {
+  const response = await apiRequest(`/admin/extensions/${id}/reject`, {
+    method: 'POST',
+    body: JSON.stringify({ admin_response: adminResponse }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || 'Failed to reject extension request');
+  }
+
+  return data;
+}
+
+/**
+ * Admin: Get all users with usage stats
+ */
+async function getUsers() {
+  const response = await apiRequest('/admin/users');
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || 'Failed to get users');
+  }
+
+  return data;
+}
+
 // Export for use in other scripts
 window.API = {
   getToken,
@@ -315,8 +449,17 @@ window.API = {
   getModels,
   sendMessage,
   logout,
+  // Admin invite functions
   generateInviteCodes,
   getInviteCodes,
   deleteInviteCode,
+  // Extension functions
+  getUsageStatus,
+  requestExtension,
+  // Admin extension functions
+  getExtensionRequests,
+  approveExtension,
+  rejectExtension,
+  getUsers,
 };
 

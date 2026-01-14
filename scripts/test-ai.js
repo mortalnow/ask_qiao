@@ -2,15 +2,17 @@
 
 /**
  * Test script to verify ChatGPT and Gemini integrations
+ * Now includes usage tracking verification
  */
 
 import dotenv from 'dotenv';
 dotenv.config();
 
-const API_BASE = 'http://localhost:3001/api';
+const API_BASE = process.env.API_BASE || 'http://localhost:3001/api';
 // Get invite code from command line or use default
 const TEST_INVITE_CODE = process.argv[2] || '7V4LV9-QGG6CZ';
 const TEST_USERNAME = 'test_user_' + Date.now();
+const TEST_PASSWORD = 'test_password_123';
 
 let authToken = null;
 
@@ -37,7 +39,8 @@ async function verifyInviteCode() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
         code: TEST_INVITE_CODE,
-        username: TEST_USERNAME
+        username: TEST_USERNAME,
+        password: TEST_PASSWORD
       }),
     });
 
@@ -85,81 +88,41 @@ async function getModels() {
   }
 }
 
-async function testChatGPT() {
-  log('\n🤖 Step 3: Testing ChatGPT...', 'cyan');
+async function checkUsageStatus() {
+  log('\n📊 Step 3: Checking usage status...', 'cyan');
   
-  const testMessage = 'Say "Hello from ChatGPT" in exactly 5 words.';
-  log(`📤 Sending: "${testMessage}"`, 'yellow');
-
   try {
-    const response = await fetch(`${API_BASE}/chat`, {
-      method: 'POST',
+    const response = await fetch(`${API_BASE}/extension/status`, {
       headers: {
-        'Authorization': `Bearer ${authToken}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        message: testMessage,
-        model: 'chatgpt',
-        history: []
-      })
+        'Authorization': `Bearer ${authToken}`
+      }
     });
 
+    const data = await response.json();
+
     if (!response.ok) {
-      const error = await response.json();
-      log(`❌ Failed: ${error.error}`, 'red');
-      return false;
+      log(`❌ Failed: ${data.error}`, 'red');
+      return null;
     }
 
-    // Read streaming response
-    const reader = response.body.getReader();
-    const decoder = new TextDecoder();
-    let fullResponse = '';
-
-    log(`📥 Response: `, 'green');
-    process.stdout.write(colors.green);
-
-    while (true) {
-      const { done, value } = await reader.read();
-      if (done) break;
-
-      const chunk = decoder.decode(value);
-      const lines = chunk.split('\n');
-
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          try {
-            const data = JSON.parse(line.slice(6));
-            if (data.type === 'chunk') {
-              process.stdout.write(data.content);
-              fullResponse += data.content;
-            } else if (data.type === 'done') {
-              break;
-            } else if (data.type === 'error') {
-              log(`\n❌ Error: ${data.message}`, 'red');
-              return false;
-            }
-          } catch (e) {
-            // Skip parse errors
-          }
-        }
-      }
-    }
-
-    process.stdout.write(colors.reset + '\n');
-    log(`✅ ChatGPT test completed!`, 'green');
-    return true;
+    const { usage } = data;
+    log(`✅ Usage Status:`, 'green');
+    log(`   - Used: ${usage.count}/${usage.limit} prompts`, 'blue');
+    log(`   - Remaining: ${usage.remaining}`, 'blue');
+    log(`   - Unlimited: ${usage.is_unlimited ? 'Yes' : 'No'}`, 'blue');
+    
+    return usage;
   } catch (err) {
     log(`❌ Error: ${err.message}`, 'red');
-    return false;
+    return null;
   }
 }
 
-async function testGemini() {
-  log('\n🤖 Step 4: Testing Gemini...', 'cyan');
+async function testChatWithUsage(model, modelName) {
+  log(`\n🤖 Testing ${modelName}...`, 'cyan');
   
-  const testMessage = 'Say "Hello from Gemini" in exactly 5 words.';
-  log(`📤 Sending: "${testMessage}"`, 'yellow');
+  const testMessage = `[PERSONA]\nYou are a helpful assistant.\n\n[TASK]\nSay "Hello from ${modelName}" in exactly 5 words.\n\n[CONTEXT]\nThis is a test message.`;
+  log(`📤 Sending structured prompt to ${modelName}...`, 'yellow');
 
   try {
     const response = await fetch(`${API_BASE}/chat`, {
@@ -170,21 +133,33 @@ async function testGemini() {
       },
       body: JSON.stringify({
         message: testMessage,
-        model: 'gemini',
+        model: model,
         history: []
       })
     });
 
+    // Check for usage limit exceeded
+    if (response.status === 403) {
+      const error = await response.json();
+      if (error.error === 'usage_limit_exceeded') {
+        log(`⚠️  Usage limit exceeded! Used: ${error.usage_count}/${error.usage_limit}`, 'yellow');
+        return { success: false, limitExceeded: true };
+      }
+      log(`❌ Failed: ${error.error}`, 'red');
+      return { success: false, limitExceeded: false };
+    }
+
     if (!response.ok) {
       const error = await response.json();
       log(`❌ Failed: ${error.error}`, 'red');
-      return false;
+      return { success: false, limitExceeded: false };
     }
 
     // Read streaming response
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
     let fullResponse = '';
+    let usageInfo = null;
 
     log(`📥 Response: `, 'green');
     process.stdout.write(colors.green);
@@ -204,10 +179,11 @@ async function testGemini() {
               process.stdout.write(data.content);
               fullResponse += data.content;
             } else if (data.type === 'done') {
+              usageInfo = data.usage;
               break;
             } else if (data.type === 'error') {
               log(`\n❌ Error: ${data.message}`, 'red');
-              return false;
+              return { success: false, limitExceeded: false };
             }
           } catch (e) {
             // Skip parse errors
@@ -217,16 +193,22 @@ async function testGemini() {
     }
 
     process.stdout.write(colors.reset + '\n');
-    log(`✅ Gemini test completed!`, 'green');
-    return true;
+    
+    if (usageInfo) {
+      log(`📊 Usage after request: ${usageInfo.count}/${usageInfo.limit}`, 'blue');
+    }
+    
+    log(`✅ ${modelName} test completed!`, 'green');
+    return { success: true, limitExceeded: false, usage: usageInfo };
   } catch (err) {
     log(`❌ Error: ${err.message}`, 'red');
-    return false;
+    return { success: false, limitExceeded: false };
   }
 }
 
 async function main() {
   log('\n🧪 Testing AI Chat Wrapper Integrations\n', 'cyan');
+  log('This test now includes usage tracking verification.\n', 'blue');
   
   // Check if server is running
   try {
@@ -236,21 +218,48 @@ async function main() {
     process.exit(1);
   }
 
-  // Run tests
-  const steps = [
-    verifyInviteCode,
-    getModels,
-    testChatGPT,
-    testGemini
-  ];
+  // Step 1: Authenticate
+  const authSuccess = await verifyInviteCode();
+  if (!authSuccess) {
+    log('\n❌ Authentication failed. Cannot continue.', 'red');
+    log('💡 Make sure you have a valid unused invite code.', 'yellow');
+    log(`   Usage: node scripts/test-ai.js <INVITE_CODE>`, 'yellow');
+    process.exit(1);
+  }
 
-  for (const step of steps) {
-    const success = await step();
-    if (!success && step === verifyInviteCode) {
-      log('\n❌ Authentication failed. Cannot continue.', 'red');
-      process.exit(1);
-    }
-    // Continue even if one test fails
+  // Step 2: Get models
+  await getModels();
+
+  // Step 3: Check initial usage
+  const initialUsage = await checkUsageStatus();
+  if (!initialUsage) {
+    log('⚠️  Could not get usage status, continuing anyway...', 'yellow');
+  }
+
+  // Step 4: Test ChatGPT
+  const chatGptResult = await testChatWithUsage('chatgpt', 'ChatGPT');
+  
+  // Step 5: Test Gemini (if we haven't hit the limit)
+  let geminiResult = { success: false, limitExceeded: false };
+  if (!chatGptResult.limitExceeded) {
+    geminiResult = await testChatWithUsage('gemini', 'Gemini');
+  } else {
+    log('\n⏭️  Skipping Gemini test (usage limit exceeded)', 'yellow');
+  }
+
+  // Step 6: Check final usage
+  const finalUsage = await checkUsageStatus();
+
+  // Summary
+  log('\n📊 Test Summary:', 'cyan');
+  log(`   ChatGPT: ${chatGptResult.success ? '✅ PASSED' : (chatGptResult.limitExceeded ? '⚠️  LIMIT EXCEEDED' : '❌ FAILED')}`, chatGptResult.success ? 'green' : 'yellow');
+  log(`   Gemini:  ${geminiResult.success ? '✅ PASSED' : (geminiResult.limitExceeded ? '⚠️  LIMIT EXCEEDED' : '❌ FAILED')}`, geminiResult.success ? 'green' : 'yellow');
+  
+  if (finalUsage) {
+    log(`\n📊 Usage Summary:`, 'cyan');
+    log(`   Started at: ${initialUsage?.count || 0}/${initialUsage?.limit || 5}`, 'blue');
+    log(`   Ended at:   ${finalUsage.count}/${finalUsage.limit}`, 'blue');
+    log(`   Remaining:  ${finalUsage.remaining}`, 'blue');
   }
 
   log('\n✨ All tests completed!\n', 'green');
@@ -260,4 +269,3 @@ main().catch(err => {
   log(`\n❌ Fatal error: ${err.message}`, 'red');
   process.exit(1);
 });
-

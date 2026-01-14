@@ -107,7 +107,7 @@ body {
 .chat-header {
   display: flex;
   align-items: center;
-  justify-content: flex-end;
+  justify-content: space-between;
   padding: var(--spacing-md);
   padding-top: calc(var(--spacing-md) + var(--safe-top));
   background: var(--bg-secondary);
@@ -1395,5 +1395,234 @@ body {
 
   .header-right {
     gap: 2px;
+  }
+}
+
+/* ============================================
+   Usage Counter
+   ============================================ */
+
+.header-left {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+}
+
+.usage-counter {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: var(--spacing-xs) var(--spacing-sm);
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-full);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+}
+
+.usage-counter.usage-warning {
+  background: rgba(239, 68, 68, 0.2);
+  color: var(--error);
+}
+
+/* ============================================
+   Mandatory Prompt Builder
+   ============================================ */
+
+.prompt-builder-mandatory {
+  display: block !important;
+  border-top: none;
+  border-radius: var(--radius-lg);
+  margin: 0;
+}
+
+.prompt-builder-title-area {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xs);
+}
+
+.prompt-builder-subtitle {
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  font-weight: normal;
+}
+
+.prompt-builder-footer {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: var(--spacing-md);
+  padding-top: var(--spacing-md);
+  border-top: 1px solid var(--bg-tertiary);
+}
+
+.btn-send-prompt {
+  min-width: 120px;
+}
+
+/* ============================================
+   Extension Modal
+   ============================================ */
+
+.modal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  padding: var(--spacing-md);
+}
+
+.modal-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(4px);
+}
+
+.modal-content {
+  position: relative;
+  width: 100%;
+  max-width: 480px;
+  max-height: 90vh;
+  overflow-y: auto;
+  background: var(--bg-secondary);
+  border: 1px solid var(--bg-tertiary);
+  border-radius: var(--radius-lg);
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+}
+
+.modal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-lg);
+  border-bottom: 1px solid var(--bg-tertiary);
+}
+
+.modal-header h3 {
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.modal-body {
+  padding: var(--spacing-lg);
+}
+
+.extension-info {
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-md);
+  background: rgba(99, 102, 241, 0.1);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.extension-notice {
+  margin-bottom: var(--spacing-lg);
+  padding: var(--spacing-md);
+  background: rgba(245, 158, 11, 0.1);
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: var(--radius-md);
+  color: var(--warning);
+  font-size: 0.9rem;
+}
+
+.extension-form .form-field {
+  margin-bottom: var(--spacing-md);
+}
+
+.extension-form label {
+  display: block;
+  margin-bottom: var(--spacing-xs);
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.extension-form select,
+.extension-form textarea {
+  width: 100%;
+  padding: var(--spacing-sm) var(--spacing-md);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--bg-hover);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+}
+
+.extension-form select:focus,
+.extension-form textarea:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+}
+
+.extension-form .field-hint {
+  margin-top: var(--spacing-xs);
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.form-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  justify-content: flex-end;
+  margin-top: var(--spacing-lg);
+}
+
+.extension-status {
+  margin-top: var(--spacing-lg);
+  padding: var(--spacing-md);
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+}
+
+.extension-status h4 {
+  margin-bottom: var(--spacing-sm);
+  font-size: 0.9rem;
+}
+
+.extension-status p {
+  margin-bottom: var(--spacing-xs);
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
+.status-pending {
+  color: var(--warning);
+}
+
+.status-approved {
+  color: var(--success);
+}
+
+.status-rejected {
+  color: var(--error);
+}
+
+/* Mobile adjustments for modal */
+@media (max-width: 480px) {
+  .modal-content {
+    max-height: 85vh;
+  }
+  
+  .modal-header,
+  .modal-body {
+    padding: var(--spacing-md);
+  }
+  
+  .form-actions {
+    flex-direction: column;
+  }
+  
+  .form-actions button {
+    width: 100%;
   }
 }

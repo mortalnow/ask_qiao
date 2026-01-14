@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { authenticateToken } from '../middleware/auth.js';
+import { authenticateToken, checkUsageLimit, incrementUsage } from '../middleware/auth.js';
 import * as openaiService from '../services/openai.js';
 import * as geminiService from '../services/gemini.js';
 
@@ -38,8 +38,9 @@ router.get('/models', authenticateToken, async (req, res) => {
 /**
  * POST /api/chat
  * Send message to selected AI model with streaming response
+ * Checks usage limit and increments usage count on success
  */
-router.post('/', authenticateToken, async (req, res) => {
+router.post('/', authenticateToken, checkUsageLimit, async (req, res) => {
   const { message, model, history = [] } = req.body;
 
   // Validate input
@@ -91,9 +92,25 @@ router.post('/', authenticateToken, async (req, res) => {
         }
       },
       // onDone
-      () => {
+      async () => {
         try {
-          res.write(`data: ${JSON.stringify({ type: 'done' })}\n\n`);
+          // Increment usage count for non-unlimited users
+          if (req.dbUser && !req.dbUser.is_unlimited) {
+            await incrementUsage(req.user.id);
+          }
+          
+          // Get updated usage info
+          const newUsageCount = req.dbUser?.is_unlimited ? null : (req.dbUser?.usage_count || 0) + 1;
+          const usageLimit = req.dbUser?.is_unlimited ? null : req.dbUser?.usage_limit;
+          
+          res.write(`data: ${JSON.stringify({ 
+            type: 'done',
+            usage: {
+              count: newUsageCount,
+              limit: usageLimit,
+              is_unlimited: req.dbUser?.is_unlimited || false
+            }
+          })}\n\n`);
           res.end();
         } catch (writeErr) {
           // Client disconnected, ignore

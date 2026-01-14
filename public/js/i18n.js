@@ -60,6 +60,30 @@ const translations = {
     // Validation
     'promptBuilder.validation': '请填写所有必填字段：[PERSONA]、[TASK] 和 [CONTEXT]',
     'promptBuilder.clearConfirm': '确定要清空所有字段吗？',
+    'promptBuilder.send': '发送提问',
+    'promptBuilder.subtitle': '通过结构化提问学习与AI高效沟通',
+    
+    // Usage Counter
+    'usage.prompts': '次提问',
+    'usage.counter': '已使用',
+    'usage.unlimited': '无限制',
+    
+    // Extension Requests
+    'extension.modalTitle': '申请更多提问次数',
+    'extension.limitReached': '您已用完免费提问次数。请填写以下表单申请更多次数。',
+    'extension.pendingNotice': '您已有一个待处理的申请，请等待管理员审核。',
+    'extension.amountLabel': '申请次数',
+    'extension.reasonLabel': '申请理由 *',
+    'extension.reasonPlaceholder': '请说明您申请更多次数的原因（至少10个字符）...',
+    'extension.reasonHint': '请简要说明您的使用目的和申请原因',
+    'extension.submit': '提交申请',
+    'extension.submitSuccess': '申请已提交，请等待管理员审核',
+    'extension.reasonMinLength': '申请理由至少需要10个字符',
+    'extension.statusTitle': '申请状态',
+    
+    // Common
+    'common.cancel': '取消',
+    'common.submitting': '提交中...',
     
     // Login page
     'login.tab.login': '登录',
@@ -141,6 +165,30 @@ const translations = {
     // Validation
     'promptBuilder.validation': 'Please fill in all required fields: [PERSONA], [TASK], and [CONTEXT]',
     'promptBuilder.clearConfirm': 'Are you sure you want to clear all fields?',
+    'promptBuilder.send': 'Send Prompt',
+    'promptBuilder.subtitle': 'Learn effective AI communication through structured prompts',
+    
+    // Usage Counter
+    'usage.prompts': 'prompts',
+    'usage.counter': 'Used',
+    'usage.unlimited': 'Unlimited',
+    
+    // Extension Requests
+    'extension.modalTitle': 'Request More Prompts',
+    'extension.limitReached': 'You have used all your free prompts. Please fill out the form below to request more.',
+    'extension.pendingNotice': 'You already have a pending request. Please wait for admin review.',
+    'extension.amountLabel': 'Requested Amount',
+    'extension.reasonLabel': 'Reason *',
+    'extension.reasonPlaceholder': 'Please explain why you need more prompts (at least 10 characters)...',
+    'extension.reasonHint': 'Briefly explain your purpose and reason for requesting more prompts',
+    'extension.submit': 'Submit Request',
+    'extension.submitSuccess': 'Request submitted successfully. Please wait for admin review.',
+    'extension.reasonMinLength': 'Reason must be at least 10 characters',
+    'extension.statusTitle': 'Request Status',
+    
+    // Common
+    'common.cancel': 'Cancel',
+    'common.submitting': 'Submitting...',
     
     // Login page
     'login.tab.login': 'Login',

@@ -1,20 +1,20 @@
 #!/usr/bin/env node
 
 /**
- * Script to check if a user exists and verify login credentials
+ * Script to check if a user exists, verify login credentials, and show usage stats
  * Usage: node scripts/check-user.js [username] [password]
  */
 
 import bcrypt from 'bcrypt';
 import mongoose from '../server/db/init.js';
-import { User } from '../server/db/models.js';
+import { User, ExtensionRequest } from '../server/db/models.js';
 
 async function main() {
   const args = process.argv.slice(2);
   const username = args[0] || 'mortalnow@gmail.com';
   const password = args[1] || '111111';
 
-  console.log('\n🔍 Checking user login credentials...\n');
+  console.log('\n🔍 Checking user login credentials and usage stats...\n');
   console.log(`Username: ${username}`);
   console.log(`Password: ${password}\n`);
 
@@ -39,8 +39,8 @@ async function main() {
 
     console.log('✅ Connected to MongoDB Atlas\n');
 
-    // List all users
-    const allUsers = await User.find({}).select('username is_admin created_at password_hash');
+    // List all users with usage info
+    const allUsers = await User.find({}).select('username is_admin usage_count usage_limit is_unlimited created_at password_hash');
     console.log(`📊 Total users in database: ${allUsers.length}\n`);
 
     if (allUsers.length > 0) {
@@ -48,9 +48,12 @@ async function main() {
       allUsers.forEach((user, index) => {
         const hasPassword = user.password_hash ? '✅' : '❌';
         const adminStatus = user.is_admin ? '👑 ADMIN' : '👤 USER';
+        const usageStatus = user.is_unlimited ? '♾️  Unlimited' : `${user.usage_count || 0}/${user.usage_limit || 5}`;
+        
         console.log(`  ${index + 1}. Username: "${user.username}"`);
         console.log(`     Has Password: ${hasPassword}`);
         console.log(`     Status: ${adminStatus}`);
+        console.log(`     Usage: ${usageStatus} prompts`);
         console.log(`     Created: ${user.created_at}`);
         console.log(`     ID: ${user._id}`);
         console.log('');
@@ -69,7 +72,6 @@ async function main() {
     }
 
     if (!user) {
-      // Try partial match (in case username is different)
       console.log(`\n❌ User "${username}" not found!\n`);
       console.log('💡 Possible issues:');
       console.log('   1. The username might be different (check list above)');
@@ -99,6 +101,43 @@ async function main() {
     console.log(`   ID: ${user._id}`);
     console.log(`   Admin: ${user.is_admin ? 'Yes 👑' : 'No'}`);
     console.log(`   Has Password: ${user.password_hash ? 'Yes ✅' : 'No ❌'}`);
+    console.log('');
+    console.log('   📊 Usage Stats:');
+    console.log(`      Unlimited: ${user.is_unlimited ? 'Yes ♾️' : 'No'}`);
+    console.log(`      Usage Count: ${user.usage_count || 0}`);
+    console.log(`      Usage Limit: ${user.usage_limit || 5}`);
+    console.log(`      Remaining: ${user.is_unlimited ? 'N/A' : Math.max(0, (user.usage_limit || 5) - (user.usage_count || 0))}`);
+
+    // Check for pending extension requests
+    const pendingRequest = await ExtensionRequest.findOne({
+      user: user._id,
+      status: 'pending'
+    });
+
+    if (pendingRequest) {
+      console.log('');
+      console.log('   ⏳ Pending Extension Request:');
+      console.log(`      Requested: ${pendingRequest.requested_amount || 'Unlimited'} prompts`);
+      console.log(`      Reason: "${pendingRequest.reason}"`);
+      console.log(`      Created: ${pendingRequest.created_at}`);
+    }
+
+    // Check recent extension requests
+    const recentRequests = await ExtensionRequest.find({ user: user._id })
+      .sort({ created_at: -1 })
+      .limit(3);
+
+    if (recentRequests.length > 0) {
+      console.log('');
+      console.log('   📜 Recent Extension Requests:');
+      recentRequests.forEach((req, index) => {
+        const statusIcon = req.status === 'approved' ? '✅' : req.status === 'rejected' ? '❌' : '⏳';
+        const amount = req.granted_unlimited ? 'Unlimited' : 
+                       req.granted_amount ? `${req.granted_amount} prompts` :
+                       req.requested_amount ? `${req.requested_amount} prompts` : 'Unlimited';
+        console.log(`      ${index + 1}. ${statusIcon} ${req.status.toUpperCase()} - ${amount}`);
+      });
+    }
 
     if (!user.password_hash) {
       console.log(`\n❌ User account has no password set!`);
@@ -109,7 +148,7 @@ async function main() {
 
     // Check password
     const passwordMatch = await bcrypt.compare(password, user.password_hash);
-    console.log(`   Password Match: ${passwordMatch ? 'Yes ✅' : 'No ❌'}`);
+    console.log(`\n   Password Match: ${passwordMatch ? 'Yes ✅' : 'No ❌'}`);
 
     if (!passwordMatch) {
       console.log(`\n❌ Password does not match!`);
@@ -132,4 +171,3 @@ async function main() {
 }
 
 main();
-

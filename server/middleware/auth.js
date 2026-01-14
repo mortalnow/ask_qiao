@@ -1,5 +1,6 @@
 import jwt from 'jsonwebtoken';
 import { config } from '../config.js';
+import { User } from '../db/models.js';
 
 /**
  * JWT authentication middleware
@@ -42,5 +43,55 @@ export function requireAdmin(req, res, next) {
     return res.status(403).json({ error: 'Admin access required' });
   }
   next();
+}
+
+/**
+ * Check usage limit middleware
+ * Must be used after authenticateToken
+ * Attaches dbUser to request for later use
+ */
+export async function checkUsageLimit(req, res, next) {
+  try {
+    const user = await User.findById(req.user.id);
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    // Admin users with is_unlimited bypass the check
+    if (user.is_unlimited) {
+      req.dbUser = user;
+      return next();
+    }
+    
+    // Check if user has exceeded their limit
+    if (user.usage_count >= user.usage_limit) {
+      return res.status(403).json({
+        error: 'usage_limit_exceeded',
+        message: 'You have used all your free prompts. Please request an extension.',
+        usage_count: user.usage_count,
+        usage_limit: user.usage_limit
+      });
+    }
+    
+    // Attach user to request for incrementing usage later
+    req.dbUser = user;
+    next();
+  } catch (err) {
+    console.error('Check usage limit error:', err);
+    return res.status(500).json({ error: 'Failed to check usage limit' });
+  }
+}
+
+/**
+ * Increment user's usage count
+ * Call this after successful chat response
+ */
+export async function incrementUsage(userId) {
+  try {
+    await User.findByIdAndUpdate(userId, { $inc: { usage_count: 1 } });
+  } catch (err) {
+    console.error('Increment usage error:', err);
+  }
 }
 

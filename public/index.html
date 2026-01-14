@@ -35,6 +35,12 @@
   <div id="app" class="app-container">
     <!-- Header -->
     <header class="chat-header">
+      <div class="header-left">
+        <!-- Usage Counter -->
+        <div id="usage-counter" class="usage-counter" style="display: none;">
+          <span id="usage-text" data-i18n="usage.counter">0/5 次提问</span>
+        </div>
+      </div>
       <div class="header-right">
         <button id="history-btn" class="btn-icon btn-history" data-i18n-title="header.history" title="历史记录">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -92,29 +98,13 @@
 
     <!-- Input Area -->
     <footer class="chat-input-area">
-      <!-- Prompt Builder Toggle -->
-      <div class="prompt-builder-toggle">
-        <button type="button" id="prompt-builder-btn" class="btn-prompt-builder">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-            <rect x="3" y="3" width="18" height="18" rx="2"/>
-            <line x1="7" y1="8" x2="17" y2="8"/>
-            <line x1="7" y1="12" x2="14" y2="12"/>
-            <line x1="7" y1="16" x2="11" y2="16"/>
-          </svg>
-          <span data-i18n="promptBuilder.toggle">问题构建器</span>
-        </button>
-        <span class="prompt-builder-desc" data-i18n="promptBuilder.desc">填表来问，获得更好的AI回复</span>
-      </div>
-
-      <!-- Prompt Builder Form -->
-      <div id="prompt-builder" class="prompt-builder" style="display: none;">
+      <!-- Prompt Builder Form (Always Visible - Mandatory) -->
+      <div id="prompt-builder" class="prompt-builder prompt-builder-mandatory">
         <div class="prompt-builder-header">
-          <h3 data-i18n="promptBuilder.title">问题构建器</h3>
-          <button type="button" id="close-prompt-builder" class="btn-icon-small">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M18 6L6 18M6 6l12 12"/>
-            </svg>
-          </button>
+          <div class="prompt-builder-title-area">
+            <h3 data-i18n="promptBuilder.title">问题构建器</h3>
+            <span class="prompt-builder-subtitle" data-i18n="promptBuilder.subtitle">通过结构化提问学习与AI高效沟通</span>
+          </div>
         </div>
         <form id="prompt-form" class="prompt-form">
           <div class="prompt-field">
@@ -189,32 +179,70 @@
 
           <div class="prompt-builder-actions">
             <button type="button" id="clear-prompt-form" class="btn-secondary" data-i18n="promptBuilder.clear">清空</button>
-            <button type="button" id="generate-prompt" class="btn-primary" data-i18n="promptBuilder.generate">生成提示词</button>
+            <button type="button" id="send-prompt" class="btn-primary btn-send-prompt" data-i18n="promptBuilder.send">发送提问</button>
+          </div>
+          <div class="prompt-builder-footer">
+            <span class="current-model"><span data-i18n="chat.currentModel">当前模型：</span><strong id="current-model-label">GPT-5.2</strong></span>
           </div>
         </form>
       </div>
+    </footer>
 
-      <form id="chat-form" class="chat-form">
-        <div class="input-wrapper">
-          <textarea
-            id="message-input"
-            data-i18n-placeholder="chat.placeholder"
-            placeholder="输入您的消息..."
-            rows="1"
-            maxlength="32000"
-          ></textarea>
-          <button type="submit" id="send-btn" class="btn-send" disabled>
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/>
+    <!-- Extension Request Modal -->
+    <div id="extension-modal" class="modal" style="display: none;">
+      <div class="modal-overlay"></div>
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3 data-i18n="extension.modalTitle">申请更多提问次数</h3>
+          <button type="button" id="close-extension-modal" class="btn-icon-small">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 6L6 18M6 6l12 12"/>
             </svg>
           </button>
         </div>
-        <div class="input-footer">
-          <span id="char-count">0 / 32000</span>
-          <span class="current-model"><span data-i18n="chat.currentModel">当前模型：</span><strong id="current-model-label">GPT-5.2</strong></span>
+        <div class="modal-body">
+          <p class="extension-info" data-i18n="extension.limitReached">您已用完免费提问次数。请填写以下表单申请更多次数。</p>
+          
+          <div id="extension-pending-notice" class="extension-notice" style="display: none;">
+            <p data-i18n="extension.pendingNotice">您已有一个待处理的申请，请等待管理员审核。</p>
+          </div>
+          
+          <form id="extension-form" class="extension-form">
+            <div class="form-field">
+              <label for="extension-amount" data-i18n="extension.amountLabel">申请次数</label>
+              <select id="extension-amount">
+                <option value="5">5 次</option>
+                <option value="10">10 次</option>
+                <option value="20">20 次</option>
+                <option value="">无限制</option>
+              </select>
+            </div>
+            <div class="form-field">
+              <label for="extension-reason" data-i18n="extension.reasonLabel">申请理由 *</label>
+              <textarea 
+                id="extension-reason" 
+                rows="3" 
+                data-i18n-placeholder="extension.reasonPlaceholder"
+                placeholder="请说明您申请更多次数的原因（至少10个字符）..."
+                required
+                minlength="10"
+                maxlength="500"
+              ></textarea>
+              <div class="field-hint" data-i18n="extension.reasonHint">请简要说明您的使用目的和申请原因</div>
+            </div>
+            <div class="form-actions">
+              <button type="button" id="cancel-extension" class="btn-secondary" data-i18n="common.cancel">取消</button>
+              <button type="submit" id="submit-extension" class="btn-primary" data-i18n="extension.submit">提交申请</button>
+            </div>
+          </form>
+          
+          <div id="extension-status" class="extension-status" style="display: none;">
+            <h4 data-i18n="extension.statusTitle">申请状态</h4>
+            <div id="extension-status-content"></div>
+          </div>
         </div>
-      </form>
-    </footer>
+      </div>
+    </div>
   </div>
 
   <script src="/js/i18n.js"></script>

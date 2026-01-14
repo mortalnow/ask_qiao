@@ -1,5 +1,6 @@
 /**
- * Main Chat Application
+ * Main Chat Application - Prompt-Based Education Service
+ * Users must use the prompt builder to send messages
  */
 
 document.addEventListener('DOMContentLoaded', () => {
@@ -16,27 +17,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // DOM Elements
   const messagesContainer = document.getElementById('chat-messages');
-  const chatForm = document.getElementById('chat-form');
-  const messageInput = document.getElementById('message-input');
-  const sendBtn = document.getElementById('send-btn');
   const modelSelect = document.getElementById('model-select');
   const currentModelLabel = document.getElementById('current-model-label');
-  const charCount = document.getElementById('char-count');
   const logoutBtn = document.getElementById('logout-btn');
   const adminLink = document.getElementById('admin-link');
   const langToggleBtn = document.getElementById('lang-toggle');
   
+  // Usage Counter Elements
+  const usageCounter = document.getElementById('usage-counter');
+  const usageText = document.getElementById('usage-text');
+  
   // Prompt Builder Elements
-  const promptBuilderBtn = document.getElementById('prompt-builder-btn');
   const promptBuilder = document.getElementById('prompt-builder');
-  const closePromptBuilderBtn = document.getElementById('close-prompt-builder');
   const promptForm = document.getElementById('prompt-form');
   const personaInput = document.getElementById('persona-input');
   const taskInput = document.getElementById('task-input');
   const contextInput = document.getElementById('context-input');
   const formatInput = document.getElementById('format-input');
   const referencesInput = document.getElementById('references-input');
-  const generatePromptBtn = document.getElementById('generate-prompt');
+  const sendPromptBtn = document.getElementById('send-prompt');
   const clearPromptFormBtn = document.getElementById('clear-prompt-form');
 
   // History Sidebar Elements
@@ -46,6 +45,17 @@ document.addEventListener('DOMContentLoaded', () => {
   const closeHistoryBtn = document.getElementById('close-history');
   const historyList = document.getElementById('history-list');
   const historyOverlay = document.getElementById('history-overlay');
+  
+  // Extension Modal Elements
+  const extensionModal = document.getElementById('extension-modal');
+  const closeExtensionModalBtn = document.getElementById('close-extension-modal');
+  const extensionForm = document.getElementById('extension-form');
+  const extensionAmountSelect = document.getElementById('extension-amount');
+  const extensionReasonInput = document.getElementById('extension-reason');
+  const cancelExtensionBtn = document.getElementById('cancel-extension');
+  const submitExtensionBtn = document.getElementById('submit-extension');
+  const extensionPendingNotice = document.getElementById('extension-pending-notice');
+  const extensionStatus = document.getElementById('extension-status');
 
   // State
   let chatHistory = [];
@@ -53,6 +63,14 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentStreamingMessage = null;
   let currentStreamAbortController = null;
   let currentStreamFullResponse = '';
+  
+  // Usage state
+  let usageInfo = {
+    count: 0,
+    limit: 5,
+    remaining: 5,
+    is_unlimited: false
+  };
   
   // Session management
   let currentSessionId = null;
@@ -64,7 +82,7 @@ document.addEventListener('DOMContentLoaded', () => {
     gemini: 'Gemini 3 Flash'
   };
 
-  // Model icons - use img for assistant avatars
+  // Model icons
   const modelIcons = {
     chatgpt: '<img src="/icons/qiao.png" alt="Qiao" class="avatar-img">',
     gemini: '<img src="/icons/qiao.png" alt="Qiao" class="avatar-img">'
@@ -75,14 +93,17 @@ document.addEventListener('DOMContentLoaded', () => {
   init();
 
   async function init() {
-    // Check if user is admin
+    // Check if user is admin and fetch usage status
     try {
       const user = await window.API.getCurrentUser();
       if (user.isAdmin && adminLink) {
         adminLink.style.display = 'flex';
       }
+      
+      // Fetch usage status
+      await fetchUsageStatus();
     } catch (err) {
-      console.error('Failed to check admin status:', err);
+      console.error('Failed to initialize:', err);
     }
 
     // Load sessions from local storage
@@ -94,7 +115,6 @@ document.addEventListener('DOMContentLoaded', () => {
       currentSessionId = savedSessionId;
       chatHistory = sessions[savedSessionId].messages || [];
     } else {
-      // Create a new session
       startNewSession();
     }
     
@@ -107,8 +127,43 @@ document.addEventListener('DOMContentLoaded', () => {
     // Set up event listeners
     setupEventListeners();
 
-    // Focus input
-    messageInput.focus();
+    // Focus first prompt builder input
+    personaInput?.focus();
+  }
+  
+  async function fetchUsageStatus() {
+    try {
+      const data = await window.API.getUsageStatus();
+      usageInfo = data.usage;
+      updateUsageDisplay();
+      
+      // Check for pending extension request
+      if (data.extension?.has_pending) {
+        // User has a pending request
+        console.log('User has pending extension request');
+      }
+    } catch (err) {
+      console.error('Failed to fetch usage status:', err);
+    }
+  }
+  
+  function updateUsageDisplay() {
+    if (!usageCounter || !usageText) return;
+    
+    if (usageInfo.is_unlimited) {
+      usageCounter.style.display = 'none';
+    } else {
+      usageCounter.style.display = 'flex';
+      const t = window.i18n ? window.i18n.t.bind(window.i18n) : (k) => k;
+      usageText.textContent = `${usageInfo.count}/${usageInfo.limit} ${t('usage.prompts') || '次提问'}`;
+      
+      // Add warning class if close to limit
+      if (usageInfo.remaining <= 1) {
+        usageCounter.classList.add('usage-warning');
+      } else {
+        usageCounter.classList.remove('usage-warning');
+      }
+    }
   }
 
   function setupEventListeners() {
@@ -122,17 +177,10 @@ document.addEventListener('DOMContentLoaded', () => {
         if (model) {
           modelSelect.value = model;
           updateModelLabel();
-          messageInput.focus();
+          personaInput?.focus();
         }
       });
     });
-
-    // Message input
-    messageInput.addEventListener('input', handleInputChange);
-    messageInput.addEventListener('keydown', handleKeyDown);
-
-    // Form submit
-    chatForm.addEventListener('submit', handleSubmit);
 
     // Logout
     logoutBtn.addEventListener('click', () => {
@@ -147,7 +195,7 @@ document.addEventListener('DOMContentLoaded', () => {
       langToggleBtn.addEventListener('click', () => {
         if (window.i18n) {
           window.i18n.toggleLanguage();
-          // Re-render chat history to update welcome message if visible
+          updateUsageDisplay();
           if (chatHistory.length === 0) {
             renderChatHistory();
           }
@@ -155,15 +203,9 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
-    // Prompt Builder
-    if (promptBuilderBtn) {
-      promptBuilderBtn.addEventListener('click', togglePromptBuilder);
-    }
-    if (closePromptBuilderBtn) {
-      closePromptBuilderBtn.addEventListener('click', togglePromptBuilder);
-    }
-    if (generatePromptBtn) {
-      generatePromptBtn.addEventListener('click', generatePrompt);
+    // Prompt Builder - Send button (main action)
+    if (sendPromptBtn) {
+      sendPromptBtn.addEventListener('click', sendPrompt);
     }
     if (clearPromptFormBtn) {
       clearPromptFormBtn.addEventListener('click', clearPromptForm);
@@ -176,7 +218,8 @@ document.addEventListener('DOMContentLoaded', () => {
         startNewSession();
         renderChatHistory();
         renderHistoryList();
-        messageInput.focus();
+        clearPromptFormFields();
+        personaInput?.focus();
       });
     }
     
@@ -190,6 +233,20 @@ document.addEventListener('DOMContentLoaded', () => {
     if (historyOverlay) {
       historyOverlay.addEventListener('click', toggleHistorySidebar);
     }
+    
+    // Extension Modal
+    if (closeExtensionModalBtn) {
+      closeExtensionModalBtn.addEventListener('click', hideExtensionModal);
+    }
+    if (cancelExtensionBtn) {
+      cancelExtensionBtn.addEventListener('click', hideExtensionModal);
+    }
+    if (extensionForm) {
+      extensionForm.addEventListener('submit', handleExtensionSubmit);
+    }
+    if (extensionModal) {
+      extensionModal.querySelector('.modal-overlay')?.addEventListener('click', hideExtensionModal);
+    }
   }
 
   function updateModelLabel() {
@@ -197,86 +254,42 @@ document.addEventListener('DOMContentLoaded', () => {
     currentModelLabel.textContent = modelNames[model] || model;
   }
 
-  function handleInputChange() {
-    // Auto-resize textarea
-    messageInput.style.height = 'auto';
-    messageInput.style.height = Math.min(messageInput.scrollHeight, 150) + 'px';
-
-    // Update character count
-    const length = messageInput.value.length;
-    charCount.textContent = `${length} / 32000`;
-
-    // Enable/disable send button
-    sendBtn.disabled = !messageInput.value.trim() || isStreaming;
-  }
-
-  function handleKeyDown(e) {
-    // Submit on Enter (without Shift)
-    if (e.key === 'Enter' && !e.shiftKey) {
-      e.preventDefault();
-      if (messageInput.value.trim() && !isStreaming) {
-        handleSubmit(e);
-      }
+  // Main send function - builds prompt and sends
+  async function sendPrompt() {
+    if (isStreaming) return;
+    
+    // Check usage limit first
+    if (!usageInfo.is_unlimited && usageInfo.remaining <= 0) {
+      showExtensionModal();
+      return;
     }
-  }
+    
+    // Get required fields
+    const persona = personaInput?.value.trim() || '';
+    const task = taskInput?.value.trim() || '';
+    const context = contextInput?.value.trim() || '';
 
-  async function handleSubmit(e) {
-    e.preventDefault();
-
-    const message = messageInput.value.trim();
-    if (!message) return;
-
-    // If currently streaming, cancel it and combine messages
-    if (isStreaming && currentStreamAbortController) {
-      // Cancel current stream
-      currentStreamAbortController.abort();
-      
-      // Remove incomplete assistant message
-      if (currentStreamingMessage) {
-        const assistantMsgElement = currentStreamingMessage.closest('.message');
-        if (assistantMsgElement) {
-          assistantMsgElement.remove();
-        }
-        // Remove from history
-        if (chatHistory.length > 0 && chatHistory[chatHistory.length - 1].role === 'assistant') {
-          chatHistory.pop();
-        }
-      }
-      
-      // Combine last user message with new message
-      if (chatHistory.length > 0 && chatHistory[chatHistory.length - 1].role === 'user') {
-        const lastUserMsg = chatHistory[chatHistory.length - 1].content;
-        const combinedMessage = lastUserMsg + '\n\n' + message;
-        chatHistory[chatHistory.length - 1].content = combinedMessage;
-        
-        // Update the last user message in UI
-        const lastUserElement = messagesContainer.querySelector('.message.user:last-child');
-        if (lastUserElement) {
-          const bubble = lastUserElement.querySelector('.message-text');
-          if (bubble) {
-            bubble.innerHTML = formatMessage(combinedMessage);
-          }
-        }
-      } else {
-        // No previous user message, just add new one
-        addMessage('user', message);
-      }
-      
-      // Reset streaming state
-      isStreaming = false;
-      currentStreamingMessage = null;
-      currentStreamAbortController = null;
-      currentStreamFullResponse = '';
-    } else if (isStreaming) {
-      // Already streaming and can't cancel, ignore
+    // Validate required fields
+    if (!persona || !task || !context) {
+      const msg = window.i18n ? window.i18n.t('promptBuilder.validation') : '请填写所有必填字段：[PERSONA]、[TASK] 和 [CONTEXT]';
+      alert(msg);
       return;
     }
 
-    const model = modelSelect.value;
+    // Get optional fields
+    const format = formatInput?.value.trim() || '';
+    const references = referencesInput?.value.trim() || '';
 
-    // Clear input
-    messageInput.value = '';
-    handleInputChange();
+    // Build structured prompt
+    let message = `[PERSONA]\n${persona}\n\n[TASK]\n${task}\n\n[CONTEXT]\n${context}`;
+    if (format) {
+      message += `\n\n[FORMAT]\n${format}`;
+    }
+    if (references) {
+      message += `\n\n[REFERENCES]\n${references}`;
+    }
+
+    const model = modelSelect.value;
 
     // Hide welcome message
     const welcomeMessage = messagesContainer.querySelector('.welcome-message');
@@ -284,15 +297,8 @@ document.addEventListener('DOMContentLoaded', () => {
       welcomeMessage.remove();
     }
 
-    // Add user message (if we combined messages above, it's already added)
-    // Check if last message in history is the one we just combined
-    const wasCombined = chatHistory.length > 0 && 
-                       chatHistory[chatHistory.length - 1].role === 'user' &&
-                       chatHistory[chatHistory.length - 1].content.includes('\n\n');
-    
-    if (!wasCombined) {
-      addMessage('user', message);
-    }
+    // Add user message to UI
+    addMessage('user', message);
 
     // Add assistant message placeholder
     const assistantMessage = addMessage('assistant', '', model);
@@ -300,7 +306,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Start streaming
     isStreaming = true;
-    sendBtn.disabled = true;
+    sendPromptBtn.disabled = true;
     currentStreamFullResponse = '';
 
     // Show typing indicator
@@ -312,16 +318,16 @@ document.addEventListener('DOMContentLoaded', () => {
       </div>
     `;
 
-    // Build history for API (exclude the incomplete assistant message if exists)
+    // Build history for API
     const apiHistory = chatHistory
-      .filter(msg => msg.role !== 'assistant' || msg.content) // Remove empty assistant messages
-      .slice(0, -1) // Exclude the user message we just added
+      .filter(msg => msg.role !== 'assistant' || msg.content)
+      .slice(0, -1)
       .map(msg => ({
         role: msg.role,
         content: msg.content
       }));
 
-    // Create abort controller for this stream
+    // Create abort controller
     currentStreamAbortController = new AbortController();
 
     try {
@@ -342,8 +348,17 @@ document.addEventListener('DOMContentLoaded', () => {
           scrollToBottom();
         },
         // onDone
-        () => {
+        (usage) => {
           if (!currentStreamingMessage) return;
+          
+          // Update usage info if provided
+          if (usage) {
+            usageInfo.count = usage.count;
+            usageInfo.limit = usage.limit;
+            usageInfo.is_unlimited = usage.is_unlimited;
+            usageInfo.remaining = usage.is_unlimited ? null : Math.max(0, usage.limit - usage.count);
+            updateUsageDisplay();
+          }
           
           // Update chat history with full response
           const lastAssistantMsg = chatHistory[chatHistory.length - 1];
@@ -352,12 +367,15 @@ document.addEventListener('DOMContentLoaded', () => {
           }
           saveChatHistory();
           
+          // Clear prompt builder after successful send
+          clearPromptFormFields();
+          
           isStreaming = false;
-          sendBtn.disabled = !messageInput.value.trim();
+          sendPromptBtn.disabled = false;
           currentStreamingMessage = null;
           currentStreamAbortController = null;
           currentStreamFullResponse = '';
-          messageInput.focus();
+          personaInput?.focus();
         },
         // onError
         (error) => {
@@ -365,7 +383,6 @@ document.addEventListener('DOMContentLoaded', () => {
           
           if (!currentStreamingMessage) return;
           
-          // Don't show error if it was aborted
           if (error.name === 'AbortError') {
             return;
           }
@@ -381,14 +398,43 @@ document.addEventListener('DOMContentLoaded', () => {
           saveChatHistory();
           
           isStreaming = false;
-          sendBtn.disabled = !messageInput.value.trim();
+          sendPromptBtn.disabled = false;
           currentStreamingMessage = null;
           currentStreamAbortController = null;
           currentStreamFullResponse = '';
+        },
+        // onUsageLimitExceeded
+        (data) => {
+          // Remove the user message and placeholder we added
+          const messages = messagesContainer.querySelectorAll('.message');
+          if (messages.length >= 2) {
+            messages[messages.length - 1].remove(); // Remove assistant placeholder
+            messages[messages.length - 2].remove(); // Remove user message
+          }
+          
+          // Remove from history
+          if (chatHistory.length >= 2) {
+            chatHistory.pop(); // assistant
+            chatHistory.pop(); // user
+          }
+          
+          // Update usage info
+          usageInfo.count = data.usage_count;
+          usageInfo.limit = data.usage_limit;
+          usageInfo.remaining = 0;
+          updateUsageDisplay();
+          
+          isStreaming = false;
+          sendPromptBtn.disabled = false;
+          currentStreamingMessage = null;
+          currentStreamAbortController = null;
+          currentStreamFullResponse = '';
+          
+          // Show extension modal
+          showExtensionModal();
         }
       );
     } catch (err) {
-      // Handle abort or other errors
       if (err.name !== 'AbortError') {
         console.error('Send message error:', err);
         if (currentStreamingMessage) {
@@ -399,7 +445,7 @@ document.addEventListener('DOMContentLoaded', () => {
       }
       
       isStreaming = false;
-      sendBtn.disabled = !messageInput.value.trim();
+      sendPromptBtn.disabled = false;
       currentStreamingMessage = null;
       currentStreamAbortController = null;
       currentStreamFullResponse = '';
@@ -440,18 +486,15 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function renderChatHistory() {
-    // Clear container (except welcome message)
     messagesContainer.innerHTML = '';
 
     if (chatHistory.length === 0) {
-      // Get translations
       const t = window.i18n ? window.i18n.t.bind(window.i18n) : (k) => k;
       const welcomeTitle = t('welcome.title');
       const welcomeSubtitle = t('welcome.subtitle');
       const gptDesc = t('welcome.gpt.desc');
       const geminiDesc = t('welcome.gemini.desc');
       
-      // Show welcome message
       messagesContainer.innerHTML = `
         <div class="welcome-message">
           <img class="welcome-icon" src="/icons/qiao.png" alt="Qiao">
@@ -479,7 +522,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (model) {
             modelSelect.value = model;
             updateModelLabel();
-            messageInput.focus();
+            personaInput?.focus();
           }
         });
       });
@@ -517,27 +560,18 @@ document.addEventListener('DOMContentLoaded', () => {
   function formatMessage(text) {
     if (!text) return '';
 
-    // Escape HTML
     let formatted = text
       .replace(/&/g, '&amp;')
       .replace(/</g, '&lt;')
       .replace(/>/g, '&gt;');
 
-    // Format code blocks
     formatted = formatted.replace(/```(\w*)\n?([\s\S]*?)```/g, (match, lang, code) => {
       return `<pre><code class="language-${lang}">${code.trim()}</code></pre>`;
     });
 
-    // Format inline code
     formatted = formatted.replace(/`([^`]+)`/g, '<code>$1</code>');
-
-    // Format bold
     formatted = formatted.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>');
-
-    // Format italic
     formatted = formatted.replace(/\*([^*]+)\*/g, '<em>$1</em>');
-
-    // Format line breaks
     formatted = formatted.replace(/\n/g, '<br>');
 
     return formatted;
@@ -554,7 +588,6 @@ document.addEventListener('DOMContentLoaded', () => {
   function saveChatHistory() {
     if (!currentSessionId) return;
     
-    // Update current session
     if (!sessions[currentSessionId]) {
       sessions[currentSessionId] = {
         id: currentSessionId,
@@ -569,20 +602,22 @@ document.addEventListener('DOMContentLoaded', () => {
       sessions[currentSessionId].title = getSessionTitle(chatHistory);
     }
     
-    // Save sessions to localStorage
     saveSessions();
   }
   
-  // Session Management Functions
   function generateSessionId() {
     return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
   }
   
   function getSessionTitle(messages) {
-    // Get first user message as title
     const firstUserMsg = messages.find(m => m.role === 'user');
     if (firstUserMsg && firstUserMsg.content) {
-      // Truncate to first 50 characters
+      // Extract task from structured prompt if possible
+      const taskMatch = firstUserMsg.content.match(/\[TASK\]\n([^\[]+)/);
+      if (taskMatch) {
+        const task = taskMatch[1].trim().substring(0, 50);
+        return task.length < taskMatch[1].trim().length ? task + '...' : task;
+      }
       const title = firstUserMsg.content.substring(0, 50);
       return title.length < firstUserMsg.content.length ? title + '...' : title;
     }
@@ -599,30 +634,6 @@ document.addEventListener('DOMContentLoaded', () => {
         sessions = {};
       }
     }
-    
-    // Migrate old chat_history if exists
-    const oldHistory = localStorage.getItem('chat_history');
-    if (oldHistory && Object.keys(sessions).length === 0) {
-      try {
-        const messages = JSON.parse(oldHistory);
-        if (messages && messages.length > 0) {
-          const migrationId = generateSessionId();
-          sessions[migrationId] = {
-            id: migrationId,
-            title: getSessionTitle(messages),
-            createdAt: Date.now(),
-            updatedAt: Date.now(),
-            messages: messages
-          };
-          currentSessionId = migrationId;
-          chatHistory = messages;
-          saveSessions();
-          localStorage.removeItem('chat_history'); // Remove old format
-        }
-      } catch (e) {
-        console.error('Failed to migrate old history:', e);
-      }
-    }
   }
   
   function saveSessions() {
@@ -631,12 +642,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   
   function startNewSession() {
-    // Save current session first if it has messages
     if (currentSessionId && chatHistory.length > 0) {
       saveChatHistory();
     }
     
-    // Create new session
     currentSessionId = generateSessionId();
     chatHistory = [];
     saveSessions();
@@ -646,12 +655,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (isStreaming) return;
     if (!sessions[sessionId]) return;
     
-    // Save current session
     if (currentSessionId && chatHistory.length > 0) {
       saveChatHistory();
     }
     
-    // Switch to selected session
     currentSessionId = sessionId;
     chatHistory = sessions[sessionId].messages || [];
     saveSessions();
@@ -668,7 +675,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     delete sessions[sessionId];
     
-    // If deleting current session, start a new one
     if (sessionId === currentSessionId) {
       startNewSession();
       renderChatHistory();
@@ -700,17 +706,12 @@ document.addEventListener('DOMContentLoaded', () => {
       return;
     }
     
-    // Group by date
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
     
-    const groups = {
-      today: [],
-      yesterday: [],
-      earlier: []
-    };
+    const groups = { today: [], yesterday: [], earlier: [] };
     
     sessionArray.forEach(session => {
       const sessionDate = new Date(session.updatedAt);
@@ -726,7 +727,6 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     const t = window.i18n ? window.i18n.t.bind(window.i18n) : (k) => k;
-    
     let html = '';
     
     if (groups.today.length > 0) {
@@ -741,7 +741,6 @@ document.addEventListener('DOMContentLoaded', () => {
     
     historyList.innerHTML = html;
     
-    // Add click handlers
     historyList.querySelectorAll('.history-item').forEach(item => {
       const sessionId = item.dataset.sessionId;
       item.addEventListener('click', () => switchToSession(sessionId));
@@ -788,93 +787,101 @@ document.addEventListener('DOMContentLoaded', () => {
     return div.innerHTML;
   }
 
-  function clearChat() {
-    if (isStreaming) return;
-
-    const msg = window.i18n ? window.i18n.t('confirm.clearChat') : '确定要清空所有消息吗？';
-    if (chatHistory.length === 0 || confirm(msg)) {
-      chatHistory = [];
-      if (currentSessionId && sessions[currentSessionId]) {
-        delete sessions[currentSessionId];
-      }
-      startNewSession();
-      saveSessions();
-      renderChatHistory();
-      renderHistoryList();
-    }
-  }
-
   // Prompt Builder Functions
-  function togglePromptBuilder() {
-    if (promptBuilder) {
-      const isVisible = promptBuilder.style.display !== 'none';
-      promptBuilder.style.display = isVisible ? 'none' : 'block';
-      
-      if (!isVisible) {
-        // Focus first input when opening
-        setTimeout(() => {
-          personaInput?.focus();
-        }, 100);
-      }
-    }
-  }
-
-  function generatePrompt() {
-    // Get required fields
-    const persona = personaInput?.value.trim() || '';
-    const task = taskInput?.value.trim() || '';
-    const context = contextInput?.value.trim() || '';
-
-    // Validate required fields
-    if (!persona || !task || !context) {
-      const msg = window.i18n ? window.i18n.t('promptBuilder.validation') : '请填写所有必填字段：[PERSONA]、[TASK] 和 [CONTEXT]';
-      alert(msg);
-      return;
-    }
-
-    // Get optional fields
-    const format = formatInput?.value.trim() || '';
-    const references = referencesInput?.value.trim() || '';
-
-    // Build prompt based on template
-    let prompt = `[PERSONA]\n${persona}\n\n[TASK]\n${task}\n\n[CONTEXT]\n${context}`;
-
-    if (format) {
-      prompt += `\n\n[FORMAT]\n${format}`;
-    }
-
-    if (references) {
-      prompt += `\n\n[REFERENCES]\n${references}`;
-    }
-
-    // Populate main input
-    if (messageInput) {
-      messageInput.value = prompt;
-      handleInputChange();
-      
-      // Close prompt builder
-      togglePromptBuilder();
-      
-      // Focus main input
-      messageInput.focus();
-      
-      // Scroll to input
-      messageInput.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-    }
+  function clearPromptFormFields() {
+    if (personaInput) personaInput.value = '';
+    if (taskInput) taskInput.value = '';
+    if (contextInput) contextInput.value = '';
+    if (formatInput) formatInput.value = '';
+    if (referencesInput) referencesInput.value = '';
   }
 
   function clearPromptForm() {
     const msg = window.i18n ? window.i18n.t('promptBuilder.clearConfirm') : '确定要清空所有字段吗？';
     if (confirm(msg)) {
-      if (personaInput) personaInput.value = '';
-      if (taskInput) taskInput.value = '';
-      if (contextInput) contextInput.value = '';
-      if (formatInput) formatInput.value = '';
-      if (referencesInput) referencesInput.value = '';
-      
-      // Focus first input
+      clearPromptFormFields();
       personaInput?.focus();
     }
   }
+  
+  // Extension Modal Functions
+  function showExtensionModal() {
+    if (!extensionModal) return;
+    
+    // Check for pending request first
+    checkPendingExtensionRequest();
+    
+    extensionModal.style.display = 'flex';
+  }
+  
+  function hideExtensionModal() {
+    if (!extensionModal) return;
+    extensionModal.style.display = 'none';
+    
+    // Reset form
+    if (extensionAmountSelect) extensionAmountSelect.value = '5';
+    if (extensionReasonInput) extensionReasonInput.value = '';
+  }
+  
+  async function checkPendingExtensionRequest() {
+    try {
+      const data = await window.API.getUsageStatus();
+      
+      if (data.extension?.has_pending) {
+        // Show pending notice, hide form
+        if (extensionPendingNotice) extensionPendingNotice.style.display = 'block';
+        if (extensionForm) extensionForm.style.display = 'none';
+        
+        // Show status of last request
+        if (extensionStatus && data.extension.pending_request) {
+          extensionStatus.style.display = 'block';
+          const req = data.extension.pending_request;
+          const amountText = req.requested_amount ? `${req.requested_amount} 次` : '无限制';
+          extensionStatus.querySelector('#extension-status-content').innerHTML = `
+            <p><strong>申请次数:</strong> ${amountText}</p>
+            <p><strong>申请时间:</strong> ${new Date(req.created_at).toLocaleString()}</p>
+            <p><strong>状态:</strong> <span class="status-pending">待审核</span></p>
+          `;
+        }
+      } else {
+        // Show form, hide pending notice
+        if (extensionPendingNotice) extensionPendingNotice.style.display = 'none';
+        if (extensionForm) extensionForm.style.display = 'block';
+        if (extensionStatus) extensionStatus.style.display = 'none';
+      }
+    } catch (err) {
+      console.error('Failed to check pending request:', err);
+    }
+  }
+  
+  async function handleExtensionSubmit(e) {
+    e.preventDefault();
+    
+    const amount = extensionAmountSelect?.value;
+    const reason = extensionReasonInput?.value.trim();
+    
+    if (!reason || reason.length < 10) {
+      alert(window.i18n ? window.i18n.t('extension.reasonMinLength') : '申请理由至少需要10个字符');
+      return;
+    }
+    
+    try {
+      submitExtensionBtn.disabled = true;
+      submitExtensionBtn.textContent = window.i18n ? window.i18n.t('common.submitting') : '提交中...';
+      
+      const requestedAmount = amount === '' ? null : parseInt(amount);
+      await window.API.requestExtension(reason, requestedAmount);
+      
+      alert(window.i18n ? window.i18n.t('extension.submitSuccess') : '申请已提交，请等待管理员审核');
+      hideExtensionModal();
+      
+      // Refresh usage status
+      await fetchUsageStatus();
+    } catch (err) {
+      alert(err.message || '提交失败，请稍后重试');
+    } finally {
+      submitExtensionBtn.disabled = false;
+      submitExtensionBtn.textContent = window.i18n ? window.i18n.t('extension.submit') : '提交申请';
+    }
+  }
 });
-
