@@ -1,11 +1,13 @@
 # Ask Qiao
 
-A multi-model AI chat wrapper with a modern PWA interface. Chat with ChatGPT 5.2 and Gemini 3.1 through a unified, invite-only interface.
+A prompt-based AI instruction service designed to teach users how to communicate with AI effectively. Users must use structured prompts to interact with ChatGPT 5.2 and Gemini 3.1 through a unified, invite-only interface.
 
 ## Features
 
+- **Mandatory Prompt Builder**: All queries must use structured prompts (PERSONA, TASK, CONTEXT, FORMAT, REFERENCES)
+- **Usage Limits**: 5 free prompts per user, with extension request system
+- **Extension Requests**: Users can request more prompts; admins approve/reject via UI
 - **Multi-model chat**: Switch between AI models (ChatGPT, Gemini) per message
-- **Prompt Builder**: Structured prompt construction with PERSONA, TASK, CONTEXT fields
 - **Invite-only access**: Secure single-use invite codes
 - **PWA support**: Install on iOS/Android via "Add to Home Screen"
 - **Streaming responses**: Real-time message display
@@ -90,7 +92,8 @@ ask_qiao/
 ├── api/                    # Vercel serverless function
 │   └── index.js           # Express app wrapper for Vercel
 ├── docs/                   # Documentation
-│   ├── PLAN.md            # Project planning and architecture
+│   ├── PLAN_v1_original.md # Original project planning (historical)
+│   ├── task_plan.md       # Current task planning
 │   ├── feature_list.json  # QA test cases (62 features)
 │   └── prompt_structure.md # Prompt Builder template reference
 ├── server/                 # Backend
@@ -99,9 +102,10 @@ ask_qiao/
 │   ├── routes/
 │   │   ├── auth.js        # Authentication endpoints
 │   │   ├── admin.js       # Admin panel endpoints
-│   │   └── chat.js        # Chat API endpoints
+│   │   ├── chat.js        # Chat API endpoints
+│   │   └── extension.js   # Usage extension requests
 │   ├── middleware/
-│   │   └── auth.js        # JWT middleware
+│   │   └── auth.js        # JWT + usage limit middleware
 │   ├── services/
 │   │   ├── openai.js      # ChatGPT integration
 │   │   └── gemini.js      # Gemini integration
@@ -128,12 +132,18 @@ ask_qiao/
 │   ├── generate-invite.js  # CLI for invite codes
 │   ├── init-mongodb.js     # MongoDB initialization script
 │   ├── check-admin.js      # Admin account management
-│   ├── check-user.js       # Check user credentials
+│   ├── check-user.js       # Check user credentials + usage stats
+│   ├── list-invites.js     # List invite codes with user info
+│   ├── list-extensions.js  # List extension requests
+│   ├── grant-usage.js      # Grant usage to users
+│   ├── test-ai.js          # Test AI integrations
+│   ├── test-usage-limits.js # Test usage limit enforcement
+│   ├── test-extension-requests.js # Test extension workflow
 │   ├── verify-mongodb-config.js # Verify MongoDB config
 │   ├── set-password.js     # User password management
 │   ├── test-mongodb-connection.js # DB connectivity test
 │   ├── test-production-login.js  # Test production login
-│   └── README-admin.md     # Admin documentation guide
+│   └── README-admin.md     # Admin & testing scripts guide
 ├── CLAUDE.md               # Project context for Claude Code
 ├── vercel.json             # Vercel deployment configuration
 ├── package.json
@@ -145,9 +155,15 @@ ask_qiao/
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
 | POST | `/api/auth/verify` | No | Verify invite code |
+| POST | `/api/auth/login` | No | Login with username/password |
 | GET | `/api/auth/me` | Yes | Get current user |
 | POST | `/api/chat` | Yes | Send message (SSE stream) |
 | GET | `/api/chat/models` | Yes | List available models |
+| GET | `/api/extension/status` | Yes | Get usage status and extension info |
+| POST | `/api/extension/request` | Yes | Submit extension request |
+| GET | `/api/admin/extensions` | Admin | List extension requests |
+| POST | `/api/admin/extensions/:id/approve` | Admin | Approve extension request |
+| POST | `/api/admin/extensions/:id/reject` | Admin | Reject extension request |
 
 ## Deployment
 
@@ -204,6 +220,25 @@ If you can't login to the production site, check:
 - **Frontend**: Vanilla JS, CSS (no frameworks)
 
 ## Changelog
+
+### 2026-01-14
+- **Major**: Transformed service to prompt-based instruction platform
+  - All users must now use the structured Prompt Builder (no free-form input)
+  - Added usage limit system (5 free prompts per user)
+  - Added extension request workflow for users to request more prompts
+  - Admin panel now includes extension request management
+  - Admin users automatically get unlimited access
+- **Backend**:
+  - Added ExtensionRequest model and usage fields to User schema
+  - New `/api/extension` routes for status and request submission
+  - Usage limit middleware with automatic increment tracking
+  - Extended admin routes for extension approval/rejection
+- **Frontend**:
+  - Removed chat input form, made Prompt Builder mandatory
+  - Added usage counter in header
+  - Added extension request modal when limit exceeded
+  - Enhanced admin panel with extension request management
+- **Scripts**: Added test-usage-limits.js, test-extension-requests.js, list-extensions.js, grant-usage.js
 
 ### 2026-01-11
 - **Added**: Comprehensive feature list with 62 test cases (`docs/feature_list.json`)
