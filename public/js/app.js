@@ -105,7 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
   init();
 
   async function init() {
-    // Check if user is admin and fetch usage status
+    // Check if user is admin
     try {
       const user = await window.API.getCurrentUser();
       userIsAdmin = !!user.isAdmin;
@@ -113,17 +113,17 @@ document.addEventListener('DOMContentLoaded', () => {
       if (user.isAdmin && adminLink) {
         adminLink.style.display = 'flex';
       }
-      
-      // Fetch usage status
-      await fetchUsageStatus();
-      
-      // Show welcome modal only for limited users (not admin, not unlimited), once per session
-      const isLimitedUser = !userIsAdmin && !usageInfo.is_unlimited;
-      if (isLimitedUser && !sessionStorage.getItem('welcomeShown')) {
-        showWelcomeModal();
-      }
     } catch (err) {
-      console.error('Failed to initialize:', err);
+      console.error('Failed to get current user:', err);
+    }
+    
+    // Fetch usage status (always attempt, even if getCurrentUser failed)
+    await fetchUsageStatus();
+    
+    // Show welcome modal only for limited users (not admin, not unlimited), once per session
+    const isLimitedUser = !userIsAdmin && !usageInfo.is_unlimited;
+    if (isLimitedUser && !sessionStorage.getItem('welcomeShown')) {
+      showWelcomeModal();
     }
 
     // Load sessions from local storage
@@ -155,7 +155,6 @@ document.addEventListener('DOMContentLoaded', () => {
     try {
       const data = await window.API.getUsageStatus();
       usageInfo = data.usage;
-      updateUsageDisplay();
       
       // Check for pending extension request
       if (data.extension?.has_pending) {
@@ -164,7 +163,10 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     } catch (err) {
       console.error('Failed to fetch usage status:', err);
+      // Keep default usageInfo values on error
     }
+    // ALWAYS update display - even on API error, show default (0/5)
+    updateUsageDisplay();
   }
   
   function updateUsageDisplay() {
