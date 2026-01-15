@@ -103,13 +103,19 @@
 
     <!-- Input Area -->
     <footer class="chat-input-area">
-      <!-- Prompt Builder Form (Always Visible - Mandatory) -->
+      <!-- Prompt Builder Form (Full Page when Active) -->
       <div id="prompt-builder" class="prompt-builder prompt-builder-mandatory">
         <div class="prompt-builder-header">
           <div class="prompt-builder-title-area">
             <h3 data-i18n="promptBuilder.title">问题构建器</h3>
             <span class="prompt-builder-subtitle" data-i18n="promptBuilder.subtitle">通过结构化提问学习与AI高效沟通</span>
           </div>
+          <button type="button" id="back-to-models" class="btn-back-to-models" data-i18n="promptBuilder.backToModels">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M19 12H5M12 19l-7-7 7-7"/>
+            </svg>
+            <span data-i18n="promptBuilder.changeModel">切换模型</span>
+          </button>
         </div>
         <form id="prompt-form" class="prompt-form">
           <div class="prompt-field">

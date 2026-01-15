@@ -251,9 +251,15 @@ body {
   overflow-y: auto;
   padding: var(--spacing-lg);
   scroll-behavior: smooth;
+  transition: opacity 0.3s ease;
 }
 
-/* Welcome Message */
+/* Hide chat area when prompt builder is active */
+.app-container.prompt-active .chat-messages {
+  display: none;
+}
+
+/* Welcome Message - Full Page Landing */
 .welcome-message {
   display: flex;
   flex-direction: column;
@@ -1398,6 +1404,27 @@ body {
   }
 }
 
+/* Mobile prompt builder adjustments */
+@media (max-width: 480px) {
+  .app-container.prompt-active .chat-input-area {
+    top: 52px; /* Smaller header on mobile */
+  }
+
+  .prompt-builder-header {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .btn-back-to-models {
+    align-self: flex-start;
+    margin-bottom: var(--spacing-sm);
+  }
+
+  .btn-back-to-models span {
+    display: none; /* Hide text, show only icon on small screens */
+  }
+}
+
 /* ============================================
    Usage Counter
    ============================================ */
@@ -1465,14 +1492,59 @@ body {
 }
 
 /* ============================================
-   Mandatory Prompt Builder
+   Full Page Prompt Builder
    ============================================ */
 
+/* Hide footer when not in prompt mode */
+.chat-input-area {
+  display: none;
+}
+
+/* Full page prompt builder overlay */
+.app-container.prompt-active .chat-input-area {
+  display: flex;
+  position: absolute;
+  top: 60px; /* Below header */
+  left: 0;
+  right: 0;
+  bottom: 0;
+  padding: 0;
+  background: var(--bg-secondary);
+  z-index: 50;
+  animation: slideUpFull 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+/* Ensure header stays on top */
+.chat-header {
+  position: relative;
+  z-index: 100;
+}
+
+@keyframes slideUpFull {
+  0% {
+    transform: translateY(100%);
+    opacity: 0.8;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.app-container.prompt-active .prompt-builder-mandatory {
+  display: flex !important;
+  flex-direction: column;
+  height: 100%;
+  max-height: none;
+  overflow-y: auto;
+  border-radius: 0;
+  padding: var(--spacing-lg);
+  padding-top: calc(var(--spacing-lg) + var(--safe-top));
+  padding-bottom: calc(var(--spacing-lg) + var(--safe-bottom));
+}
+
 .prompt-builder-mandatory {
-  display: block !important;
-  border-top: none;
-  border-radius: var(--radius-lg);
-  margin: 0;
+  display: none !important;
 }
 
 .prompt-builder-title-area {
@@ -1487,16 +1559,75 @@ body {
   font-weight: normal;
 }
 
+/* Back button in prompt builder */
+.prompt-builder-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  margin-bottom: var(--spacing-lg);
+  gap: var(--spacing-md);
+}
+
+.btn-back-to-models {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--bg-hover);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  font-family: var(--font-sans);
+  font-size: 0.85rem;
+  padding: var(--spacing-xs) var(--spacing-md);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.btn-back-to-models:hover {
+  border-color: var(--accent-primary);
+  color: var(--text-primary);
+}
+
+.btn-back-to-models svg {
+  width: 16px;
+  height: 16px;
+}
+
 .prompt-builder-footer {
   display: flex;
-  justify-content: flex-end;
-  margin-top: var(--spacing-md);
+  justify-content: space-between;
+  align-items: center;
+  margin-top: auto;
   padding-top: var(--spacing-md);
   border-top: 1px solid var(--bg-tertiary);
+  gap: var(--spacing-md);
+}
+
+.prompt-builder-actions {
+  display: flex;
+  gap: var(--spacing-md);
+  margin-left: auto;
 }
 
 .btn-send-prompt {
   min-width: 120px;
+}
+
+/* Slide out animation when going back */
+.app-container.prompt-closing .chat-input-area {
+  animation: slideDownFull 0.4s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+@keyframes slideDownFull {
+  0% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100%);
+    opacity: 0;
+  }
 }
 
 /* ============================================

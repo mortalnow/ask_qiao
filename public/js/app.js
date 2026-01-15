@@ -175,8 +175,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // Set up event listeners
     setupEventListeners();
 
-    // Focus first prompt builder input
-    personaInput?.focus();
+    // If there's chat history, show prompt builder immediately
+    if (chatHistory.length > 0) {
+      showPromptBuilder();
+    }
   }
   
   async function fetchUsageStatus() {
@@ -229,21 +231,30 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  // App container for adding/removing prompt-active class
+  const appContainer = document.getElementById('app');
+  const backToModelsBtn = document.getElementById('back-to-models');
+
   function setupEventListeners() {
     // Model selection
     modelSelect.addEventListener('change', updateModelLabel);
 
-    // Model card clicks (welcome screen)
+    // Model card clicks (welcome screen) - show prompt builder full page
     document.querySelectorAll('.model-card').forEach(card => {
       card.addEventListener('click', () => {
         const model = card.dataset.model;
         if (model) {
           modelSelect.value = model;
           updateModelLabel();
-          personaInput?.focus();
+          showPromptBuilder();
         }
       });
     });
+
+    // Back to models button
+    if (backToModelsBtn) {
+      backToModelsBtn.addEventListener('click', hidePromptBuilder);
+    }
 
     // Logout
     logoutBtn.addEventListener('click', () => {
@@ -274,7 +285,7 @@ document.addEventListener('DOMContentLoaded', () => {
       clearPromptFormBtn.addEventListener('click', clearPromptForm);
     }
     
-    // New Chat Button
+    // New Chat Button - goes back to model selection
     if (newChatBtn) {
       newChatBtn.addEventListener('click', () => {
         if (isStreaming) return;
@@ -282,7 +293,7 @@ document.addEventListener('DOMContentLoaded', () => {
         renderChatHistory();
         renderHistoryList();
         clearPromptFormFields();
-        personaInput?.focus();
+        hidePromptBuilder();
       });
     }
     
@@ -592,7 +603,7 @@ document.addEventListener('DOMContentLoaded', () => {
           if (model) {
             modelSelect.value = model;
             updateModelLabel();
-            personaInput?.focus();
+            showPromptBuilder();
           }
         });
       });
@@ -735,6 +746,13 @@ document.addEventListener('DOMContentLoaded', () => {
     
     renderChatHistory();
     toggleHistorySidebar();
+    
+    // Show prompt builder if session has messages
+    if (chatHistory.length > 0) {
+      showPromptBuilder();
+    } else {
+      hidePromptBuilder();
+    }
   }
   
   function deleteSession(sessionId, event) {
@@ -872,6 +890,27 @@ document.addEventListener('DOMContentLoaded', () => {
       clearPromptFormFields();
       personaInput?.focus();
     }
+  }
+
+  // Show/Hide Full Page Prompt Builder
+  function showPromptBuilder() {
+    if (!appContainer) return;
+    appContainer.classList.remove('prompt-closing');
+    appContainer.classList.add('prompt-active');
+    // Focus first input after animation
+    setTimeout(() => {
+      personaInput?.focus();
+    }, 500);
+  }
+
+  function hidePromptBuilder() {
+    if (!appContainer) return;
+    // Add closing class for slide-down animation
+    appContainer.classList.add('prompt-closing');
+    // After animation, remove both classes
+    setTimeout(() => {
+      appContainer.classList.remove('prompt-active', 'prompt-closing');
+    }, 400);
   }
   
   // Extension Modal Functions

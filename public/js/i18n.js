@@ -69,6 +69,8 @@ const translations = {
     'promptBuilder.clearConfirm': '确定要清空所有字段吗？',
     'promptBuilder.send': '发送提问',
     'promptBuilder.subtitle': '通过结构化提问学习与AI高效沟通',
+    'promptBuilder.changeModel': '切换模型',
+    'promptBuilder.backToModels': '返回选择',
     
     // Usage Counter
     'usage.prompts': '次提问',
@@ -186,6 +188,8 @@ const translations = {
     'promptBuilder.clearConfirm': 'Are you sure you want to clear all fields?',
     'promptBuilder.send': 'Send Prompt',
     'promptBuilder.subtitle': 'Learn effective AI communication through structured prompts',
+    'promptBuilder.changeModel': 'Change Model',
+    'promptBuilder.backToModels': 'Back to models',
     
     // Usage Counter
     'usage.prompts': 'prompts',
