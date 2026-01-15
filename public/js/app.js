@@ -101,23 +101,14 @@ document.addEventListener('DOMContentLoaded', () => {
   };
   const defaultAssistantIcon = '<img src="/icons/qiao.png" alt="Qiao" class="avatar-img">';
 
-  // Show welcome modal immediately if needed (before API calls complete)
-  // This ensures the modal appears before the page content is visible
+  // Track whether we should show welcome modal (check AFTER API call)
   const shouldShowWelcome = !sessionStorage.getItem('welcomeShown');
-  if (shouldShowWelcome && welcomeModal) {
-    // Show modal overlay immediately with loading state
-    welcomeModal.style.display = 'flex';
-    document.body.style.overflow = 'hidden';
-    if (welcomeUsageCount) {
-      welcomeUsageCount.textContent = '...'; // Loading placeholder
-    }
-  }
 
   // Initialize
   init();
 
   async function init() {
-    // Check if user is admin
+    // Check if user is admin FIRST (before showing any modals)
     try {
       const user = await window.API.getCurrentUser();
       userIsAdmin = !!user.isAdmin;
@@ -132,26 +123,20 @@ document.addEventListener('DOMContentLoaded', () => {
     // Fetch usage status (always attempt, even if getCurrentUser failed)
     await fetchUsageStatus();
     
-    // Now decide what to do with the welcome modal
+    // Now decide whether to show the welcome modal (AFTER we know user type)
     const isLimitedUser = !userIsAdmin && !usageInfo.is_unlimited;
     
-    if (shouldShowWelcome && welcomeModal) {
-      if (isLimitedUser) {
-        // Update the modal with actual data and set up handlers
-        if (welcomeUsageCount) {
-          welcomeUsageCount.textContent = usageInfo.remaining;
-        }
-        setupWelcomeModalHandlers();
-      } else {
-        // Hide the modal for admin/unlimited users (with fade out)
-        welcomeModal.classList.add('fading-out');
-        sessionStorage.setItem('welcomeShown', 'true');
-        setTimeout(() => {
-          welcomeModal.style.display = 'none';
-          welcomeModal.classList.remove('fading-out');
-          document.body.style.overflow = '';
-        }, 300);
+    if (shouldShowWelcome && welcomeModal && isLimitedUser) {
+      // Only show welcome modal for limited users
+      welcomeModal.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+      if (welcomeUsageCount) {
+        welcomeUsageCount.textContent = usageInfo.remaining;
       }
+      setupWelcomeModalHandlers();
+    } else if (shouldShowWelcome) {
+      // Mark as shown for admin/unlimited users without displaying
+      sessionStorage.setItem('welcomeShown', 'true');
     }
 
     // Load sessions from local storage

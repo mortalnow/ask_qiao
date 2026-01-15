@@ -1534,10 +1534,15 @@ body {
 .app-container.prompt-active .prompt-builder-mandatory {
   display: flex !important;
   flex-direction: column;
+  width: 100%;
   height: 100%;
-  max-height: none;
+  max-height: none !important;
+  max-width: 800px;
+  margin: 0 auto;
   overflow-y: auto;
   border-radius: 0;
+  border: none;
+  background: var(--bg-secondary);
   padding: var(--spacing-lg);
   padding-top: calc(var(--spacing-lg) + var(--safe-top));
   padding-bottom: calc(var(--spacing-lg) + var(--safe-bottom));
@@ -1545,6 +1550,13 @@ body {
 
 .prompt-builder-mandatory {
   display: none !important;
+}
+
+/* Override base prompt-builder styles when in full-page mode */
+.app-container.prompt-active .prompt-builder {
+  max-height: none !important;
+  animation: none;
+  margin-bottom: 0;
 }
 
 .prompt-builder-title-area {
@@ -1559,13 +1571,14 @@ body {
   font-weight: normal;
 }
 
-/* Back button in prompt builder */
-.prompt-builder-header {
+/* Back button in prompt builder - full page mode */
+.app-container.prompt-active .prompt-builder-header {
   display: flex;
   align-items: flex-start;
   justify-content: space-between;
   margin-bottom: var(--spacing-lg);
   gap: var(--spacing-md);
+  flex-shrink: 0;
 }
 
 .btn-back-to-models {
@@ -1594,6 +1607,15 @@ body {
   height: 16px;
 }
 
+/* Prompt form takes remaining space */
+.app-container.prompt-active .prompt-form {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
 .prompt-builder-footer {
   display: flex;
   justify-content: space-between;
@@ -1602,6 +1624,7 @@ body {
   padding-top: var(--spacing-md);
   border-top: 1px solid var(--bg-tertiary);
   gap: var(--spacing-md);
+  flex-shrink: 0;
 }
 
 .prompt-builder-actions {
