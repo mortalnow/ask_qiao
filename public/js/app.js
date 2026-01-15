@@ -117,8 +117,9 @@ document.addEventListener('DOMContentLoaded', () => {
       // Fetch usage status
       await fetchUsageStatus();
       
-      // Show welcome modal for all users (only once per session)
-      if (!sessionStorage.getItem('welcomeShown')) {
+      // Show welcome modal only for limited users (not admin, not unlimited), once per session
+      const isLimitedUser = !userIsAdmin && !usageInfo.is_unlimited;
+      if (isLimitedUser && !sessionStorage.getItem('welcomeShown')) {
         showWelcomeModal();
       }
     } catch (err) {

@@ -84,7 +84,7 @@ router.post('/login', async (req, res) => {
     // Check if user has a password set
     if (!user.password_hash) {
       return res.status(401).json({
-        error: 'Account not set up. Please use an invite code to create your account with a password.'
+        error: 'Account not set up. Please register with a password first.'
       });
     }
 
