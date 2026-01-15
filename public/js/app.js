@@ -101,6 +101,18 @@ document.addEventListener('DOMContentLoaded', () => {
   };
   const defaultAssistantIcon = '<img src="/icons/qiao.png" alt="Qiao" class="avatar-img">';
 
+  // Show welcome modal immediately if needed (before API calls complete)
+  // This ensures the modal appears before the page content is visible
+  const shouldShowWelcome = !sessionStorage.getItem('welcomeShown');
+  if (shouldShowWelcome && welcomeModal) {
+    // Show modal overlay immediately with loading state
+    welcomeModal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    if (welcomeUsageCount) {
+      welcomeUsageCount.textContent = '...'; // Loading placeholder
+    }
+  }
+
   // Initialize
   init();
 
@@ -120,10 +132,26 @@ document.addEventListener('DOMContentLoaded', () => {
     // Fetch usage status (always attempt, even if getCurrentUser failed)
     await fetchUsageStatus();
     
-    // Show welcome modal only for limited users (not admin, not unlimited), once per session
+    // Now decide what to do with the welcome modal
     const isLimitedUser = !userIsAdmin && !usageInfo.is_unlimited;
-    if (isLimitedUser && !sessionStorage.getItem('welcomeShown')) {
-      showWelcomeModal();
+    
+    if (shouldShowWelcome && welcomeModal) {
+      if (isLimitedUser) {
+        // Update the modal with actual data and set up handlers
+        if (welcomeUsageCount) {
+          welcomeUsageCount.textContent = usageInfo.remaining;
+        }
+        setupWelcomeModalHandlers();
+      } else {
+        // Hide the modal for admin/unlimited users (with fade out)
+        welcomeModal.classList.add('fading-out');
+        sessionStorage.setItem('welcomeShown', 'true');
+        setTimeout(() => {
+          welcomeModal.style.display = 'none';
+          welcomeModal.classList.remove('fading-out');
+          document.body.style.overflow = '';
+        }, 300);
+      }
     }
 
     // Load sessions from local storage
@@ -936,21 +964,14 @@ document.addEventListener('DOMContentLoaded', () => {
   // Welcome Modal Functions
   // ============================================
 
-  function showWelcomeModal() {
+  function setupWelcomeModalHandlers() {
     if (!welcomeModal) return;
-    
-    // Update the usage count display
-    if (welcomeUsageCount) {
-      welcomeUsageCount.textContent = usageInfo.is_unlimited ? '∞' : usageInfo.remaining;
-    }
-    
-    welcomeModal.style.display = 'flex';
-    document.body.style.overflow = 'hidden';
     
     // Setup acknowledge button
     if (welcomeAckBtn) {
-      welcomeAckBtn.addEventListener('click', hideWelcomeModal, { once: true });
+      welcomeAckBtn.addEventListener('click', () => hideWelcomeModal(false), { once: true });
     }
+    
     // Setup apply unlimited button (only for limited users)
     if (welcomeApplyUnlimitedBtn) {
       if (usageInfo.is_unlimited) {
@@ -968,8 +989,22 @@ document.addEventListener('DOMContentLoaded', () => {
     // Close on overlay click
     const overlay = welcomeModal.querySelector('.modal-overlay');
     if (overlay) {
-      overlay.addEventListener('click', hideWelcomeModal, { once: true });
+      overlay.addEventListener('click', () => hideWelcomeModal(false), { once: true });
     }
+  }
+
+  function showWelcomeModal() {
+    if (!welcomeModal) return;
+    
+    // Update the usage count display
+    if (welcomeUsageCount) {
+      welcomeUsageCount.textContent = usageInfo.is_unlimited ? '∞' : usageInfo.remaining;
+    }
+    
+    welcomeModal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    
+    setupWelcomeModalHandlers();
   }
 
   function hideWelcomeModal(skipHighlight = false) {
@@ -982,8 +1017,13 @@ document.addEventListener('DOMContentLoaded', () => {
     const usageCounterRect = usageCounter?.getBoundingClientRect();
     const modalContent = welcomeModal.querySelector('.welcome-modal-content');
     
-    // If unlimited or no counter visible, just fade out without shrink
-    const canAnimateToCounter = !skipHighlight && usageCounterRect && modalContent && usageCounter?.style.display !== 'none' && headerLeft?.style.display !== 'none';
+    // Check if we can animate to the counter
+    const counterVisible = usageCounter && 
+      usageCounter.offsetParent !== null && 
+      headerLeft && 
+      headerLeft.offsetParent !== null;
+    
+    const canAnimateToCounter = !skipHighlight && usageCounterRect && modalContent && counterVisible;
 
     if (canAnimateToCounter) {
       // Calculate the offset to shrink towards the usage counter
@@ -993,9 +1033,17 @@ document.addEventListener('DOMContentLoaded', () => {
       const targetX = usageCounterRect.left + usageCounterRect.width / 2;
       const targetY = usageCounterRect.top + usageCounterRect.height / 2;
       
+      // Calculate translation needed (scale factor is 0.15 at end of animation)
+      // In CSS, transform: scale(s) translate(x, y) applies translate first, then scale
+      // So final_position = original_center + (translate * scale)
+      // We need: translate = (target - center) / scale
+      const scale = 0.15;
+      const translateX = (targetX - centerX) / scale;
+      const translateY = (targetY - centerY) / scale;
+      
       // Set CSS variables for animation target
-      modalContent.style.setProperty('--shrink-x', `${targetX - centerX}px`);
-      modalContent.style.setProperty('--shrink-y', `${targetY - centerY}px`);
+      modalContent.style.setProperty('--shrink-x', `${translateX}px`);
+      modalContent.style.setProperty('--shrink-y', `${translateY}px`);
       
       // Add shrinking class to trigger animation
       welcomeModal.classList.add('shrinking');
@@ -1011,13 +1059,17 @@ document.addEventListener('DOMContentLoaded', () => {
           usageCounter.classList.add('highlight');
           setTimeout(() => {
             usageCounter.classList.remove('highlight');
-          }, 600);
+          }, 800);
         }
-      }, 500);
+      }, 600);
     } else {
-      // Fallback: just hide without animation
-      welcomeModal.style.display = 'none';
-      document.body.style.overflow = '';
+      // Fallback: just fade out
+      welcomeModal.classList.add('fading-out');
+      setTimeout(() => {
+        welcomeModal.style.display = 'none';
+        welcomeModal.classList.remove('fading-out');
+        document.body.style.overflow = '';
+      }, 300);
     }
   }
 });

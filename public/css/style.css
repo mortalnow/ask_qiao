@@ -1672,13 +1672,26 @@ body {
    ======================================== */
 
 .welcome-modal .modal-overlay {
-  background: rgba(0, 0, 0, 0.7);
+  background: rgba(0, 0, 0, 0.85);
+  animation: fadeIn 0.3s ease;
 }
 
 .welcome-modal-content {
   text-align: center;
   padding: var(--spacing-xl) var(--spacing-lg);
   max-width: 360px;
+  animation: modalSlideIn 0.4s ease-out;
+}
+
+@keyframes modalSlideIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.9) translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 .welcome-modal-icon {
@@ -1749,31 +1762,50 @@ body {
 
 .welcome-modal.shrinking .modal-overlay {
   opacity: 0;
-  transition: opacity 0.3s ease;
+  transition: opacity 0.4s ease;
 }
 
 .welcome-modal.shrinking .welcome-modal-content {
-  animation: shrinkToCounter 0.5s ease-out forwards;
+  animation: shrinkToCounter 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
 
 @keyframes shrinkToCounter {
   0% {
-    transform: scale(1);
+    transform: scale(1) translate(0, 0);
     opacity: 1;
   }
-  50% {
-    transform: scale(0.5);
-    opacity: 0.7;
+  40% {
+    transform: scale(0.6) translate(0, 0);
+    opacity: 0.9;
   }
   100% {
-    transform: scale(0.1) translate(var(--shrink-x, -200px), var(--shrink-y, -300px));
+    transform: scale(0.15) translate(var(--shrink-x, -200px), var(--shrink-y, -300px));
+    opacity: 0;
+  }
+}
+
+/* Fade out animation (fallback) */
+.welcome-modal.fading-out {
+  pointer-events: none;
+}
+
+.welcome-modal.fading-out .modal-overlay,
+.welcome-modal.fading-out .welcome-modal-content {
+  animation: fadeOut 0.3s ease forwards;
+}
+
+@keyframes fadeOut {
+  0% {
+    opacity: 1;
+  }
+  100% {
     opacity: 0;
   }
 }
 
 /* Highlight animation for usage counter after shrink */
 .usage-counter.highlight {
-  animation: pulseHighlight 0.6s ease-out;
+  animation: pulseHighlight 0.8s ease-out;
 }
 
 @keyframes pulseHighlight {
