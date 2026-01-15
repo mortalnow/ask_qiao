@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-This is a prompt-based AI instruction service designed to teach users how to communicate with AI effectively. Users must use structured prompts (via the mandatory Prompt Builder) to interact with AI models (ChatGPT 5.2, Gemini 3.1). The service is invite-only with usage limits to encourage thoughtful prompt construction.
+This is a prompt-based AI instruction service designed to teach users how to communicate with AI effectively. Users must use structured prompts (via the mandatory Prompt Builder) to interact with AI models (ChatGPT 5.2, Gemini 3.1). The service has usage limits to encourage thoughtful prompt construction.
 
 ## Tech Stack
 
@@ -25,11 +25,12 @@ Client (Web/Mobile/PWA) → Express Server → AI Providers (OpenAI, Gemini)
 1. **Mandatory Prompt Builder**: All queries must use structured prompts (PERSONA, TASK, CONTEXT, FORMAT, REFERENCES)
 2. **Usage Limits**: 5 free prompts per user; must request extension for more
 3. **Extension Request System**: Users can request more prompts; admins approve/reject via UI
-4. **Multi-model chat**: Users can switch between AI models per message
-5. **Invite-only access**: Single-use invite codes for authentication
-6. **PWA support**: Installable on iOS via "Add to Home Screen"
-7. **Streaming responses**: Real-time message display via SSE
-8. **Ephemeral chats**: No server-side chat persistence (privacy-focused)
+4. **Apply for Unlimited**: Quick access button next to usage counter for limited users
+5. **Multi-model chat**: Users can switch between AI models per message
+6. **Open Registration**: Users register with username/password (no invite codes)
+7. **PWA support**: Installable on iOS via "Add to Home Screen"
+8. **Streaming responses**: Real-time message display via SSE
+9. **Ephemeral chats**: No server-side chat persistence (privacy-focused)
 
 ## Project Structure
 
@@ -56,7 +57,7 @@ vercel.json       # Vercel deployment configuration
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| POST | `/api/auth/verify` | Verify invite code, return JWT |
+| POST | `/api/auth/register` | Register new user, return JWT |
 | POST | `/api/auth/login` | Login with username/password |
 | GET | `/api/auth/me` | Get current user info |
 | POST | `/api/chat` | Send message to AI model (with usage tracking) |
@@ -148,7 +149,6 @@ The project uses MongoDB Atlas for user and invite code storage. To initialize:
 ## Security Considerations
 
 - All API routes (except auth) require valid JWT
-- Invite codes are single-use and securely generated
 - API keys stored in environment variables only
 - Rate limiting on chat endpoints
 - Input sanitization before sending to AI providers
@@ -215,3 +215,26 @@ The project uses MongoDB Atlas for user and invite code storage. To initialize:
 - JS: `togglePromptBuilder()`, `generatePrompt()`, `clearPromptForm()`
 
 **Bug Fix**: Service Worker caching old `app.js` - updated cache version to force refresh
+
+### 2026-01-15: Open Registration & UI Improvements
+
+**Goal**: Simplify onboarding and improve extension request UX.
+
+**Changes**:
+1. **Open Registration**: Removed invite-code requirement; users register with username/password only
+2. **Apply for Unlimited Button**: Added quick-access button next to usage counter for limited users
+3. **Welcome Modal**: New users see a welcome modal with remaining prompts and option to apply for unlimited
+4. **Admin Panel Simplification**: Removed invite code management section; focused on extension requests
+
+**Backend Changes**:
+- `server/routes/auth.js`: Changed `/api/auth/verify` to `/api/auth/register` (no invite code required)
+
+**Frontend Changes**:
+- `public/index.html`: Added "Apply for unlimited" button, welcome modal
+- `public/js/app.js`: Wired button and welcome modal logic
+- `public/js/auth.js`: Updated registration to not require invite code
+- `public/login.html`: Removed invite code field from registration form
+- `public/admin.html`: Removed invite code management section
+- `public/js/admin.js`: Removed invite code functions
+- `public/css/style.css`: Added button and welcome modal styles
+- `public/js/i18n.js`: Added new translation strings

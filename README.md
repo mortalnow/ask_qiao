@@ -1,14 +1,15 @@
 # Ask Qiao
 
-A prompt-based AI instruction service designed to teach users how to communicate with AI effectively. Users must use structured prompts to interact with ChatGPT 5.2 and Gemini 3.1 through a unified, invite-only interface.
+A prompt-based AI instruction service designed to teach users how to communicate with AI effectively. Users must use structured prompts to interact with ChatGPT 5.2 and Gemini 3.1 through a unified interface.
 
 ## Features
 
 - **Mandatory Prompt Builder**: All queries must use structured prompts (PERSONA, TASK, CONTEXT, FORMAT, REFERENCES)
 - **Usage Limits**: 5 free prompts per user, with extension request system
 - **Extension Requests**: Users can request more prompts; admins approve/reject via UI
+- **Apply for Unlimited**: Quick access button next to usage counter for limited users
 - **Multi-model chat**: Switch between AI models (ChatGPT, Gemini) per message
-- **Invite-only access**: Secure single-use invite codes
+- **Open Registration**: Users can create accounts with username/password
 - **PWA support**: Install on iOS/Android via "Add to Home Screen"
 - **Streaming responses**: Real-time message display
 - **Ephemeral chats**: No server-side storage (privacy-focused)
@@ -63,15 +64,7 @@ This script will:
 - Create required collections (`users`, `invitecodes`) with indexes
 - Create admin user: `mortalnow@gmail.com` / `111111`
 
-### 4. Generate Invite Codes
-
-```bash
-npm run generate-invite
-# or generate multiple codes:
-npm run generate-invite 5
-```
-
-### 5. Start the Server
+### 4. Start the Server
 
 ```bash
 # Development (with hot reload)
@@ -81,7 +74,7 @@ npm run dev
 npm start
 ```
 
-### 6. Access the App
+### 5. Access the App
 
 Open http://localhost:3002 in your browser.
 
@@ -154,7 +147,7 @@ ask_qiao/
 
 | Method | Endpoint | Auth | Description |
 |--------|----------|------|-------------|
-| POST | `/api/auth/verify` | No | Verify invite code |
+| POST | `/api/auth/register` | No | Register new user |
 | POST | `/api/auth/login` | No | Login with username/password |
 | GET | `/api/auth/me` | Yes | Get current user |
 | POST | `/api/chat` | Yes | Send message (SSE stream) |
@@ -194,7 +187,6 @@ If you can't login to the production site, check:
 ## Security
 
 - JWT tokens for authentication (7-day expiry)
-- Single-use invite codes
 - Rate limiting (60 req/min API, 20 req/min chat)
 - Input sanitization
 - API keys stored in environment variables only
@@ -257,6 +249,14 @@ If you can't login to the production site, check:
 - **Added**: Admin panel for invite code management
 - **Fixed**: Service Worker cache issue preventing Prompt Builder from working
 
+## Changelog
+
+### 2026-01-15
+- **Changed**: Removed invite-code requirement; open registration now available
+- **Added**: "Apply for unlimited" button next to usage counter for limited users
+- **Added**: Welcome modal for new users showing remaining prompts
+- **Simplified**: Admin panel now focuses on extension requests (removed invite code management)
+
 ## License
 
-Private - Invite-only access
+Private
