@@ -13,6 +13,7 @@ import { connectDB } from '../server/db/init.js';
 import authRoutes from '../server/routes/auth.js';
 import chatRoutes from '../server/routes/chat.js';
 import adminRoutes from '../server/routes/admin.js';
+import extensionRoutes from '../server/routes/extension.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -66,6 +67,7 @@ app.use('/api', apiLimiter);
 app.use('/api/auth', authRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/extension', extensionRoutes);
 
 // Serve static files from public directory
 const publicPath = join(__dirname, '..', 'public');
