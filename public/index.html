@@ -38,7 +38,12 @@
       <div class="header-left">
         <!-- Usage Counter -->
         <div id="usage-counter" class="usage-counter" style="display: none;">
-          <span id="usage-text" data-i18n="usage.counter">0/5 次提问</span>
+          <span id="usage-text">0/5</span>
+          <button id="apply-unlimited-btn" class="btn-apply-unlimited" data-i18n-title="usage.applyUnlimited" title="申请无限次数">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 5v14M5 12h14"/>
+            </svg>
+          </button>
         </div>
       </div>
       <div class="header-right">
@@ -240,6 +245,32 @@
             <h4 data-i18n="extension.statusTitle">申请状态</h4>
             <div id="extension-status-content"></div>
           </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Welcome Modal for New Users -->
+    <div id="welcome-modal" class="modal welcome-modal" style="display: none;">
+      <div class="modal-overlay"></div>
+      <div class="modal-content welcome-modal-content">
+        <div class="welcome-modal-icon">
+          <img src="/icons/qiao.png" alt="Qiao" width="64" height="64">
+        </div>
+        <h2 data-i18n="welcome.modal.title">欢迎使用问Qiao</h2>
+        <p class="welcome-modal-desc" data-i18n="welcome.modal.description">
+          这是一个结构化提问学习平台，通过填写表单与AI对话，学习高效沟通技巧。
+        </p>
+        <div class="welcome-modal-usage">
+          <span data-i18n="welcome.modal.remaining">剩余提问次数</span>
+          <span id="welcome-usage-count" class="welcome-usage-badge">5</span>
+        </div>
+        <div class="welcome-actions">
+          <button id="welcome-apply-unlimited" class="btn-secondary" data-i18n="welcome.modal.applyUnlimited">
+            申请无限次数
+          </button>
+          <button id="welcome-ack-btn" class="btn-primary welcome-ack-btn" data-i18n="welcome.modal.gotIt">
+            我知道了
+          </button>
         </div>
       </div>
     </div>

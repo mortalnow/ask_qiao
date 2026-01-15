@@ -24,6 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const langToggleBtn = document.getElementById('lang-toggle');
   
   // Usage Counter Elements
+  const headerLeft = document.querySelector('.header-left');
   const usageCounter = document.getElementById('usage-counter');
   const usageText = document.getElementById('usage-text');
   
@@ -56,6 +57,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const submitExtensionBtn = document.getElementById('submit-extension');
   const extensionPendingNotice = document.getElementById('extension-pending-notice');
   const extensionStatus = document.getElementById('extension-status');
+  
+  // Welcome Modal Elements
+  const welcomeModal = document.getElementById('welcome-modal');
+  const welcomeAckBtn = document.getElementById('welcome-ack-btn');
+  const welcomeUsageCount = document.getElementById('welcome-usage-count');
+  const welcomeApplyUnlimitedBtn = document.getElementById('welcome-apply-unlimited');
+  
+  // Apply Unlimited Button (next to usage counter)
+  const applyUnlimitedBtn = document.getElementById('apply-unlimited-btn');
 
   // State
   let chatHistory = [];
@@ -71,6 +81,8 @@ document.addEventListener('DOMContentLoaded', () => {
     remaining: 5,
     is_unlimited: false
   };
+  // Admin state
+  let userIsAdmin = false;
   
   // Session management
   let currentSessionId = null;
@@ -96,12 +108,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // Check if user is admin and fetch usage status
     try {
       const user = await window.API.getCurrentUser();
+      userIsAdmin = !!user.isAdmin;
+
       if (user.isAdmin && adminLink) {
         adminLink.style.display = 'flex';
       }
       
       // Fetch usage status
       await fetchUsageStatus();
+      
+      // Show welcome modal for all users (only once per session)
+      if (!sessionStorage.getItem('welcomeShown')) {
+        showWelcomeModal();
+      }
     } catch (err) {
       console.error('Failed to initialize:', err);
     }
@@ -149,14 +168,27 @@ document.addEventListener('DOMContentLoaded', () => {
   
   function updateUsageDisplay() {
     if (!usageCounter || !usageText) return;
-    
-    if (usageInfo.is_unlimited) {
-      usageCounter.style.display = 'none';
+
+    const hideUsage = usageInfo.is_unlimited || userIsAdmin;
+
+    if (hideUsage) {
+      // Hide entire header-left for unlimited users/admins (and clear text)
+      usageText.textContent = '';
+      usageCounter.style.setProperty('display', 'none', 'important');
+      if (headerLeft) {
+        headerLeft.style.setProperty('display', 'none', 'important');
+      }
     } else {
+      // Show usage counter for limited users
+      if (headerLeft) {
+        headerLeft.style.removeProperty('display');
+        headerLeft.style.display = 'flex';
+      }
+      usageCounter.style.removeProperty('display');
       usageCounter.style.display = 'flex';
-      const t = window.i18n ? window.i18n.t.bind(window.i18n) : (k) => k;
-      usageText.textContent = `${usageInfo.count}/${usageInfo.limit} ${t('usage.prompts') || '次提问'}`;
-      
+      // Compact format: just show "0/5"
+      usageText.textContent = `${usageInfo.count}/${usageInfo.limit}`;
+
       // Add warning class if close to limit
       if (usageInfo.remaining <= 1) {
         usageCounter.classList.add('usage-warning');
@@ -246,6 +278,13 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (extensionModal) {
       extensionModal.querySelector('.modal-overlay')?.addEventListener('click', hideExtensionModal);
+    }
+    
+    // Apply Unlimited Button (next to usage counter)
+    if (applyUnlimitedBtn) {
+      applyUnlimitedBtn.addEventListener('click', () => {
+        showExtensionModal(true); // Pre-select unlimited
+      });
     }
   }
 
@@ -805,12 +844,17 @@ document.addEventListener('DOMContentLoaded', () => {
   }
   
   // Extension Modal Functions
-  function showExtensionModal() {
+  function showExtensionModal(requestUnlimited = false) {
     if (!extensionModal) return;
     
     // Check for pending request first
     checkPendingExtensionRequest();
     
+    // Pre-select unlimited if requested
+    if (requestUnlimited && extensionAmountSelect) {
+      extensionAmountSelect.value = '';
+    }
+
     extensionModal.style.display = 'flex';
   }
   
@@ -856,25 +900,25 @@ document.addEventListener('DOMContentLoaded', () => {
   
   async function handleExtensionSubmit(e) {
     e.preventDefault();
-    
+
     const amount = extensionAmountSelect?.value;
     const reason = extensionReasonInput?.value.trim();
-    
+
     if (!reason || reason.length < 10) {
       alert(window.i18n ? window.i18n.t('extension.reasonMinLength') : '申请理由至少需要10个字符');
       return;
     }
-    
+
     try {
       submitExtensionBtn.disabled = true;
       submitExtensionBtn.textContent = window.i18n ? window.i18n.t('common.submitting') : '提交中...';
-      
+
       const requestedAmount = amount === '' ? null : parseInt(amount);
       await window.API.requestExtension(reason, requestedAmount);
-      
+
       alert(window.i18n ? window.i18n.t('extension.submitSuccess') : '申请已提交，请等待管理员审核');
       hideExtensionModal();
-      
+
       // Refresh usage status
       await fetchUsageStatus();
     } catch (err) {
@@ -882,6 +926,95 @@ document.addEventListener('DOMContentLoaded', () => {
     } finally {
       submitExtensionBtn.disabled = false;
       submitExtensionBtn.textContent = window.i18n ? window.i18n.t('extension.submit') : '提交申请';
+    }
+  }
+
+  // ============================================
+  // Welcome Modal Functions
+  // ============================================
+
+  function showWelcomeModal() {
+    if (!welcomeModal) return;
+    
+    // Update the usage count display
+    if (welcomeUsageCount) {
+      welcomeUsageCount.textContent = usageInfo.is_unlimited ? '∞' : usageInfo.remaining;
+    }
+    
+    welcomeModal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+    
+    // Setup acknowledge button
+    if (welcomeAckBtn) {
+      welcomeAckBtn.addEventListener('click', hideWelcomeModal, { once: true });
+    }
+    // Setup apply unlimited button (only for limited users)
+    if (welcomeApplyUnlimitedBtn) {
+      if (usageInfo.is_unlimited) {
+        welcomeApplyUnlimitedBtn.style.display = 'none';
+      } else {
+        welcomeApplyUnlimitedBtn.style.display = 'inline-flex';
+        welcomeApplyUnlimitedBtn.addEventListener('click', () => {
+          hideWelcomeModal(true);
+          // Open extension modal pre-filled as unlimited after slight delay
+          setTimeout(() => showExtensionModal(true), 200);
+        }, { once: true });
+      }
+    }
+    
+    // Close on overlay click
+    const overlay = welcomeModal.querySelector('.modal-overlay');
+    if (overlay) {
+      overlay.addEventListener('click', hideWelcomeModal, { once: true });
+    }
+  }
+
+  function hideWelcomeModal(skipHighlight = false) {
+    if (!welcomeModal) return;
+    
+    // Mark as shown for this session
+    sessionStorage.setItem('welcomeShown', 'true');
+    
+    // Get positions for shrink animation
+    const usageCounterRect = usageCounter?.getBoundingClientRect();
+    const modalContent = welcomeModal.querySelector('.welcome-modal-content');
+    
+    // If unlimited or no counter visible, just fade out without shrink
+    const canAnimateToCounter = !skipHighlight && usageCounterRect && modalContent && usageCounter?.style.display !== 'none' && headerLeft?.style.display !== 'none';
+
+    if (canAnimateToCounter) {
+      // Calculate the offset to shrink towards the usage counter
+      const modalRect = modalContent.getBoundingClientRect();
+      const centerX = modalRect.left + modalRect.width / 2;
+      const centerY = modalRect.top + modalRect.height / 2;
+      const targetX = usageCounterRect.left + usageCounterRect.width / 2;
+      const targetY = usageCounterRect.top + usageCounterRect.height / 2;
+      
+      // Set CSS variables for animation target
+      modalContent.style.setProperty('--shrink-x', `${targetX - centerX}px`);
+      modalContent.style.setProperty('--shrink-y', `${targetY - centerY}px`);
+      
+      // Add shrinking class to trigger animation
+      welcomeModal.classList.add('shrinking');
+      
+      // After animation, hide modal and highlight usage counter
+      setTimeout(() => {
+        welcomeModal.style.display = 'none';
+        welcomeModal.classList.remove('shrinking');
+        document.body.style.overflow = '';
+        
+        // Highlight the usage counter
+        if (usageCounter) {
+          usageCounter.classList.add('highlight');
+          setTimeout(() => {
+            usageCounter.classList.remove('highlight');
+          }, 600);
+        }
+      }, 500);
+    } else {
+      // Fallback: just hide without animation
+      welcomeModal.style.display = 'none';
+      document.body.style.overflow = '';
     }
   }
 });

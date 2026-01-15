@@ -51,6 +51,7 @@
 - [x] Make prompt builder visible by default (not hidden)
 - [x] Add usage counter display in header
 - [x] Add extension request modal HTML
+- [x] Add "Apply for unlimited" button next to usage counter
 
 ### public/js/app.js
 - [x] Remove `handleSubmit` for free-form input
@@ -60,6 +61,7 @@
 - [x] Add `showExtensionModal()` function
 - [x] Add `handleExtensionSubmit()` function
 - [x] Handle usage_limit_exceeded via onUsageLimitExceeded callback
+- [x] Wire "Apply for unlimited" button to open modal
 
 ### public/js/api.js
 - [x] Add `getUsageStatus()` function

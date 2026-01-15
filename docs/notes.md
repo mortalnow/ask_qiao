@@ -65,6 +65,7 @@ UI Changes:
 2. Prompt builder becomes the ONLY input method
 3. Add usage counter in header: "3/5 prompts used"
 4. Add "Request Extension" modal when limit reached
+5. Add "Apply for unlimited" button next to usage counter (limited users only)
 
 ### Phase 5: Admin Panel
 Files to modify:

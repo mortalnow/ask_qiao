@@ -8,7 +8,7 @@ const translations = {
     // App title
     'app.title': '问Qiao',
     'app.title.login': '问Qiao - 登录',
-    'app.tagline': '多模型 AI 对话界面',
+    'app.tagline': '学习高效AI沟通',
     
     // Header
     'header.admin': '管理面板',
@@ -32,6 +32,13 @@ const translations = {
     'welcome.subtitle': '选择一个模型开始对话，您可以随时切换模型。',
     'welcome.gpt.desc': '最强大的推理和编码能力',
     'welcome.gemini.desc': '快速高效的多模态响应',
+    
+    // Welcome modal
+    'welcome.modal.title': '欢迎使用问Qiao',
+    'welcome.modal.description': '这是一个结构化提问学习平台，通过填写表单与AI对话，学习高效沟通技巧。',
+    'welcome.modal.remaining': '剩余提问次数',
+    'welcome.modal.gotIt': '我知道了',
+    'welcome.modal.applyUnlimited': '申请无限次数',
     
     // Chat input
     'chat.placeholder': '输入您的消息...',
@@ -67,6 +74,7 @@ const translations = {
     'usage.prompts': '次提问',
     'usage.counter': '已使用',
     'usage.unlimited': '无限制',
+    'usage.applyUnlimited': '申请无限次数',
     
     // Extension Requests
     'extension.modalTitle': '申请更多提问次数',
@@ -99,7 +107,7 @@ const translations = {
     'login.chooseUsername': '选择用户名',
     'login.password.hint': '至少 6 个字符',
     'login.createAccount': '创建账户',
-    'login.footer': '仅限邀请访问 • 由 GPT 和 Gemini 驱动',
+    'login.footer': '由 GPT 和 Gemini 驱动',
     
     // Confirmations
     'confirm.logout': '确定要退出登录吗？',
@@ -113,7 +121,7 @@ const translations = {
     // App title
     'app.title': 'Ask Qiao',
     'app.title.login': 'Ask Qiao - Login',
-    'app.tagline': 'Multi-model AI Chat Interface',
+    'app.tagline': 'Learn Effective AI Communication',
     
     // Header
     'header.admin': 'Admin Panel',
@@ -137,6 +145,13 @@ const translations = {
     'welcome.subtitle': 'Select a model to start chatting. You can switch models anytime.',
     'welcome.gpt.desc': 'Most powerful reasoning and coding',
     'welcome.gemini.desc': 'Fast and efficient multimodal responses',
+    
+    // Welcome modal
+    'welcome.modal.title': 'Welcome to Ask Qiao',
+    'welcome.modal.description': 'This is a structured prompt learning platform. Learn effective AI communication by filling out forms to interact with AI.',
+    'welcome.modal.remaining': 'Prompts remaining',
+    'welcome.modal.gotIt': 'Got it',
+    'welcome.modal.applyUnlimited': 'Apply for unlimited',
     
     // Chat input
     'chat.placeholder': 'Type your message...',
@@ -172,6 +187,7 @@ const translations = {
     'usage.prompts': 'prompts',
     'usage.counter': 'Used',
     'usage.unlimited': 'Unlimited',
+    'usage.applyUnlimited': 'Apply for unlimited',
     
     // Extension Requests
     'extension.modalTitle': 'Request More Prompts',
@@ -204,7 +220,7 @@ const translations = {
     'login.chooseUsername': 'Choose Username',
     'login.password.hint': 'At least 6 characters',
     'login.createAccount': 'Create Account',
-    'login.footer': 'Invite-only access • Powered by GPT and Gemini',
+    'login.footer': 'Powered by GPT and Gemini',
     
     // Confirmations
     'confirm.logout': 'Are you sure you want to logout?',
@@ -286,14 +302,20 @@ const i18n = {
       document.title = this.t(titleKey);
     }
     
-    // Update language button display
-    const langBtn = document.getElementById('lang-toggle');
-    if (langBtn) {
-      const langSpan = langBtn.querySelector('span');
-      if (langSpan) {
-        langSpan.textContent = this.currentLang === 'zh-CN' ? 'EN' : '中';
+    // Update language button display (main page and login page)
+    const langBtns = [
+      document.getElementById('lang-toggle'),
+      document.getElementById('lang-toggle-login')
+    ];
+    
+    langBtns.forEach(langBtn => {
+      if (langBtn) {
+        const langSpan = langBtn.querySelector('span');
+        if (langSpan) {
+          langSpan.textContent = this.currentLang === 'zh-CN' ? 'EN' : '中';
+        }
       }
-    }
+    });
   },
   
   // Get current language

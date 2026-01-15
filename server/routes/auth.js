@@ -1,26 +1,21 @@
 import { Router } from 'express';
 import bcrypt from 'bcrypt';
-import { User, InviteCode } from '../db/models.js';
+import { User } from '../db/models.js';
 import { generateToken, authenticateToken } from '../middleware/auth.js';
-import { isValidCodeFormat } from '../utils/inviteCode.js';
 
 const router = Router();
 
 /**
- * POST /api/auth/verify
- * Verify invite code, create user account with password
+ * POST /api/auth/register
+ * Open registration - create user account with username and password
  */
-router.post('/verify', async (req, res) => {
+router.post('/register', async (req, res) => {
   try {
-    const { code, username, password } = req.body;
+    const { username, password } = req.body;
 
     // Validate input
-    if (!code || !username || !password) {
-      return res.status(400).json({ error: 'Invite code, username, and password are required' });
-    }
-
-    if (!isValidCodeFormat(code)) {
-      return res.status(400).json({ error: 'Invalid invite code format' });
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Username and password are required' });
     }
 
     const trimmedUsername = username.trim();
@@ -30,17 +25,6 @@ router.post('/verify', async (req, res) => {
 
     if (password.length < 6) {
       return res.status(400).json({ error: 'Password must be at least 6 characters' });
-    }
-
-    // Check if code exists and is unused
-    const inviteCode = await InviteCode.findOne({ code });
-
-    if (!inviteCode) {
-      return res.status(404).json({ error: 'Invalid invite code' });
-    }
-
-    if (inviteCode.used_by) {
-      return res.status(400).json({ error: 'Invite code has already been used' });
     }
 
     // Check if username is taken
@@ -53,49 +37,27 @@ router.post('/verify', async (req, res) => {
     const saltRounds = 10;
     const passwordHash = await bcrypt.hash(password, saltRounds);
 
-    // Create user and mark code as used (using MongoDB session for transaction)
-    const session = await User.startSession();
-    session.startTransaction();
+    // Create user
+    const user = await User.create({
+      username: trimmedUsername,
+      password_hash: passwordHash
+    });
 
-    try {
-      const user = await User.create([{
-        username: trimmedUsername,
-        password_hash: passwordHash
-      }], { session });
+    const token = generateToken({
+      id: user._id.toString(),
+      username: user.username,
+      is_admin: user.is_admin || false
+    });
 
-      await InviteCode.updateOne(
-        { _id: inviteCode._id },
-        { 
-          used_by: user[0]._id,
-          used_at: new Date()
-        },
-        { session }
-      );
-
-      await session.commitTransaction();
-      session.endSession();
-
-      const userRecord = await User.findById(user[0]._id).select('_id username is_admin');
-      const token = generateToken({
-        id: userRecord._id.toString(),
-        username: userRecord.username,
-        is_admin: userRecord.is_admin || false
-      });
-
-      res.json({
-        success: true,
-        token,
-        user: { id: userRecord._id.toString(), username: userRecord.username, isAdmin: userRecord.is_admin || false },
-        message: 'Account created successfully'
-      });
-    } catch (error) {
-      await session.abortTransaction();
-      session.endSession();
-      throw error;
-    }
+    res.json({
+      success: true,
+      token,
+      user: { id: user._id.toString(), username: user.username, isAdmin: user.is_admin || false },
+      message: 'Account created successfully'
+    });
   } catch (err) {
-    console.error('Auth error:', err);
-    res.status(500).json({ error: 'Authentication failed' });
+    console.error('Registration error:', err);
+    res.status(500).json({ error: 'Registration failed' });
   }
 });
 

@@ -66,31 +66,32 @@ async function apiRequest(endpoint, options = {}) {
 }
 
 /**
- * Verify invite code and create account with password
+ * Register new account with username and password (open registration)
  */
-async function verifyInviteCode(code, username, password) {
-  const response = await fetch(`${API_BASE}/auth/verify`, {
+async function register(username, password) {
+  const response = await fetch(`${API_BASE}/auth/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ code, username, password }),
+    body: JSON.stringify({ username, password }),
   });
 
   // Check if response is JSON
   const contentType = response.headers.get('content-type');
   if (!contentType || !contentType.includes('application/json')) {
-    const text = await response.text();
     throw new Error(`Server error: ${response.status} ${response.statusText}`);
   }
 
   const data = await response.json();
 
   if (!response.ok) {
-    throw new Error(data.error || 'Verification failed');
+    throw new Error(data.error || 'Registration failed');
   }
 
   setToken(data.token);
   localStorage.setItem('user', JSON.stringify(data.user));
-  
+  // Clear welcome modal flag so it shows for new registration
+  sessionStorage.removeItem('welcomeShown');
+
   return data;
 }
 
@@ -119,7 +120,9 @@ async function login(username, password) {
 
   setToken(data.token);
   localStorage.setItem('user', JSON.stringify(data.user));
-  
+  // Clear welcome modal flag so it shows on each login
+  sessionStorage.removeItem('welcomeShown');
+
   return data;
 }
 
@@ -267,6 +270,8 @@ function logout() {
   clearToken();
   localStorage.removeItem('user');
   localStorage.removeItem('chat_history');
+  // Clear welcome modal flag so it shows again on next login
+  sessionStorage.removeItem('welcomeShown');
   window.location.href = '/login.html';
 }
 
@@ -443,16 +448,12 @@ window.API = {
   setToken,
   clearToken,
   isAuthenticated,
-  verifyInviteCode,
+  register,
   login,
   getCurrentUser,
   getModels,
   sendMessage,
   logout,
-  // Admin invite functions
-  generateInviteCodes,
-  getInviteCodes,
-  deleteInviteCode,
   // Extension functions
   getUsageStatus,
   requestExtension,
