@@ -317,7 +317,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function updateModelLabel() {
     const model = modelSelect.value;
-    currentModelLabel.textContent = modelNames[model] || model;
+    // Update label if element exists (removed from UI for cleaner look)
+    if (currentModelLabel) {
+      currentModelLabel.textContent = modelNames[model] || model;
+    }
   }
 
   // Main send function - builds prompt and sends

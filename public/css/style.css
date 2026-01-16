@@ -1441,22 +1441,13 @@ body {
     font-size: 16px; /* Prevent iOS zoom on focus */
   }
 
-  .prompt-builder-footer {
-    flex-direction: column;
-    gap: var(--spacing-sm);
-  }
-
-  .prompt-builder-actions {
-    width: 100%;
-    margin-left: 0;
+  .app-container.prompt-active .prompt-builder-actions {
+    flex-direction: row;
+    padding: var(--spacing-sm) 0;
   }
 
   .prompt-builder-actions button {
     flex: 1;
-  }
-
-  .current-model {
-    align-self: center;
   }
 }
 
@@ -1684,29 +1675,26 @@ body {
   flex-shrink: 0;
 }
 
-.prompt-builder-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-top: auto;
-  padding-top: var(--spacing-md);
-  border-top: 1px solid var(--bg-tertiary);
-  gap: var(--spacing-md);
-  flex-shrink: 0;
-}
-
-.app-container.prompt-active .prompt-builder-footer {
+/* Prompt builder actions - sticky at bottom */
+.app-container.prompt-active .prompt-builder-actions {
   position: sticky;
   bottom: 0;
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: flex-end;
+  padding: var(--spacing-md) 0;
+  margin-top: auto;
   background: var(--bg-secondary);
-  padding-bottom: var(--spacing-md);
-  margin-top: var(--spacing-md);
+  border-top: 1px solid var(--bg-tertiary);
 }
 
 .prompt-builder-actions {
   display: flex;
   gap: var(--spacing-md);
-  margin-left: auto;
+  justify-content: flex-end;
+  padding-top: var(--spacing-md);
+  margin-top: var(--spacing-md);
+  border-top: 1px solid var(--bg-tertiary);
 }
 
 .btn-send-prompt {
