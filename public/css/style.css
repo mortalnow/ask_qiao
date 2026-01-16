@@ -251,12 +251,12 @@ body {
   overflow-y: auto;
   padding: var(--spacing-lg);
   scroll-behavior: smooth;
-  transition: opacity 0.3s ease;
+  min-height: 0;
 }
 
 /* Hide chat area when prompt builder is active */
 .app-container.prompt-active .chat-messages {
-  display: none;
+  display: none !important;
 }
 
 /* Welcome Message - Full Page Landing */
@@ -1406,22 +1406,77 @@ body {
 
 /* Mobile prompt builder adjustments */
 @media (max-width: 480px) {
-  .app-container.prompt-active .chat-input-area {
-    top: 52px; /* Smaller header on mobile */
+  .app-container.prompt-active .prompt-builder-mandatory {
+    padding: var(--spacing-md);
+    padding-bottom: calc(var(--spacing-md) + var(--safe-bottom));
   }
 
-  .prompt-builder-header {
-    flex-direction: column;
-    align-items: flex-start;
+  .app-container.prompt-active .prompt-builder-header {
+    flex-direction: row;
+    align-items: center;
+    margin-bottom: var(--spacing-md);
   }
 
   .btn-back-to-models {
-    align-self: flex-start;
-    margin-bottom: var(--spacing-sm);
+    padding: var(--spacing-xs) var(--spacing-sm);
   }
 
   .btn-back-to-models span {
     display: none; /* Hide text, show only icon on small screens */
+  }
+
+  .prompt-builder-title-area h3 {
+    font-size: 1rem;
+  }
+
+  .prompt-builder-subtitle {
+    display: none; /* Hide subtitle on mobile to save space */
+  }
+
+  .prompt-field label {
+    font-size: 0.85rem;
+  }
+
+  .prompt-field textarea {
+    font-size: 16px; /* Prevent iOS zoom on focus */
+  }
+
+  .prompt-builder-footer {
+    flex-direction: column;
+    gap: var(--spacing-sm);
+  }
+
+  .prompt-builder-actions {
+    width: 100%;
+    margin-left: 0;
+  }
+
+  .prompt-builder-actions button {
+    flex: 1;
+  }
+
+  .current-model {
+    align-self: center;
+  }
+}
+
+/* iPhone Pro Max and large phones (430px width) */
+@media (min-width: 400px) and (max-width: 480px) {
+  .app-container.prompt-active .prompt-builder-mandatory {
+    padding: var(--spacing-md) var(--spacing-lg);
+  }
+}
+
+/* Extra small screens (iPhone SE, older devices) */
+@media (max-width: 375px) {
+  .app-container.prompt-active .prompt-builder-mandatory {
+    padding: var(--spacing-sm);
+    padding-bottom: calc(var(--spacing-sm) + var(--safe-bottom));
+  }
+
+  .prompt-field textarea {
+    rows: 2;
+    min-height: 60px;
   }
 }
 
@@ -1500,14 +1555,11 @@ body {
   display: none;
 }
 
-/* Full page prompt builder overlay */
+/* Full page prompt builder - takes remaining space below header */
 .app-container.prompt-active .chat-input-area {
   display: flex;
-  position: absolute;
-  top: 60px; /* Below header */
-  left: 0;
-  right: 0;
-  bottom: 0;
+  flex: 1;
+  min-height: 0;
   padding: 0;
   background: var(--bg-secondary);
   z-index: 50;
@@ -1518,12 +1570,13 @@ body {
 .chat-header {
   position: relative;
   z-index: 100;
+  flex-shrink: 0;
 }
 
 @keyframes slideUpFull {
   0% {
-    transform: translateY(100%);
-    opacity: 0.8;
+    transform: translateY(30px);
+    opacity: 0;
   }
   100% {
     transform: translateY(0);
@@ -1537,15 +1590,24 @@ body {
   width: 100%;
   height: 100%;
   max-height: none !important;
-  max-width: 800px;
-  margin: 0 auto;
+  max-width: 100%;
+  margin: 0;
   overflow-y: auto;
   border-radius: 0;
   border: none;
   background: var(--bg-secondary);
   padding: var(--spacing-lg);
-  padding-top: calc(var(--spacing-lg) + var(--safe-top));
   padding-bottom: calc(var(--spacing-lg) + var(--safe-bottom));
+}
+
+/* Center content on larger screens */
+@media (min-width: 768px) {
+  .app-container.prompt-active .prompt-builder-mandatory {
+    max-width: 700px;
+    margin: 0 auto;
+    padding: var(--spacing-xl);
+    padding-bottom: calc(var(--spacing-xl) + var(--safe-bottom));
+  }
 }
 
 .prompt-builder-mandatory {
@@ -1557,6 +1619,7 @@ body {
   max-height: none !important;
   animation: none;
   margin-bottom: 0;
+  background: transparent;
 }
 
 .prompt-builder-title-area {
@@ -1613,7 +1676,12 @@ body {
   flex-direction: column;
   flex: 1;
   min-height: 0;
-  overflow-y: auto;
+  gap: var(--spacing-md);
+}
+
+/* Scrollable area for prompt fields */
+.app-container.prompt-active .prompt-form .prompt-field {
+  flex-shrink: 0;
 }
 
 .prompt-builder-footer {
@@ -1625,6 +1693,14 @@ body {
   border-top: 1px solid var(--bg-tertiary);
   gap: var(--spacing-md);
   flex-shrink: 0;
+}
+
+.app-container.prompt-active .prompt-builder-footer {
+  position: sticky;
+  bottom: 0;
+  background: var(--bg-secondary);
+  padding-bottom: var(--spacing-md);
+  margin-top: var(--spacing-md);
 }
 
 .prompt-builder-actions {
