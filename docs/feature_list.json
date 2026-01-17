@@ -1,7 +1,7 @@
 {
   "project": "Ask Qiao",
-  "version": "1.0.0",
-  "lastUpdated": "2026-01-11",
+  "version": "2.0.0",
+  "lastUpdated": "2026-01-17",
   "features": [
     {
       "id": "AUTH-001",
@@ -148,11 +148,12 @@
       "description": "Model selection via welcome screen model cards",
       "steps": [
         "Navigate to main chat interface with empty history",
-        "Verify welcome message with model cards is displayed",
+        "Verify welcome message with model cards is displayed as full page",
         "Click on GPT-5.2 model card",
+        "Verify prompt builder slides up and takes full page",
         "Verify model selector updates to GPT-5.2",
-        "Verify input is focused",
-        "Refresh page to reset",
+        "Verify PERSONA input is focused",
+        "Click 'Change Model' button to return to landing",
         "Click on Gemini 3 Flash model card",
         "Verify model selector updates to Gemini"
       ],
@@ -986,6 +987,476 @@
         "Verify history is properly formatted for each provider"
       ],
       "passes": false
+    },
+    {
+      "id": "FILE-001",
+      "category": "fileUpload",
+      "description": "File upload via click to select",
+      "steps": [
+        "Navigate to prompt builder (click model card)",
+        "Locate file upload area in CONTEXT section",
+        "Click on the upload zone",
+        "Verify file picker dialog opens",
+        "Select an image file (PNG, JPG, GIF, WebP)",
+        "Verify file appears in preview list",
+        "Verify file count updates (e.g., 1/5)"
+      ],
+      "passes": false
+    },
+    {
+      "id": "FILE-002",
+      "category": "fileUpload",
+      "description": "File upload via drag and drop",
+      "steps": [
+        "Navigate to prompt builder",
+        "Drag an image file over the upload zone",
+        "Verify zone highlights with border color change",
+        "Drop the file",
+        "Verify file appears in preview list",
+        "Verify drag-over styling is removed"
+      ],
+      "passes": false
+    },
+    {
+      "id": "FILE-003",
+      "category": "fileUpload",
+      "description": "File upload via clipboard paste",
+      "steps": [
+        "Navigate to prompt builder",
+        "Copy an image to clipboard (screenshot or copy image)",
+        "Focus on the context textarea or upload area",
+        "Press Ctrl+V / Cmd+V",
+        "Verify pasted image appears in preview list",
+        "Verify auto-generated filename (pasted-image-timestamp.ext)"
+      ],
+      "passes": false
+    },
+    {
+      "id": "FILE-004",
+      "category": "fileUpload",
+      "description": "File type validation by model",
+      "steps": [
+        "Select GPT-5.2 model",
+        "Attempt to upload a PDF file",
+        "Verify error: PDF only supported by Gemini",
+        "Switch to Gemini model",
+        "Upload the same PDF file",
+        "Verify PDF is accepted and shows in preview"
+      ],
+      "passes": false
+    },
+    {
+      "id": "FILE-005",
+      "category": "fileUpload",
+      "description": "Supported file formats (PNG, JPG, GIF, WebP, HEIC, PDF)",
+      "steps": [
+        "Select Gemini model (supports all formats)",
+        "Upload PNG image - verify accepted",
+        "Upload JPG image - verify accepted",
+        "Upload GIF image - verify accepted",
+        "Upload WebP image - verify accepted",
+        "Upload PDF document - verify accepted",
+        "Attempt to upload unsupported format (e.g., .doc)",
+        "Verify error message for unsupported type"
+      ],
+      "passes": false
+    },
+    {
+      "id": "FILE-006",
+      "category": "fileUpload",
+      "description": "File size limit enforcement (20MB max)",
+      "steps": [
+        "Attempt to upload a file larger than 20MB",
+        "Verify error message: file too large",
+        "Upload a file under 20MB",
+        "Verify file is accepted"
+      ],
+      "passes": false
+    },
+    {
+      "id": "FILE-007",
+      "category": "fileUpload",
+      "description": "Maximum file count limit (5 files)",
+      "steps": [
+        "Upload 5 files one by one",
+        "Verify count shows 5/5",
+        "Verify count indicator turns red/warning color",
+        "Attempt to upload a 6th file",
+        "Verify error: maximum 5 files allowed",
+        "Remove one file",
+        "Verify 6th file can now be uploaded"
+      ],
+      "passes": false
+    },
+    {
+      "id": "FILE-008",
+      "category": "fileUpload",
+      "description": "File preview with thumbnails for images",
+      "steps": [
+        "Upload an image file",
+        "Verify thumbnail preview is displayed",
+        "Verify filename is shown (truncated if long)",
+        "Hover over preview item",
+        "Verify remove button (X) appears",
+        "Verify full filename in title tooltip"
+      ],
+      "passes": false
+    },
+    {
+      "id": "FILE-009",
+      "category": "fileUpload",
+      "description": "File preview for documents (PDF)",
+      "steps": [
+        "Upload a PDF file (using Gemini)",
+        "Verify document icon is displayed (not thumbnail)",
+        "Verify filename and file size are shown",
+        "Verify remove button functionality"
+      ],
+      "passes": false
+    },
+    {
+      "id": "FILE-010",
+      "category": "fileUpload",
+      "description": "Remove file from upload list",
+      "steps": [
+        "Upload multiple files",
+        "Click remove button (X) on one file",
+        "Verify file is removed from preview list",
+        "Verify file count decreases",
+        "Verify other files remain"
+      ],
+      "passes": false
+    },
+    {
+      "id": "FILE-011",
+      "category": "fileUpload",
+      "description": "File compatibility warning when switching models",
+      "steps": [
+        "Select Gemini model",
+        "Upload a PDF file",
+        "Switch to GPT-5.2 model",
+        "Verify warning alert about incompatible files",
+        "Verify PDF preview shows incompatible indicator",
+        "Send message - verify PDF is excluded for GPT"
+      ],
+      "passes": false
+    },
+    {
+      "id": "FILE-012",
+      "category": "fileUpload",
+      "description": "Large image compression (>2MB auto-compressed)",
+      "steps": [
+        "Upload an image larger than 2MB",
+        "Verify compression happens (check console log)",
+        "Verify compressed size is smaller",
+        "Verify image quality is acceptable",
+        "Verify max dimension is 2048px"
+      ],
+      "passes": false
+    },
+    {
+      "id": "FILE-013",
+      "category": "fileUpload",
+      "description": "Files cleared when clearing prompt form",
+      "steps": [
+        "Upload some files",
+        "Fill in prompt builder fields",
+        "Click 'Clear' button",
+        "Confirm clear action",
+        "Verify all files are removed",
+        "Verify file count resets to 0/5"
+      ],
+      "passes": false
+    },
+    {
+      "id": "FILE-014",
+      "category": "fileUpload",
+      "description": "File attachment indicator in chat messages",
+      "steps": [
+        "Upload files and send a message",
+        "Verify user message shows file attachment indicator",
+        "Verify indicator shows file count (e.g., '2 files')",
+        "Verify paperclip icon is displayed"
+      ],
+      "passes": false
+    },
+    {
+      "id": "FILE-015",
+      "category": "fileUpload",
+      "description": "Files sent to AI model with message",
+      "steps": [
+        "Upload an image file",
+        "Fill in prompt builder",
+        "Send the prompt",
+        "Verify AI response references the image content",
+        "Verify files are cleared after successful send"
+      ],
+      "passes": false
+    },
+    {
+      "id": "FILE-016",
+      "category": "fileUpload",
+      "description": "Upload progress indicator",
+      "steps": [
+        "Upload a larger file",
+        "Verify loading state on upload zone",
+        "Verify progress bar appears",
+        "Verify progress percentage updates",
+        "Verify zone returns to normal after upload"
+      ],
+      "passes": false
+    },
+    {
+      "id": "FILE-017",
+      "category": "fileUpload",
+      "description": "Keyboard accessibility for file upload",
+      "steps": [
+        "Tab to file upload zone",
+        "Verify zone receives focus with visible outline",
+        "Press Enter or Space",
+        "Verify file picker dialog opens"
+      ],
+      "passes": false
+    },
+    {
+      "id": "USAGE-001",
+      "category": "usage",
+      "description": "Usage counter display for limited users",
+      "steps": [
+        "Login as a regular (non-admin) user",
+        "Verify usage counter appears in header (e.g., 0/5)",
+        "Send a prompt successfully",
+        "Verify counter increments (e.g., 1/5)",
+        "Verify counter has warning style when near limit"
+      ],
+      "passes": false
+    },
+    {
+      "id": "USAGE-002",
+      "category": "usage",
+      "description": "Usage counter hidden for admin/unlimited users",
+      "steps": [
+        "Login as admin user",
+        "Verify usage counter is NOT displayed",
+        "Login as user with unlimited access",
+        "Verify usage counter is NOT displayed"
+      ],
+      "passes": false
+    },
+    {
+      "id": "USAGE-003",
+      "category": "usage",
+      "description": "Usage limit enforcement (5 free prompts)",
+      "steps": [
+        "Login as new user with 0 usage",
+        "Send 5 prompts successfully",
+        "Attempt to send 6th prompt",
+        "Verify extension request modal appears",
+        "Verify cannot send more prompts until approved"
+      ],
+      "passes": false
+    },
+    {
+      "id": "USAGE-004",
+      "category": "usage",
+      "description": "Apply for Unlimited button functionality",
+      "steps": [
+        "Login as limited user",
+        "Click the + button next to usage counter",
+        "Verify extension request modal opens",
+        "Verify 'Unlimited' option is pre-selected"
+      ],
+      "passes": false
+    },
+    {
+      "id": "EXT-001",
+      "category": "extension",
+      "description": "Submit extension request for more prompts",
+      "steps": [
+        "Login as limited user who has reached limit",
+        "Click 'Apply for Unlimited' or trigger limit modal",
+        "Select amount (5, 10, 20, or Unlimited)",
+        "Enter reason (minimum 10 characters)",
+        "Submit request",
+        "Verify success message",
+        "Verify pending status is shown"
+      ],
+      "passes": false
+    },
+    {
+      "id": "EXT-002",
+      "category": "extension",
+      "description": "Extension request form validation",
+      "steps": [
+        "Open extension request modal",
+        "Try to submit with empty reason",
+        "Verify error: reason required",
+        "Enter less than 10 characters",
+        "Try to submit",
+        "Verify error: minimum 10 characters"
+      ],
+      "passes": false
+    },
+    {
+      "id": "EXT-003",
+      "category": "extension",
+      "description": "Pending extension request status display",
+      "steps": [
+        "Submit an extension request",
+        "Open extension modal again",
+        "Verify pending status is displayed",
+        "Verify form is hidden while request is pending"
+      ],
+      "passes": false
+    },
+    {
+      "id": "EXT-004",
+      "category": "extension",
+      "description": "Admin approve extension request",
+      "steps": [
+        "Login as admin",
+        "Navigate to admin panel",
+        "View pending extension requests",
+        "Click 'Approve' on a request",
+        "Verify request status changes to approved",
+        "Login as the requesting user",
+        "Verify usage limit is increased"
+      ],
+      "passes": false
+    },
+    {
+      "id": "EXT-005",
+      "category": "extension",
+      "description": "Admin reject extension request",
+      "steps": [
+        "Login as admin",
+        "Navigate to admin panel",
+        "View pending extension requests",
+        "Click 'Reject' on a request",
+        "Verify request status changes to rejected",
+        "Login as the requesting user",
+        "Verify usage limit unchanged"
+      ],
+      "passes": false
+    },
+    {
+      "id": "EXT-006",
+      "category": "extension",
+      "description": "Admin extension request filtering",
+      "steps": [
+        "Navigate to admin panel",
+        "Click 'Pending' tab - verify only pending requests shown",
+        "Click 'Approved' tab - verify only approved shown",
+        "Click 'Rejected' tab - verify only rejected shown",
+        "Click 'All' tab - verify all requests shown"
+      ],
+      "passes": false
+    },
+    {
+      "id": "LAYOUT-001",
+      "category": "layout",
+      "description": "Model selection as full-page landing",
+      "steps": [
+        "Login and navigate to main interface",
+        "Verify model selection cards take full page",
+        "Verify prompt builder is NOT visible initially",
+        "Verify welcome message with Qiao icon is centered"
+      ],
+      "passes": false
+    },
+    {
+      "id": "LAYOUT-002",
+      "category": "layout",
+      "description": "Prompt builder slides up after model selection",
+      "steps": [
+        "On landing page, click a model card (GPT or Gemini)",
+        "Verify prompt builder slides up from bottom",
+        "Verify smooth animation (0.5s ease)",
+        "Verify prompt builder takes full page below header",
+        "Verify first input (PERSONA) is focused"
+      ],
+      "passes": false
+    },
+    {
+      "id": "LAYOUT-003",
+      "category": "layout",
+      "description": "Change Model button returns to landing",
+      "steps": [
+        "Select a model and enter prompt builder",
+        "Click 'Change Model' button in header",
+        "Verify prompt builder slides down",
+        "Verify landing page with model cards appears",
+        "Verify smooth animation"
+      ],
+      "passes": false
+    },
+    {
+      "id": "LAYOUT-004",
+      "category": "layout",
+      "description": "New Chat button returns to model selection",
+      "steps": [
+        "Have an active conversation in prompt builder",
+        "Click 'New Chat' (+) button",
+        "Verify prompt builder closes",
+        "Verify landing page appears",
+        "Verify prompt form fields are cleared"
+      ],
+      "passes": false
+    },
+    {
+      "id": "LAYOUT-005",
+      "category": "layout",
+      "description": "Responsive layout on mobile devices",
+      "steps": [
+        "Open app on mobile device or responsive mode",
+        "Verify model cards stack vertically on small screens",
+        "Select a model",
+        "Verify prompt builder fills screen properly",
+        "Verify action buttons are full-width on mobile",
+        "Verify safe-area-insets for notched phones"
+      ],
+      "passes": false
+    },
+    {
+      "id": "WELCOME-001",
+      "category": "welcome",
+      "description": "Welcome modal for new limited users",
+      "steps": [
+        "Login as a new user (first time)",
+        "Verify welcome modal appears immediately",
+        "Verify modal shows remaining prompt count",
+        "Verify 'Apply for Unlimited' option is available",
+        "Click 'Got it' button",
+        "Verify modal shrinks and animates to usage counter"
+      ],
+      "passes": false
+    },
+    {
+      "id": "WELCOME-002",
+      "category": "welcome",
+      "description": "Welcome modal NOT shown for admin/unlimited users",
+      "steps": [
+        "Login as admin user",
+        "Verify welcome modal does NOT appear",
+        "Login as user with unlimited access",
+        "Verify welcome modal does NOT appear"
+      ],
+      "passes": false
+    },
+    {
+      "id": "WELCOME-003",
+      "category": "welcome",
+      "description": "Welcome modal only shown once per session",
+      "steps": [
+        "Login as new limited user",
+        "Dismiss welcome modal",
+        "Refresh the page",
+        "Verify welcome modal does NOT appear again",
+        "Clear sessionStorage",
+        "Refresh page",
+        "Verify modal appears again"
+      ],
+      "passes": false
     }
   ],
   "categories": {
@@ -998,10 +1469,15 @@
     "ui": "User interface and visual elements",
     "api": "Backend API endpoints",
     "deployment": "Deployment and infrastructure",
-    "ai": "AI model integration features"
+    "ai": "AI model integration features",
+    "fileUpload": "File upload and attachment features",
+    "usage": "Usage tracking and limits",
+    "extension": "Extension request system for more prompts",
+    "layout": "Page layout and navigation flow",
+    "welcome": "Welcome modal and onboarding"
   },
   "summary": {
-    "total": 62,
+    "total": 105,
     "byCategory": {
       "authentication": 6,
       "functional": 18,
@@ -1012,7 +1488,12 @@
       "ui": 9,
       "api": 5,
       "deployment": 2,
-      "ai": 3
+      "ai": 3,
+      "fileUpload": 17,
+      "usage": 4,
+      "extension": 6,
+      "layout": 5,
+      "welcome": 3
     }
   }
 }
