@@ -39,9 +39,10 @@ router.get('/models', authenticateToken, async (req, res) => {
  * POST /api/chat
  * Send message to selected AI model with streaming response
  * Checks usage limit and increments usage count on success
+ * Supports file attachments (images, PDFs) via base64
  */
 router.post('/', authenticateToken, checkUsageLimit, async (req, res) => {
-  const { message, model, history = [] } = req.body;
+  const { message, model, history = [], files = [] } = req.body;
 
   // Validate input
   if (!message || typeof message !== 'string') {
@@ -49,16 +50,57 @@ router.post('/', authenticateToken, checkUsageLimit, async (req, res) => {
   }
 
   if (!model || !models[model]) {
-    return res.status(400).json({ 
-      error: 'Invalid model. Available: ' + Object.keys(models).join(', ') 
+    return res.status(400).json({
+      error: 'Invalid model. Available: ' + Object.keys(models).join(', ')
     });
   }
 
   // Sanitize message
   const sanitizedMessage = message.trim().slice(0, 32000); // Limit message length
-  
+
   if (!sanitizedMessage) {
     return res.status(400).json({ error: 'Message cannot be empty' });
+  }
+
+  // Validate and sanitize files
+  const validatedFiles = [];
+  const MAX_FILES = 5;
+  const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB (base64 is ~33% larger)
+
+  // Supported file types
+  const supportedTypes = {
+    common: ['image/png', 'image/jpeg', 'image/gif', 'image/webp'],
+    gemini: ['image/heic', 'image/heif', 'application/pdf']
+  };
+
+  const allowedTypes = model === 'gemini'
+    ? [...supportedTypes.common, ...supportedTypes.gemini]
+    : supportedTypes.common;
+
+  if (files && Array.isArray(files)) {
+    for (const file of files.slice(0, MAX_FILES)) {
+      // Validate file structure
+      if (!file.name || !file.mimeType || !file.data) {
+        continue;
+      }
+
+      // Validate mime type
+      if (!allowedTypes.includes(file.mimeType)) {
+        continue;
+      }
+
+      // Validate file size (base64 string length * 0.75 ≈ original size)
+      const estimatedSize = (file.data.length * 0.75);
+      if (estimatedSize > MAX_FILE_SIZE) {
+        continue;
+      }
+
+      validatedFiles.push({
+        name: file.name.slice(0, 255),
+        mimeType: file.mimeType,
+        data: file.data
+      });
+    }
   }
 
   // Build conversation messages
@@ -78,10 +120,11 @@ router.post('/', authenticateToken, checkUsageLimit, async (req, res) => {
 
   // Stream response from AI model
   const service = models[model];
-  
+
   try {
     await service.streamChat(
       messages,
+      validatedFiles,
       // onChunk
       (chunk) => {
         try {

@@ -77,13 +77,14 @@ async function getLatestModel() {
 /**
  * Stream chat completion from OpenAI
  * @param {Array} messages - Conversation history
+ * @param {Array} files - Optional array of files { name, mimeType, data (base64) }
  * @param {Function} onChunk - Callback for each streamed chunk
  * @param {Function} onDone - Callback when stream completes
  * @param {Function} onError - Callback for errors
  */
-export async function streamChat(messages, onChunk, onDone, onError) {
+export async function streamChat(messages, files = [], onChunk, onDone, onError) {
   const client = getClient();
-  
+
   if (!client) {
     onError(new Error('OpenAI API key not configured'));
     return;
@@ -91,13 +92,42 @@ export async function streamChat(messages, onChunk, onDone, onError) {
 
   try {
     const modelName = await getLatestModel();
-    
+
+    // Build messages with potential multimodal content
+    const formattedMessages = messages.map((m, index) => {
+      // Only attach files to the last user message
+      const isLastUserMessage = m.role === 'user' && index === messages.length - 1;
+
+      if (isLastUserMessage && files && files.length > 0) {
+        // Build multimodal content array
+        const content = [
+          { type: 'text', text: m.content }
+        ];
+
+        // Add images (OpenAI only supports images in vision)
+        for (const file of files) {
+          if (file.mimeType.startsWith('image/')) {
+            content.push({
+              type: 'image_url',
+              image_url: {
+                url: `data:${file.mimeType};base64,${file.data}`
+              }
+            });
+          }
+          // Note: OpenAI doesn't support PDF directly in chat completions
+          // PDFs would need to be processed separately or converted to images
+        }
+
+        return { role: m.role, content };
+      }
+
+      // Regular text message
+      return { role: m.role, content: m.content };
+    });
+
     const stream = await client.chat.completions.create({
       model: modelName,
-      messages: messages.map(m => ({
-        role: m.role,
-        content: m.content
-      })),
+      messages: formattedMessages,
       stream: true,
     });
 

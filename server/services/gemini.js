@@ -98,13 +98,14 @@ async function getModel() {
 /**
  * Stream chat completion from Gemini
  * @param {Array} messages - Conversation history
+ * @param {Array} files - Optional array of files { name, mimeType, data (base64) }
  * @param {Function} onChunk - Callback for each streamed chunk
  * @param {Function} onDone - Callback when stream completes
  * @param {Function} onError - Callback for errors
  */
-export async function streamChat(messages, onChunk, onDone, onError) {
+export async function streamChat(messages, files = [], onChunk, onDone, onError) {
   const geminiModel = await getModel();
-  
+
   if (!geminiModel) {
     onError(new Error('Google AI API key not configured'));
     return;
@@ -114,8 +115,7 @@ export async function streamChat(messages, onChunk, onDone, onError) {
     // Convert messages to Gemini format
     // Gemini uses 'user' and 'model' roles
     const history = [];
-    let currentMessage = '';
-    
+
     for (const msg of messages.slice(0, -1)) {
       history.push({
         role: msg.role === 'assistant' ? 'model' : 'user',
@@ -125,13 +125,27 @@ export async function streamChat(messages, onChunk, onDone, onError) {
 
     // Get the last message as the current prompt
     const lastMessage = messages[messages.length - 1];
-    currentMessage = lastMessage.content;
+
+    // Build the message parts (text + any files)
+    const messageParts = [{ text: lastMessage.content }];
+
+    // Add files to the message parts
+    if (files && files.length > 0) {
+      for (const file of files) {
+        messageParts.push({
+          inlineData: {
+            mimeType: file.mimeType,
+            data: file.data
+          }
+        });
+      }
+    }
 
     // Start chat with history
     const chat = geminiModel.startChat({ history });
-    
-    // Stream the response
-    const result = await chat.sendMessageStream(currentMessage);
+
+    // Stream the response with multimodal content
+    const result = await chat.sendMessageStream(messageParts);
 
     for await (const chunk of result.stream) {
       const text = chunk.text();

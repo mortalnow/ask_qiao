@@ -167,19 +167,25 @@ async function getModels() {
  * @param {string} message - User message
  * @param {string} model - Model ID (chatgpt or gemini)
  * @param {Array} history - Conversation history
+ * @param {Array|null} files - Optional array of file objects { name, mimeType, data (base64) }
  * @param {AbortSignal|null} signal - Optional abort signal to cancel the request
  * @param {Function} onChunk - Callback for each streamed chunk
  * @param {Function} onDone - Callback when complete (receives usage info)
  * @param {Function} onError - Callback for errors
  * @param {Function} onUsageLimitExceeded - Callback when usage limit is exceeded
  */
-async function sendMessage(message, model, history, signal = null, onChunk, onDone, onError, onUsageLimitExceeded) {
+async function sendMessage(message, model, history, files = null, signal = null, onChunk, onDone, onError, onUsageLimitExceeded) {
   let reader = null;
-  
+
   try {
+    const requestBody = { message, model, history };
+    if (files && files.length > 0) {
+      requestBody.files = files;
+    }
+
     const response = await apiRequest('/chat', {
       method: 'POST',
-      body: JSON.stringify({ message, model, history }),
+      body: JSON.stringify(requestBody),
       signal: signal, // Pass abort signal
     });
 

@@ -94,7 +94,21 @@ const translations = {
     'extension.submitSuccess': '申请已提交，请等待管理员审核',
     'extension.reasonMinLength': '申请理由至少需要10个字符',
     'extension.statusTitle': '申请状态',
-    
+
+    // File Upload
+    'fileUpload.dropzone': '拖拽文件到此处，或点击选择',
+    'fileUpload.formats': '支持: PNG, JPG, GIF, WebP, PDF',
+    'fileUpload.sizeLimit': '单文件最大 20MB',
+    'fileUpload.maxFilesReached': '最多只能上传 5 个文件',
+    'fileUpload.unsupportedType': '不支持的文件类型: {type}',
+    'fileUpload.fileTooLarge': '文件过大: {name} (最大 20MB)',
+    'fileUpload.processingError': '处理文件失败: {name}',
+    'fileUpload.geminiOnlyFormat': '{type} 格式仅 Gemini 模型支持。请切换到 Gemini 或选择其他文件。',
+    'fileUpload.incompatibleWarning': '注意：{files} 仅 Gemini 支持，使用 GPT 时将被忽略。',
+    'fileUpload.attachedCount': '{count} 个文件',
+    'fileUpload.pasteHint': '也可以直接粘贴图片',
+    'fileUpload.ariaLabel': '拖拽文件到此处，或点击/按回车选择文件',
+
     // Common
     'common.cancel': '取消',
     'common.submitting': '提交中...',
@@ -213,7 +227,21 @@ const translations = {
     'extension.submitSuccess': 'Request submitted successfully. Please wait for admin review.',
     'extension.reasonMinLength': 'Reason must be at least 10 characters',
     'extension.statusTitle': 'Request Status',
-    
+
+    // File Upload
+    'fileUpload.dropzone': 'Drop files here, or click to select',
+    'fileUpload.formats': 'Supported: PNG, JPG, GIF, WebP, PDF',
+    'fileUpload.sizeLimit': 'Max 20MB per file',
+    'fileUpload.maxFilesReached': 'Maximum 5 files allowed',
+    'fileUpload.unsupportedType': 'Unsupported file type: {type}',
+    'fileUpload.fileTooLarge': 'File too large: {name} (max 20MB)',
+    'fileUpload.processingError': 'Failed to process file: {name}',
+    'fileUpload.geminiOnlyFormat': '{type} is only supported by Gemini. Please switch to Gemini or select a different file.',
+    'fileUpload.incompatibleWarning': 'Warning: {files} is only supported by Gemini and will be ignored with GPT.',
+    'fileUpload.attachedCount': '{count} file(s)',
+    'fileUpload.pasteHint': 'You can also paste images directly',
+    'fileUpload.ariaLabel': 'Drop files here, or click/press Enter to select files',
+
     // Common
     'common.cancel': 'Cancel',
     'common.submitting': 'Submitting...',

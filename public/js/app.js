@@ -39,6 +39,15 @@ document.addEventListener('DOMContentLoaded', () => {
   const sendPromptBtn = document.getElementById('send-prompt');
   const clearPromptFormBtn = document.getElementById('clear-prompt-form');
 
+  // File Upload Elements
+  const fileUploadArea = document.getElementById('file-upload-area');
+  const fileUploadZone = document.getElementById('file-upload-zone');
+  const fileInput = document.getElementById('file-input');
+  const filePreviewList = document.getElementById('file-preview-list');
+  const fileCountDisplay = document.getElementById('file-count');
+  const fileProgressBar = document.getElementById('file-upload-progress-bar');
+  const fileProgressText = document.getElementById('file-upload-progress-text');
+
   // History Sidebar Elements
   const newChatBtn = document.getElementById('new-chat-btn');
   const historyBtn = document.getElementById('history-btn');
@@ -73,6 +82,21 @@ document.addEventListener('DOMContentLoaded', () => {
   let currentStreamingMessage = null;
   let currentStreamAbortController = null;
   let currentStreamFullResponse = '';
+
+  // File Upload State and Configuration
+  let uploadedFiles = []; // Array of { file, name, mimeType, data (base64), previewUrl }
+  const MAX_FILES = 5;
+  const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
+
+  // Supported file types by model
+  const SUPPORTED_TYPES = {
+    // Common to both OpenAI and Gemini
+    common: ['image/png', 'image/jpeg', 'image/gif', 'image/webp'],
+    // Gemini-only formats
+    gemini: ['image/heic', 'image/heif', 'application/pdf'],
+    // All supported types
+    all: ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/heic', 'image/heif', 'application/pdf']
+  };
   
   // Usage state
   let usageInfo = {
@@ -222,7 +246,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function setupEventListeners() {
     // Model selection
-    modelSelect.addEventListener('change', updateModelLabel);
+    modelSelect.addEventListener('change', () => {
+      updateModelLabel();
+      checkFileCompatibility();
+    });
 
     // Model card clicks (welcome screen) - show prompt builder full page
     document.querySelectorAll('.model-card').forEach(card => {
@@ -313,6 +340,413 @@ document.addEventListener('DOMContentLoaded', () => {
         showExtensionModal(true); // Pre-select unlimited
       });
     }
+
+    // File Upload Event Listeners
+    setupFileUploadListeners();
+  }
+
+  // ============================================
+  // File Upload Functions
+  // ============================================
+
+  function setupFileUploadListeners() {
+    if (!fileUploadZone || !fileInput) return;
+
+    // Click to select files
+    fileUploadZone.addEventListener('click', () => {
+      fileInput.click();
+    });
+
+    // File input change
+    fileInput.addEventListener('change', (e) => {
+      handleFileSelection(e.target.files);
+      fileInput.value = ''; // Reset to allow selecting same file again
+    });
+
+    // Drag and drop
+    fileUploadZone.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      fileUploadZone.classList.add('drag-over');
+    });
+
+    fileUploadZone.addEventListener('dragleave', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      fileUploadZone.classList.remove('drag-over');
+    });
+
+    fileUploadZone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      fileUploadZone.classList.remove('drag-over');
+      handleFileSelection(e.dataTransfer.files);
+    });
+
+    // Clipboard paste support for images
+    document.addEventListener('paste', async (e) => {
+      // Only handle paste when not typing in a text field (except the context textarea which allows paste)
+      const target = e.target;
+      const isInPromptBuilder = target.closest('.prompt-builder');
+      const isTextInput = target.tagName === 'INPUT' ||
+        (target.tagName === 'TEXTAREA' && target.id !== 'context-input');
+
+      if (isTextInput && !isInPromptBuilder) return;
+
+      const items = e.clipboardData?.items;
+      if (!items) return;
+
+      const imageFiles = [];
+      for (const item of items) {
+        if (item.type.startsWith('image/')) {
+          const file = item.getAsFile();
+          if (file) {
+            // Generate a name for pasted images
+            const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+            const ext = file.type.split('/')[1] || 'png';
+            Object.defineProperty(file, 'name', {
+              writable: true,
+              value: `pasted-image-${timestamp}.${ext}`
+            });
+            imageFiles.push(file);
+          }
+        }
+      }
+
+      if (imageFiles.length > 0) {
+        e.preventDefault();
+        handleFileSelection(imageFiles);
+      }
+    });
+
+    // Keyboard accessibility - make file zone focusable and respond to Enter/Space
+    fileUploadZone.setAttribute('tabindex', '0');
+    fileUploadZone.setAttribute('role', 'button');
+    fileUploadZone.setAttribute('aria-label', window.i18n ? window.i18n.t('fileUpload.dropzone') : 'Drop files here, or click to select');
+
+    fileUploadZone.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        fileInput.click();
+      }
+    });
+  }
+
+  async function handleFileSelection(files) {
+    if (!files || files.length === 0) return;
+
+    // Show loading state
+    if (fileUploadZone) {
+      fileUploadZone.classList.add('loading');
+    }
+
+    const currentModel = modelSelect.value;
+    const supportedTypes = currentModel === 'gemini'
+      ? SUPPORTED_TYPES.all
+      : SUPPORTED_TYPES.common;
+
+    for (const file of files) {
+      // Check if max files reached
+      if (uploadedFiles.length >= MAX_FILES) {
+        const msg = window.i18n ? window.i18n.t('fileUpload.maxFilesReached') : `最多只能上传 ${MAX_FILES} 个文件`;
+        alert(msg);
+        break;
+      }
+
+      // Validate file type
+      if (!supportedTypes.includes(file.type)) {
+        // Check if it's a Gemini-only format
+        const isGeminiOnly = SUPPORTED_TYPES.gemini.includes(file.type);
+        let msg;
+        if (isGeminiOnly && currentModel !== 'gemini') {
+          msg = window.i18n
+            ? window.i18n.t('fileUpload.geminiOnlyFormat', { type: file.type })
+            : `${file.type} 格式仅 Gemini 模型支持。请切换到 Gemini 或选择其他文件。`;
+        } else {
+          msg = window.i18n
+            ? window.i18n.t('fileUpload.unsupportedType', { type: file.type })
+            : `不支持的文件类型: ${file.type}`;
+        }
+        alert(msg);
+        continue;
+      }
+
+      // Validate file size
+      if (file.size > MAX_FILE_SIZE) {
+        const msg = window.i18n
+          ? window.i18n.t('fileUpload.fileTooLarge', { name: file.name })
+          : `文件过大: ${file.name} (最大 20MB)`;
+        alert(msg);
+        continue;
+      }
+
+      // Convert to base64 and add to list
+      try {
+        // Reset progress bar
+        if (fileProgressBar) fileProgressBar.style.width = '0%';
+        if (fileProgressText) fileProgressText.textContent = '0%';
+
+        // Compress large images to reduce payload size
+        let processedFile = file;
+        if (file.type.startsWith('image/')) {
+          processedFile = await compressImage(file);
+        }
+
+        const base64Data = await fileToBase64(processedFile, (percent) => {
+          // Update progress bar
+          if (fileProgressBar) fileProgressBar.style.width = `${percent}%`;
+          if (fileProgressText) fileProgressText.textContent = `${percent}%`;
+        });
+        const fileObj = {
+          file: processedFile,
+          name: file.name, // Keep original name
+          mimeType: processedFile.type,
+          data: base64Data,
+          previewUrl: processedFile.type.startsWith('image/') ? URL.createObjectURL(processedFile) : null
+        };
+        uploadedFiles.push(fileObj);
+      } catch (err) {
+        console.error('Failed to process file:', err);
+        const msg = window.i18n
+          ? window.i18n.t('fileUpload.processingError', { name: file.name })
+          : `处理文件失败: ${file.name}`;
+        alert(msg);
+      }
+    }
+
+    // Hide loading state and reset progress
+    if (fileUploadZone) {
+      fileUploadZone.classList.remove('loading');
+    }
+    if (fileProgressBar) fileProgressBar.style.width = '0%';
+    if (fileProgressText) fileProgressText.textContent = '0%';
+
+    renderFilePreviewList();
+    updateFileCount();
+  }
+
+  function fileToBase64(file, onProgress) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        // Extract base64 data (remove data:mime/type;base64, prefix)
+        const base64 = reader.result.split(',')[1];
+        if (onProgress) onProgress(100);
+        resolve(base64);
+      };
+      reader.onerror = reject;
+      reader.onprogress = (e) => {
+        if (e.lengthComputable && onProgress) {
+          const percent = Math.round((e.loaded / e.total) * 100);
+          onProgress(percent);
+        }
+      };
+      reader.readAsDataURL(file);
+    });
+  }
+
+  // Compress large images to reduce payload size
+  const IMAGE_COMPRESS_THRESHOLD = 2 * 1024 * 1024; // 2MB
+  const MAX_IMAGE_DIMENSION = 2048; // Max width or height
+
+  async function compressImage(file) {
+    // Only compress if image is larger than threshold
+    if (file.size <= IMAGE_COMPRESS_THRESHOLD) {
+      return file;
+    }
+
+    // Only compress supported image types (not HEIC/HEIF)
+    if (!['image/png', 'image/jpeg', 'image/webp'].includes(file.type)) {
+      return file;
+    }
+
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+
+      img.onload = () => {
+        URL.revokeObjectURL(url);
+
+        // Calculate new dimensions
+        let { width, height } = img;
+        if (width > MAX_IMAGE_DIMENSION || height > MAX_IMAGE_DIMENSION) {
+          const ratio = Math.min(MAX_IMAGE_DIMENSION / width, MAX_IMAGE_DIMENSION / height);
+          width = Math.round(width * ratio);
+          height = Math.round(height * ratio);
+        }
+
+        // Create canvas and draw resized image
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        // Convert to blob with compression
+        const outputType = file.type === 'image/png' ? 'image/png' : 'image/jpeg';
+        const quality = file.type === 'image/png' ? undefined : 0.85;
+
+        canvas.toBlob((blob) => {
+          if (!blob) {
+            resolve(file); // Fallback to original if compression fails
+            return;
+          }
+
+          // Create new file with compressed data
+          const compressedFile = new File([blob], file.name, {
+            type: outputType,
+            lastModified: file.lastModified
+          });
+
+          // Only use compressed if it's actually smaller
+          if (compressedFile.size < file.size) {
+            console.log(`Compressed ${file.name}: ${Math.round(file.size/1024)}KB → ${Math.round(compressedFile.size/1024)}KB`);
+            resolve(compressedFile);
+          } else {
+            resolve(file);
+          }
+        }, outputType, quality);
+      };
+
+      img.onerror = () => {
+        URL.revokeObjectURL(url);
+        resolve(file); // Fallback to original on error
+      };
+
+      img.src = url;
+    });
+  }
+
+  function renderFilePreviewList() {
+    if (!filePreviewList) return;
+
+    filePreviewList.innerHTML = '';
+
+    uploadedFiles.forEach((fileObj, index) => {
+      const item = document.createElement('div');
+      item.className = `file-preview-item ${fileObj.previewUrl ? 'image-preview' : ''}`;
+
+      if (fileObj.previewUrl) {
+        // Image preview
+        item.innerHTML = `
+          <img src="${fileObj.previewUrl}" alt="${fileObj.name}" class="file-preview-thumbnail">
+          <span class="file-preview-name" title="${fileObj.name}">${truncateFileName(fileObj.name, 12)}</span>
+          <button type="button" class="file-preview-remove" data-index="${index}">&times;</button>
+        `;
+      } else {
+        // Document preview (PDF, etc.)
+        const icon = getFileIcon(fileObj.mimeType);
+        item.innerHTML = `
+          <div class="file-preview-icon">${icon}</div>
+          <div class="file-preview-info">
+            <span class="file-preview-name" title="${fileObj.name}">${truncateFileName(fileObj.name, 15)}</span>
+            <span class="file-preview-size">${formatFileSize(fileObj.file.size)}</span>
+          </div>
+          <button type="button" class="file-preview-remove" data-index="${index}">&times;</button>
+        `;
+      }
+
+      filePreviewList.appendChild(item);
+
+      // Add remove button listener
+      const removeBtn = item.querySelector('.file-preview-remove');
+      removeBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        removeFile(index);
+      });
+    });
+  }
+
+  function removeFile(index) {
+    const fileObj = uploadedFiles[index];
+    if (fileObj.previewUrl) {
+      URL.revokeObjectURL(fileObj.previewUrl);
+    }
+    uploadedFiles.splice(index, 1);
+    renderFilePreviewList();
+    updateFileCount();
+  }
+
+  function updateFileCount() {
+    if (!fileCountDisplay) return;
+
+    fileCountDisplay.textContent = `${uploadedFiles.length}/${MAX_FILES}`;
+
+    // Update styling based on count
+    fileCountDisplay.classList.remove('file-count-warning', 'file-count-full');
+    if (uploadedFiles.length >= MAX_FILES) {
+      fileCountDisplay.classList.add('file-count-full');
+    } else if (uploadedFiles.length >= MAX_FILES - 1) {
+      fileCountDisplay.classList.add('file-count-warning');
+    }
+  }
+
+  function checkFileCompatibility() {
+    // Check if any uploaded files are Gemini-only when OpenAI is selected
+    const currentModel = modelSelect.value;
+
+    // First, clear all incompatible markers
+    if (filePreviewList) {
+      Array.from(filePreviewList.children).forEach(item => {
+        item.classList.remove('incompatible');
+      });
+    }
+
+    // If using Gemini or no files, nothing more to check
+    if (currentModel === 'gemini' || uploadedFiles.length === 0) return;
+
+    const incompatibleFiles = uploadedFiles.filter(f =>
+      SUPPORTED_TYPES.gemini.includes(f.mimeType)
+    );
+
+    if (incompatibleFiles.length > 0) {
+      const fileNames = incompatibleFiles.map(f => f.name).join(', ');
+      const msg = window.i18n
+        ? window.i18n.t('fileUpload.incompatibleWarning', { files: fileNames })
+        : `注意：${fileNames} 仅 Gemini 支持，使用 GPT 时将被忽略。`;
+      alert(msg);
+
+      // Mark incompatible files in the UI
+      incompatibleFiles.forEach(f => {
+        const index = uploadedFiles.indexOf(f);
+        const previewItem = filePreviewList?.children[index];
+        if (previewItem) {
+          previewItem.classList.add('incompatible');
+        }
+      });
+    }
+  }
+
+  function clearUploadedFiles() {
+    uploadedFiles.forEach(fileObj => {
+      if (fileObj.previewUrl) {
+        URL.revokeObjectURL(fileObj.previewUrl);
+      }
+    });
+    uploadedFiles = [];
+    renderFilePreviewList();
+    updateFileCount();
+  }
+
+  function truncateFileName(name, maxLength) {
+    if (name.length <= maxLength) return name;
+    const ext = name.split('.').pop();
+    const nameWithoutExt = name.substring(0, name.length - ext.length - 1);
+    const truncated = nameWithoutExt.substring(0, maxLength - ext.length - 4) + '...' + ext;
+    return truncated;
+  }
+
+  function formatFileSize(bytes) {
+    if (bytes < 1024) return bytes + ' B';
+    if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+    return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+  }
+
+  function getFileIcon(mimeType) {
+    if (mimeType === 'application/pdf') {
+      return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
+    }
+    return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>';
   }
 
   function updateModelLabel() {
@@ -366,8 +800,8 @@ document.addEventListener('DOMContentLoaded', () => {
       welcomeMessage.remove();
     }
 
-    // Add user message to UI
-    addMessage('user', message);
+    // Add user message to UI (with file count indicator)
+    addMessage('user', message, null, uploadedFiles.length);
 
     // Add assistant message placeholder
     const assistantMessage = addMessage('assistant', '', model);
@@ -396,6 +830,15 @@ document.addEventListener('DOMContentLoaded', () => {
         content: msg.content
       }));
 
+    // Prepare files for API (if any)
+    const files = uploadedFiles.length > 0
+      ? uploadedFiles.map(f => ({
+          name: f.name,
+          mimeType: f.mimeType,
+          data: f.data
+        }))
+      : null;
+
     // Create abort controller
     currentStreamAbortController = new AbortController();
 
@@ -404,6 +847,7 @@ document.addEventListener('DOMContentLoaded', () => {
         message,
         model,
         apiHistory,
+        files,
         currentStreamAbortController.signal,
         // onChunk
         (chunk) => {
@@ -521,7 +965,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function addMessage(role, content, model = null) {
+  function addMessage(role, content, model = null, fileCount = 0) {
     const message = document.createElement('div');
     message.className = `message ${role}`;
 
@@ -529,10 +973,27 @@ document.addEventListener('DOMContentLoaded', () => {
     const avatarIcon = role === 'user' ? '👤' : modelIcons[model] || defaultAssistantIcon;
     const modelLabel = model ? modelNames[model] : '';
 
+    // Build file attachment indicator for user messages
+    let fileIndicator = '';
+    if (role === 'user' && fileCount > 0) {
+      const fileLabel = window.i18n
+        ? window.i18n.t('fileUpload.attachedCount', { count: fileCount })
+        : `${fileCount} 个文件`;
+      fileIndicator = `
+        <div class="message-files-indicator">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/>
+          </svg>
+          <span>${fileLabel}</span>
+        </div>
+      `;
+    }
+
     message.innerHTML = `
       <div class="message-avatar ${avatarClass}">${avatarIcon}</div>
       <div class="message-content">
         <div class="message-bubble">
+          ${fileIndicator}
           <span class="message-text">${formatMessage(content)}</span>
         </div>
         <div class="message-meta">
@@ -548,6 +1009,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Save to history
     const historyEntry = { role, content };
     if (model) historyEntry.model = model;
+    if (fileCount > 0) historyEntry.fileCount = fileCount;
     chatHistory.push(historyEntry);
     saveChatHistory();
 
@@ -608,10 +1070,27 @@ document.addEventListener('DOMContentLoaded', () => {
       const avatarIcon = msg.role === 'user' ? '👤' : modelIcons[model] || defaultAssistantIcon;
       const modelLabel = model ? modelNames[model] : '';
 
+      // Build file attachment indicator for user messages
+      let fileIndicator = '';
+      if (msg.role === 'user' && msg.fileCount > 0) {
+        const fileLabel = window.i18n
+          ? window.i18n.t('fileUpload.attachedCount', { count: msg.fileCount })
+          : `${msg.fileCount} 个文件`;
+        fileIndicator = `
+          <div class="message-files-indicator">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21.44 11.05l-9.19 9.19a6 6 0 01-8.49-8.49l9.19-9.19a4 4 0 015.66 5.66l-9.2 9.19a2 2 0 01-2.83-2.83l8.49-8.48"/>
+            </svg>
+            <span>${fileLabel}</span>
+          </div>
+        `;
+      }
+
       message.innerHTML = `
         <div class="message-avatar ${avatarClass}">${avatarIcon}</div>
         <div class="message-content">
           <div class="message-bubble">
+            ${fileIndicator}
             <span class="message-text">${formatMessage(msg.content)}</span>
           </div>
           <div class="message-meta">
@@ -870,6 +1349,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (contextInput) contextInput.value = '';
     if (formatInput) formatInput.value = '';
     if (referencesInput) referencesInput.value = '';
+    clearUploadedFiles();
   }
 
   function clearPromptForm() {

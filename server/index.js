@@ -18,7 +18,9 @@ const app = express();
 
 // Middleware
 app.use(cors());
-app.use(express.json());
+// Increase body size limit for file uploads (base64 encoded)
+// 50MB should handle 5 files of ~7MB each after base64 encoding
+app.use(express.json({ limit: '50mb' }));
 
 // Rate limiting for API routes
 const apiLimiter = rateLimit({
