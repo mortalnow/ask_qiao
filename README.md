@@ -5,6 +5,7 @@ A prompt-based AI instruction service designed to teach users how to communicate
 ## Features
 
 - **Mandatory Prompt Builder**: All queries must use structured prompts (PERSONA, TASK, CONTEXT, FORMAT, REFERENCES)
+- **Skills Integration**: Upload Claude skill files (.md) and apply them to any LLM (GPT, Gemini)
 - **Usage Limits**: 5 free prompts per user, with extension request system
 - **Extension Requests**: Users can request more prompts; admins approve/reject via UI
 - **Apply for Unlimited**: Quick access button next to usage counter for limited users
@@ -250,6 +251,15 @@ If you can't login to the production site, check:
 - **Fixed**: Service Worker cache issue preventing Prompt Builder from working
 
 ## Changelog
+
+### 2026-01-18
+- **Added**: Skills Integration feature
+  - Upload Claude skill files (.md) from ~/.claude/skills folder
+  - Parse skill metadata (name, description) from YAML frontmatter or headings
+  - Toggle skills on/off; enabled skills are prepended to prompts
+  - Works with any LLM (GPT, Gemini) by converting skills to system instructions
+  - Skills persisted in localStorage for reuse
+  - Token warning when combined skill content is lengthy
 
 ### 2026-01-15
 - **Changed**: Removed invite-code requirement; open registration now available

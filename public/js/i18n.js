@@ -112,6 +112,25 @@ const translations = {
     // Common
     'common.cancel': '取消',
     'common.submitting': '提交中...',
+    'common.close': '关闭',
+
+    // Skills
+    'skills.title': '技能',
+    'skills.button': '技能',
+    'skills.modalTitle': '技能管理',
+    'skills.info': '上传 Claude 技能文件 (.md)，选择的技能将作为系统指令添加到您的提示词中。',
+    'skills.uploadPrompt': '拖拽技能文件到此处，或点击选择',
+    'skills.uploadHint': '支持 .md 文件（来自 ~/.claude/skills 文件夹）',
+    'skills.listTitle': '已上传的技能',
+    'skills.clearAll': '清空全部',
+    'skills.empty': '暂无上传的技能',
+    'skills.tokenWarning': '选中的技能内容较长，可能影响响应质量',
+    'skills.delete': '删除',
+    'skills.deleteConfirm': '确定要删除这个技能吗？',
+    'skills.clearConfirm': '确定要删除所有技能吗？',
+    'skills.invalidType': '只支持 Markdown 文件 (.md)',
+    'skills.duplicate': '技能 "{name}" 已存在',
+    'skills.readError': '读取文件失败: {name}',
     
     // Login page
     'login.tab.login': '登录',
@@ -245,6 +264,25 @@ const translations = {
     // Common
     'common.cancel': 'Cancel',
     'common.submitting': 'Submitting...',
+    'common.close': 'Close',
+
+    // Skills
+    'skills.title': 'Skills',
+    'skills.button': 'Skills',
+    'skills.modalTitle': 'Skills Manager',
+    'skills.info': 'Upload Claude skill files (.md). Selected skills will be added as system instructions to your prompts.',
+    'skills.uploadPrompt': 'Drop skill files here, or click to select',
+    'skills.uploadHint': 'Supports .md files (from ~/.claude/skills folder)',
+    'skills.listTitle': 'Uploaded Skills',
+    'skills.clearAll': 'Clear All',
+    'skills.empty': 'No skills uploaded yet',
+    'skills.tokenWarning': 'Selected skills are lengthy and may affect response quality',
+    'skills.delete': 'Delete',
+    'skills.deleteConfirm': 'Are you sure you want to delete this skill?',
+    'skills.clearConfirm': 'Are you sure you want to delete all skills?',
+    'skills.invalidType': 'Only Markdown files (.md) are supported',
+    'skills.duplicate': 'Skill "{name}" already exists',
+    'skills.readError': 'Failed to read file: {name}',
     
     // Login page
     'login.tab.login': 'Login',

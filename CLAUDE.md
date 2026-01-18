@@ -23,14 +23,15 @@ Client (Web/Mobile/PWA) → Express Server → AI Providers (OpenAI, Gemini)
 ## Key Features
 
 1. **Mandatory Prompt Builder**: All queries must use structured prompts (PERSONA, TASK, CONTEXT, FORMAT, REFERENCES)
-2. **Usage Limits**: 5 free prompts per user; must request extension for more
-3. **Extension Request System**: Users can request more prompts; admins approve/reject via UI
-4. **Apply for Unlimited**: Quick access button next to usage counter for limited users
-5. **Multi-model chat**: Users can switch between AI models per message
-6. **Open Registration**: Users register with username/password (no invite codes)
-7. **PWA support**: Installable on iOS via "Add to Home Screen"
-8. **Streaming responses**: Real-time message display via SSE
-9. **Ephemeral chats**: No server-side chat persistence (privacy-focused)
+2. **Skills Integration**: Upload Claude skill files (.md) and apply them to any LLM
+3. **Usage Limits**: 5 free prompts per user; must request extension for more
+4. **Extension Request System**: Users can request more prompts; admins approve/reject via UI
+5. **Apply for Unlimited**: Quick access button next to usage counter for limited users
+6. **Multi-model chat**: Users can switch between AI models per message
+7. **Open Registration**: Users register with username/password (no invite codes)
+8. **PWA support**: Installable on iOS via "Add to Home Screen"
+9. **Streaming responses**: Real-time message display via SSE
+10. **Ephemeral chats**: No server-side chat persistence (privacy-focused)
 
 ## Project Structure
 
@@ -215,6 +216,30 @@ The project uses MongoDB Atlas for user and invite code storage. To initialize:
 - JS: `togglePromptBuilder()`, `generatePrompt()`, `clearPromptForm()`
 
 **Bug Fix**: Service Worker caching old `app.js` - updated cache version to force refresh
+
+### 2026-01-18: Skills Integration Feature
+
+**Goal**: Allow users to upload Claude skill files and apply them to any LLM (GPT, Gemini).
+
+**Features**:
+1. **Skills Button**: Added in prompt builder header next to "Back to models"
+2. **Skills Modal**: Upload zone for .md files, list of skills with toggles
+3. **Skill Parser**: Extracts name/description from YAML frontmatter or first heading
+4. **localStorage Persistence**: Skills saved locally for reuse
+5. **Skill Injection**: Enabled skills prepended as `[SKILLS]` section before `[PERSONA]`
+6. **Token Warning**: Alerts when combined skill content exceeds 2000 characters
+
+**Files Changed**:
+- `public/index.html`: Skills button, skills modal HTML
+- `public/js/app.js`: Skills management functions (upload, parse, toggle, inject)
+- `public/css/style.css`: Skills button, modal, list, toggle styles
+- `public/js/i18n.js`: Chinese and English translations for skills UI
+
+**How It Works**:
+- Users upload `.md` files from `~/.claude/skills` folder
+- Parser extracts metadata from YAML frontmatter or headings
+- Skills can be toggled on/off; enabled skills are prepended to prompts
+- Works with any LLM by converting Claude skills to system instructions
 
 ### 2026-01-15: Open Registration & UI Improvements
 

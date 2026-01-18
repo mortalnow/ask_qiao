@@ -76,6 +76,18 @@ document.addEventListener('DOMContentLoaded', () => {
   // Apply Unlimited Button (next to usage counter)
   const applyUnlimitedBtn = document.getElementById('apply-unlimited-btn');
 
+  // Skills Modal Elements
+  const skillsBtn = document.getElementById('skills-btn');
+  const skillsModal = document.getElementById('skills-modal');
+  const closeSkillsModalBtn = document.getElementById('close-skills-modal');
+  const closeSkillsBtn = document.getElementById('close-skills-btn');
+  const skillsUploadZone = document.getElementById('skills-upload-zone');
+  const skillsFileInput = document.getElementById('skills-file-input');
+  const skillsList = document.getElementById('skills-list');
+  const skillsCount = document.getElementById('skills-count');
+  const clearAllSkillsBtn = document.getElementById('clear-all-skills');
+  const skillsTokenWarning = document.getElementById('skills-token-warning');
+
   // State
   let chatHistory = [];
   let isStreaming = false;
@@ -87,6 +99,11 @@ document.addEventListener('DOMContentLoaded', () => {
   let uploadedFiles = []; // Array of { file, name, mimeType, data (base64), previewUrl }
   const MAX_FILES = 5;
   const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
+
+  // Skills State and Configuration
+  let skills = []; // Array of { id, name, description, content, enabled, addedAt }
+  const SKILLS_STORAGE_KEY = 'ask_qiao_skills';
+  const SKILLS_TOKEN_WARNING_THRESHOLD = 2000; // characters
 
   // Supported file types by model
   const SUPPORTED_TYPES = {
@@ -188,6 +205,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (chatHistory.length > 0) {
       showPromptBuilder();
     }
+
+    // Initialize skills from localStorage
+    loadSkills();
+    updateSkillsUI();
   }
   
   async function fetchUsageStatus() {
@@ -343,6 +364,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // File Upload Event Listeners
     setupFileUploadListeners();
+
+    // Skills Event Listeners
+    setupSkillsListeners();
   }
 
   // ============================================
@@ -749,6 +773,346 @@ document.addEventListener('DOMContentLoaded', () => {
     return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>';
   }
 
+  // ============================================
+  // Skills Management Functions
+  // ============================================
+
+  function setupSkillsListeners() {
+    // Open skills modal
+    if (skillsBtn) {
+      skillsBtn.addEventListener('click', showSkillsModal);
+    }
+
+    // Close skills modal
+    if (closeSkillsModalBtn) {
+      closeSkillsModalBtn.addEventListener('click', hideSkillsModal);
+    }
+    if (closeSkillsBtn) {
+      closeSkillsBtn.addEventListener('click', hideSkillsModal);
+    }
+    if (skillsModal) {
+      skillsModal.querySelector('.modal-overlay')?.addEventListener('click', hideSkillsModal);
+    }
+
+    // Skills file upload
+    if (skillsUploadZone && skillsFileInput) {
+      skillsUploadZone.addEventListener('click', () => {
+        skillsFileInput.click();
+      });
+
+      skillsFileInput.addEventListener('change', (e) => {
+        handleSkillsFileSelection(e.target.files);
+        skillsFileInput.value = '';
+      });
+
+      // Drag and drop
+      skillsUploadZone.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        skillsUploadZone.classList.add('drag-over');
+      });
+
+      skillsUploadZone.addEventListener('dragleave', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        skillsUploadZone.classList.remove('drag-over');
+      });
+
+      skillsUploadZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        skillsUploadZone.classList.remove('drag-over');
+        handleSkillsFileSelection(e.dataTransfer.files);
+      });
+
+      // Keyboard accessibility
+      skillsUploadZone.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          skillsFileInput.click();
+        }
+      });
+    }
+
+    // Clear all skills
+    if (clearAllSkillsBtn) {
+      clearAllSkillsBtn.addEventListener('click', () => {
+        const msg = window.i18n ? window.i18n.t('skills.clearConfirm') : '确定要删除所有技能吗？';
+        if (confirm(msg)) {
+          skills = [];
+          saveSkills();
+          updateSkillsUI();
+        }
+      });
+    }
+  }
+
+  function showSkillsModal() {
+    if (!skillsModal) return;
+    skillsModal.style.display = 'flex';
+    renderSkillsList();
+  }
+
+  function hideSkillsModal() {
+    if (!skillsModal) return;
+    skillsModal.style.display = 'none';
+  }
+
+  async function handleSkillsFileSelection(files) {
+    if (!files || files.length === 0) return;
+
+    for (const file of files) {
+      // Validate file type
+      if (!file.name.endsWith('.md') && !file.name.endsWith('.markdown')) {
+        const msg = window.i18n 
+          ? window.i18n.t('skills.invalidType') 
+          : '只支持 Markdown 文件 (.md)';
+        alert(msg);
+        continue;
+      }
+
+      // Check for duplicates
+      const existingSkill = skills.find(s => s.name === file.name.replace(/\.(md|markdown)$/, ''));
+      if (existingSkill) {
+        const msg = window.i18n 
+          ? window.i18n.t('skills.duplicate', { name: existingSkill.name }) 
+          : `技能 "${existingSkill.name}" 已存在`;
+        alert(msg);
+        continue;
+      }
+
+      try {
+        const content = await readFileAsText(file);
+        const parsedSkill = parseSkillFile(content, file.name);
+        
+        skills.push({
+          id: generateSkillId(),
+          name: parsedSkill.name,
+          description: parsedSkill.description,
+          content: parsedSkill.content,
+          enabled: true,
+          addedAt: Date.now()
+        });
+      } catch (err) {
+        console.error('Failed to read skill file:', err);
+        const msg = window.i18n 
+          ? window.i18n.t('skills.readError', { name: file.name }) 
+          : `读取文件失败: ${file.name}`;
+        alert(msg);
+      }
+    }
+
+    saveSkills();
+    updateSkillsUI();
+    renderSkillsList();
+  }
+
+  function readFileAsText(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = reject;
+      reader.readAsText(file);
+    });
+  }
+
+  /**
+   * Parse a skill markdown file to extract name, description, and content
+   * Supports YAML frontmatter and fallbacks to filename/first heading
+   */
+  function parseSkillFile(content, filename) {
+    let name = filename.replace(/\.(md|markdown)$/, '');
+    let description = '';
+    let skillContent = content;
+
+    // Try to parse YAML frontmatter
+    const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
+    if (frontmatterMatch) {
+      const frontmatter = frontmatterMatch[1];
+      skillContent = frontmatterMatch[2].trim();
+
+      // Extract name from frontmatter
+      const nameMatch = frontmatter.match(/^name:\s*(.+)$/m);
+      if (nameMatch) {
+        name = nameMatch[1].trim().replace(/^["']|["']$/g, '');
+      }
+
+      // Extract description from frontmatter
+      const descMatch = frontmatter.match(/^description:\s*(.+)$/m);
+      if (descMatch) {
+        description = descMatch[1].trim().replace(/^["']|["']$/g, '');
+      }
+    }
+
+    // If no frontmatter name, try first H1 heading
+    if (name === filename.replace(/\.(md|markdown)$/, '')) {
+      const h1Match = skillContent.match(/^#\s+(.+)$/m);
+      if (h1Match) {
+        name = h1Match[1].trim();
+      }
+    }
+
+    // If no description, use first non-heading paragraph
+    if (!description) {
+      const paragraphMatch = skillContent.match(/^(?!#)(.+)$/m);
+      if (paragraphMatch) {
+        description = paragraphMatch[1].trim().substring(0, 150);
+        if (paragraphMatch[1].length > 150) {
+          description += '...';
+        }
+      }
+    }
+
+    return { name, description, content: skillContent };
+  }
+
+  function generateSkillId() {
+    return 'skill_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+  }
+
+  function loadSkills() {
+    try {
+      const savedSkills = localStorage.getItem(SKILLS_STORAGE_KEY);
+      if (savedSkills) {
+        skills = JSON.parse(savedSkills);
+      }
+    } catch (err) {
+      console.error('Failed to load skills:', err);
+      skills = [];
+    }
+  }
+
+  function saveSkills() {
+    try {
+      localStorage.setItem(SKILLS_STORAGE_KEY, JSON.stringify(skills));
+    } catch (err) {
+      console.error('Failed to save skills:', err);
+    }
+  }
+
+  function toggleSkill(skillId) {
+    const skill = skills.find(s => s.id === skillId);
+    if (skill) {
+      skill.enabled = !skill.enabled;
+      saveSkills();
+      updateSkillsUI();
+      renderSkillsList();
+    }
+  }
+
+  function deleteSkill(skillId) {
+    const index = skills.findIndex(s => s.id === skillId);
+    if (index !== -1) {
+      skills.splice(index, 1);
+      saveSkills();
+      updateSkillsUI();
+      renderSkillsList();
+    }
+  }
+
+  function updateSkillsUI() {
+    const enabledCount = skills.filter(s => s.enabled).length;
+    
+    // Update badge count
+    if (skillsCount) {
+      skillsCount.textContent = enabledCount;
+    }
+
+    // Update button state
+    if (skillsBtn) {
+      if (enabledCount > 0) {
+        skillsBtn.classList.add('has-active');
+      } else {
+        skillsBtn.classList.remove('has-active');
+      }
+    }
+
+    // Update token warning
+    updateTokenWarning();
+  }
+
+  function updateTokenWarning() {
+    if (!skillsTokenWarning) return;
+
+    const enabledSkills = skills.filter(s => s.enabled);
+    const totalLength = enabledSkills.reduce((sum, s) => sum + s.content.length, 0);
+
+    if (totalLength > SKILLS_TOKEN_WARNING_THRESHOLD) {
+      skillsTokenWarning.style.display = 'flex';
+    } else {
+      skillsTokenWarning.style.display = 'none';
+    }
+  }
+
+  function renderSkillsList() {
+    if (!skillsList) return;
+
+    if (skills.length === 0) {
+      const emptyText = window.i18n ? window.i18n.t('skills.empty') : '暂无上传的技能';
+      skillsList.innerHTML = `<div class="skills-empty">${emptyText}</div>`;
+      return;
+    }
+
+    skillsList.innerHTML = skills.map(skill => `
+      <div class="skill-item ${skill.enabled ? 'enabled' : ''}" data-skill-id="${skill.id}">
+        <label class="skill-toggle">
+          <input type="checkbox" ${skill.enabled ? 'checked' : ''}>
+          <span class="skill-toggle-slider"></span>
+        </label>
+        <div class="skill-content">
+          <div class="skill-name">${escapeHtml(skill.name)}</div>
+          <div class="skill-description">${escapeHtml(skill.description || '')}</div>
+        </div>
+        <button type="button" class="skill-delete" title="${window.i18n ? window.i18n.t('skills.delete') : '删除'}">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z"/>
+          </svg>
+        </button>
+      </div>
+    `).join('');
+
+    // Add event listeners
+    skillsList.querySelectorAll('.skill-item').forEach(item => {
+      const skillId = item.dataset.skillId;
+      
+      // Toggle checkbox
+      const checkbox = item.querySelector('input[type="checkbox"]');
+      if (checkbox) {
+        checkbox.addEventListener('change', () => toggleSkill(skillId));
+      }
+
+      // Delete button
+      const deleteBtn = item.querySelector('.skill-delete');
+      if (deleteBtn) {
+        deleteBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const msg = window.i18n ? window.i18n.t('skills.deleteConfirm') : '确定要删除这个技能吗？';
+          if (confirm(msg)) {
+            deleteSkill(skillId);
+          }
+        });
+      }
+    });
+
+    updateTokenWarning();
+  }
+
+  /**
+   * Build the skills prefix to prepend to prompts
+   * Returns empty string if no skills are enabled
+   */
+  function buildSkillsPrefix() {
+    const enabledSkills = skills.filter(s => s.enabled);
+    if (enabledSkills.length === 0) return '';
+
+    let prefix = '[SKILLS]\n';
+    enabledSkills.forEach(skill => {
+      prefix += `--- ${skill.name} ---\n${skill.content}\n\n`;
+    });
+
+    return prefix;
+  }
+
   function updateModelLabel() {
     const model = modelSelect.value;
     // Update label if element exists (removed from UI for cleaner look)
@@ -783,8 +1147,10 @@ document.addEventListener('DOMContentLoaded', () => {
     const format = formatInput?.value.trim() || '';
     const references = referencesInput?.value.trim() || '';
 
-    // Build structured prompt
-    let message = `[PERSONA]\n${persona}\n\n[TASK]\n${task}\n\n[CONTEXT]\n${context}`;
+    // Build structured prompt with skills prefix
+    const skillsPrefix = buildSkillsPrefix();
+    let message = skillsPrefix;
+    message += `[PERSONA]\n${persona}\n\n[TASK]\n${task}\n\n[CONTEXT]\n${context}`;
     if (format) {
       message += `\n\n[FORMAT]\n${format}`;
     }
