@@ -3,7 +3,7 @@
  * Handles caching for offline shell support
  */
 
-const CACHE_NAME = 'ask-qiao-v13';
+const CACHE_NAME = 'ask-qiao-v14';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
@@ -16,6 +16,7 @@ const STATIC_ASSETS = [
   '/manifest.json',
   '/icons/qiao.png'
 ];
+const NETWORK_FIRST_DESTINATIONS = new Set(['document', 'script', 'style']);
 
 // Install event - cache static assets
 self.addEventListener('install', (event) => {
@@ -44,10 +45,58 @@ self.addEventListener('activate', (event) => {
   );
 });
 
-// Fetch event - serve from cache, fallback to network
+// Allow clients to trigger immediate activation
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
+
+async function networkFirst(request, fallbackUrl) {
+  try {
+    const response = await fetch(request);
+    if (response && response.status === 200) {
+      const cache = await caches.open(CACHE_NAME);
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch (error) {
+    const cachedResponse = await caches.match(request);
+    if (cachedResponse) {
+      return cachedResponse;
+    }
+    if (fallbackUrl) {
+      const fallbackResponse = await caches.match(fallbackUrl);
+      if (fallbackResponse) {
+        return fallbackResponse;
+      }
+    }
+    return new Response('Offline', { status: 503, statusText: 'Offline' });
+  }
+}
+
+async function cacheFirst(request) {
+  const cachedResponse = await caches.match(request);
+  if (cachedResponse) {
+    return cachedResponse;
+  }
+
+  const response = await fetch(request);
+  if (response && response.status === 200) {
+    const cache = await caches.open(CACHE_NAME);
+    cache.put(request, response.clone());
+  }
+  return response;
+}
+
+// Fetch event - network-first for critical assets, cache-first for others
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
+
+  if (request.method !== 'GET') {
+    return;
+  }
 
   // Skip API requests - always go to network
   if (url.pathname.startsWith('/api')) {
@@ -56,38 +105,16 @@ self.addEventListener('fetch', (event) => {
 
   // For navigation requests, try network first, then cache
   if (request.mode === 'navigate') {
-    event.respondWith(
-      fetch(request)
-        .catch(() => caches.match('/index.html'))
-    );
+    event.respondWith(networkFirst(request, '/index.html'));
+    return;
+  }
+
+  if (NETWORK_FIRST_DESTINATIONS.has(request.destination)) {
+    event.respondWith(networkFirst(request));
     return;
   }
 
   // For other requests, try cache first, then network
-  event.respondWith(
-    caches.match(request)
-      .then((cachedResponse) => {
-        if (cachedResponse) {
-          return cachedResponse;
-        }
-
-        return fetch(request)
-          .then((response) => {
-            // Don't cache non-successful responses
-            if (!response || response.status !== 200) {
-              return response;
-            }
-
-            // Clone and cache the response
-            const responseToCache = response.clone();
-            caches.open(CACHE_NAME)
-              .then((cache) => {
-                cache.put(request, responseToCache);
-              });
-
-            return response;
-          });
-      })
-  );
+  event.respondWith(cacheFirst(request));
 });
 

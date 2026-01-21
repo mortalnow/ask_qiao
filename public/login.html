@@ -141,8 +141,37 @@
     
     // Register service worker
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js')
+      const hasController = !!navigator.serviceWorker.controller;
+      let refreshing = false;
+
+      navigator.serviceWorker.register('/sw.js', { updateViaCache: 'none' })
+        .then((registration) => {
+          if (registration.waiting) {
+            registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+          }
+
+          registration.addEventListener('updatefound', () => {
+            const newWorker = registration.installing;
+            if (!newWorker) {
+              return;
+            }
+
+            newWorker.addEventListener('statechange', () => {
+              if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                newWorker.postMessage({ type: 'SKIP_WAITING' });
+              }
+            });
+          });
+        })
         .catch(err => console.log('SW registration failed:', err));
+
+      navigator.serviceWorker.addEventListener('controllerchange', () => {
+        if (refreshing || !hasController) {
+          return;
+        }
+        refreshing = true;
+        window.location.reload();
+      });
     }
   </script>
 </body>

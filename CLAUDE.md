@@ -159,6 +159,15 @@ The project uses MongoDB Atlas for user and invite code storage. To initialize:
 
 ## Development Log
 
+### 2026-01-21: PWA Cache Freshness
+
+**Goal**: Prevent stale UI after deployments without manual cache clearing.
+
+**Changes**:
+1. **Service Worker Strategy**: Network-first for HTML/CSS/JS, cache-first for other assets
+2. **Instant Updates**: Added skip-waiting messaging and controller-change reload
+3. **Cache Control**: Added no-cache headers for `/sw.js`, `/`, and `*.html` in `vercel.json`
+
 ### 2026-01-14: Prompt-Based Instruction Service Transformation
 
 **Goal**: Transform from free-form chat to structured prompt instruction service with usage limits.

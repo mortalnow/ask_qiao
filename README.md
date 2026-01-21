@@ -214,6 +214,12 @@ If you can't login to the production site, check:
 
 ## Changelog
 
+### 2026-01-21
+- **Fixed**: PWA cache staleness
+  - Service worker now uses network-first for HTML/CSS/JS and refreshes cache on fetch
+  - Auto-activates new service workers and reloads once on controller change
+  - Added no-cache headers for `/sw.js`, `/`, and `*.html` on Vercel
+
 ### 2026-01-14
 - **Major**: Transformed service to prompt-based instruction platform
   - All users must now use the structured Prompt Builder (no free-form input)
