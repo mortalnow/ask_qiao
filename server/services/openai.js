@@ -77,7 +77,7 @@ async function getLatestModel() {
 /**
  * Stream chat completion from OpenAI
  * @param {Array} messages - Conversation history
- * @param {Array} files - Optional array of files { name, mimeType, data (base64) }
+ * @param {Array} files - Optional array of files { name, mimeType, data, extractedText, isDocument }
  * @param {Function} onChunk - Callback for each streamed chunk
  * @param {Function} onDone - Callback when stream completes
  * @param {Function} onError - Callback for errors
@@ -93,19 +93,37 @@ export async function streamChat(messages, files = [], onChunk, onDone, onError)
   try {
     const modelName = await getLatestModel();
 
+    // Separate documents and images
+    const safeFiles = files || [];
+    const imageFiles = safeFiles.filter(f => !f.isDocument && f.data);
+    const documentFiles = safeFiles.filter(f => f.isDocument && f.extractedText);
+
     // Build messages with potential multimodal content
     const formattedMessages = messages.map((m, index) => {
       // Only attach files to the last user message
       const isLastUserMessage = m.role === 'user' && index === messages.length - 1;
 
-      if (isLastUserMessage && files && files.length > 0) {
+      if (isLastUserMessage && safeFiles.length > 0) {
+        // Build content with document text injected
+        let textContent = m.content;
+
+        // Prepend document content as context
+        if (documentFiles.length > 0) {
+          let docContext = '\n\n[ATTACHED DOCUMENTS]\n';
+          for (const doc of documentFiles) {
+            docContext += `\n--- ${doc.name} ---\n${doc.extractedText}\n--- End of ${doc.name} ---\n`;
+          }
+          docContext += '\n[END OF ATTACHED DOCUMENTS]\n\n';
+          textContent = docContext + textContent;
+        }
+
         // Build multimodal content array
         const content = [
-          { type: 'text', text: m.content }
+          { type: 'text', text: textContent }
         ];
 
-        // Add images (OpenAI only supports images in vision)
-        for (const file of files) {
+        // Add images (OpenAI supports images in vision)
+        for (const file of imageFiles) {
           if (file.mimeType.startsWith('image/')) {
             content.push({
               type: 'image_url',
@@ -114,8 +132,6 @@ export async function streamChat(messages, files = [], onChunk, onDone, onError)
               }
             });
           }
-          // Note: OpenAI doesn't support PDF directly in chat completions
-          // PDFs would need to be processed separately or converted to images
         }
 
         return { role: m.role, content };
@@ -137,7 +153,7 @@ export async function streamChat(messages, files = [], onChunk, onDone, onError)
         onChunk(content);
       }
     }
-    
+
     onDone();
   } catch (err) {
     console.error('OpenAI streaming error:', err);

@@ -62,6 +62,7 @@ async function testOpenAI() {
 
 		openaiService.streamChat(
 			[{ role: 'user', content: testMessage }],
+			[], // files (empty array for testing)
 			// onChunk
 			(chunk) => {
 				process.stdout.write(colors.green + chunk);
@@ -106,6 +107,7 @@ async function testGemini() {
 
 		geminiService.streamChat(
 			[{ role: 'user', content: testMessage }],
+			[], // files (empty array for testing)
 			// onChunk
 			(chunk) => {
 				process.stdout.write(colors.green + chunk);

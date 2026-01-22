@@ -66,21 +66,32 @@ router.post('/', authenticateToken, checkUsageLimit, async (req, res) => {
   const validatedFiles = [];
   const MAX_FILES = 5;
   const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB (base64 is ~33% larger)
+  const MAX_EXTRACTED_TEXT_LENGTH = 50000; // Max characters for document text
 
   // Supported file types
-  const supportedTypes = {
+  const supportedImageTypes = {
     common: ['image/png', 'image/jpeg', 'image/gif', 'image/webp'],
-    gemini: ['image/heic', 'image/heif', 'application/pdf']
+    gemini: ['image/heic', 'image/heif']
   };
 
-  const allowedTypes = model === 'gemini'
-    ? [...supportedTypes.common, ...supportedTypes.gemini]
-    : supportedTypes.common;
+  // Document types that work with all models (text extracted client-side)
+  const documentTypes = [
+    'application/pdf',
+    'text/plain',
+    'text/markdown',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  ];
+
+  const allowedImageTypes = model === 'gemini'
+    ? [...supportedImageTypes.common, ...supportedImageTypes.gemini]
+    : supportedImageTypes.common;
+
+  const allowedTypes = [...allowedImageTypes, ...documentTypes];
 
   if (files && Array.isArray(files)) {
     for (const file of files.slice(0, MAX_FILES)) {
       // Validate file structure
-      if (!file.name || !file.mimeType || !file.data) {
+      if (!file.name || !file.mimeType) {
         continue;
       }
 
@@ -89,17 +100,40 @@ router.post('/', authenticateToken, checkUsageLimit, async (req, res) => {
         continue;
       }
 
-      // Validate file size (base64 string length * 0.75 ≈ original size)
-      const estimatedSize = (file.data.length * 0.75);
-      if (estimatedSize > MAX_FILE_SIZE) {
-        continue;
-      }
+      const isDocument = documentTypes.includes(file.mimeType);
 
-      validatedFiles.push({
-        name: file.name.slice(0, 255),
-        mimeType: file.mimeType,
-        data: file.data
-      });
+      // For documents, require extractedText; for images, require data
+      if (isDocument) {
+        if (!file.extractedText || typeof file.extractedText !== 'string') {
+          continue;
+        }
+        // Validate text length
+        const truncatedText = file.extractedText.slice(0, MAX_EXTRACTED_TEXT_LENGTH);
+
+        validatedFiles.push({
+          name: file.name.slice(0, 255),
+          mimeType: file.mimeType,
+          extractedText: truncatedText,
+          isDocument: true
+        });
+      } else {
+        // Image file - require base64 data
+        if (!file.data) {
+          continue;
+        }
+        // Validate file size (base64 string length * 0.75 ≈ original size)
+        const estimatedSize = (file.data.length * 0.75);
+        if (estimatedSize > MAX_FILE_SIZE) {
+          continue;
+        }
+
+        validatedFiles.push({
+          name: file.name.slice(0, 255),
+          mimeType: file.mimeType,
+          data: file.data,
+          isDocument: false
+        });
+      }
     }
   }
 

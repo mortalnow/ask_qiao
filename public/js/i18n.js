@@ -97,7 +97,7 @@ const translations = {
 
     // File Upload
     'fileUpload.dropzone': '拖拽文件到此处，或点击选择',
-    'fileUpload.formats': '支持: PNG, JPG, GIF, WebP, PDF',
+    'fileUpload.formats': '支持: PNG, JPG, PDF, TXT, MD, DOCX',
     'fileUpload.sizeLimit': '单文件最大 20MB',
     'fileUpload.maxFilesReached': '最多只能上传 5 个文件',
     'fileUpload.unsupportedType': '不支持的文件类型: {type}',
@@ -108,6 +108,10 @@ const translations = {
     'fileUpload.attachedCount': '{count} 个文件',
     'fileUpload.pasteHint': '也可以直接粘贴图片',
     'fileUpload.ariaLabel': '拖拽文件到此处，或点击/按回车选择文件',
+    'fileUpload.extracting': '提取文本中...',
+    'fileUpload.emptyDocument': '文档内容为空或无法提取文本: {name}',
+    'fileUpload.textTruncated': '文档 {name} 内容过长，已截断',
+    'fileUpload.chars': '字符',
 
     // Common
     'common.cancel': '取消',
@@ -249,7 +253,7 @@ const translations = {
 
     // File Upload
     'fileUpload.dropzone': 'Drop files here, or click to select',
-    'fileUpload.formats': 'Supported: PNG, JPG, GIF, WebP, PDF',
+    'fileUpload.formats': 'Supported: PNG, JPG, PDF, TXT, MD, DOCX',
     'fileUpload.sizeLimit': 'Max 20MB per file',
     'fileUpload.maxFilesReached': 'Maximum 5 files allowed',
     'fileUpload.unsupportedType': 'Unsupported file type: {type}',
@@ -260,6 +264,10 @@ const translations = {
     'fileUpload.attachedCount': '{count} file(s)',
     'fileUpload.pasteHint': 'You can also paste images directly',
     'fileUpload.ariaLabel': 'Drop files here, or click/press Enter to select files',
+    'fileUpload.extracting': 'Extracting text...',
+    'fileUpload.emptyDocument': 'Document is empty or text could not be extracted: {name}',
+    'fileUpload.textTruncated': 'Document {name} was too long and has been truncated',
+    'fileUpload.chars': 'chars',
 
     // Common
     'common.cancel': 'Cancel',

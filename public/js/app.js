@@ -107,13 +107,24 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Supported file types by model
   const SUPPORTED_TYPES = {
-    // Common to both OpenAI and Gemini
+    // Common to both OpenAI and Gemini (images)
     common: ['image/png', 'image/jpeg', 'image/gif', 'image/webp'],
-    // Gemini-only formats
-    gemini: ['image/heic', 'image/heif', 'application/pdf'],
-    // All supported types
-    all: ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/heic', 'image/heif', 'application/pdf']
+    // Gemini-only image formats
+    gemini: ['image/heic', 'image/heif'],
+    // All supported types (images + documents)
+    all: ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/heic', 'image/heif', 'application/pdf', 'text/plain', 'text/markdown', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
   };
+
+  // Document types that need text extraction (work with all models)
+  const DOCUMENT_TYPES = {
+    pdf: 'application/pdf',
+    txt: 'text/plain',
+    md: 'text/markdown',
+    docx: 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+  };
+
+  // Max extracted text length (to prevent context overflow)
+  const MAX_EXTRACTED_TEXT_LENGTH = 50000;
   
   // Usage state
   let usageInfo = {
@@ -465,9 +476,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     const currentModel = modelSelect.value;
-    const supportedTypes = currentModel === 'gemini'
-      ? SUPPORTED_TYPES.all
+    // Documents work with all models, images have model-specific support
+    const supportedImageTypes = currentModel === 'gemini'
+      ? [...SUPPORTED_TYPES.common, ...SUPPORTED_TYPES.gemini]
       : SUPPORTED_TYPES.common;
+    const supportedTypes = [...supportedImageTypes, ...Object.values(DOCUMENT_TYPES)];
 
     for (const file of files) {
       // Check if max files reached
@@ -477,19 +490,29 @@ document.addEventListener('DOMContentLoaded', () => {
         break;
       }
 
+      // Detect MIME type - handle common extensions for better compatibility
+      let mimeType = file.type;
+      if (!mimeType || mimeType === 'application/octet-stream') {
+        const ext = file.name.split('.').pop().toLowerCase();
+        if (ext === 'txt') mimeType = 'text/plain';
+        else if (ext === 'md' || ext === 'markdown') mimeType = 'text/markdown';
+        else if (ext === 'docx') mimeType = 'application/vnd.openxmlformats-officedocument.wordprocessingml.document';
+        else if (ext === 'pdf') mimeType = 'application/pdf';
+      }
+
       // Validate file type
-      if (!supportedTypes.includes(file.type)) {
-        // Check if it's a Gemini-only format
-        const isGeminiOnly = SUPPORTED_TYPES.gemini.includes(file.type);
+      if (!supportedTypes.includes(mimeType)) {
+        // Check if it's a Gemini-only image format
+        const isGeminiOnly = SUPPORTED_TYPES.gemini.includes(mimeType);
         let msg;
         if (isGeminiOnly && currentModel !== 'gemini') {
           msg = window.i18n
-            ? window.i18n.t('fileUpload.geminiOnlyFormat', { type: file.type })
-            : `${file.type} 格式仅 Gemini 模型支持。请切换到 Gemini 或选择其他文件。`;
+            ? window.i18n.t('fileUpload.geminiOnlyFormat', { type: mimeType })
+            : `${mimeType} 格式仅 Gemini 模型支持。请切换到 Gemini 或选择其他文件。`;
         } else {
           msg = window.i18n
-            ? window.i18n.t('fileUpload.unsupportedType', { type: file.type })
-            : `不支持的文件类型: ${file.type}`;
+            ? window.i18n.t('fileUpload.unsupportedType', { type: mimeType })
+            : `不支持的文件类型: ${mimeType}`;
         }
         alert(msg);
         continue;
@@ -504,30 +527,68 @@ document.addEventListener('DOMContentLoaded', () => {
         continue;
       }
 
-      // Convert to base64 and add to list
+      // Process file based on type
       try {
         // Reset progress bar
         if (fileProgressBar) fileProgressBar.style.width = '0%';
         if (fileProgressText) fileProgressText.textContent = '0%';
 
-        // Compress large images to reduce payload size
-        let processedFile = file;
-        if (file.type.startsWith('image/')) {
-          processedFile = await compressImage(file);
+        let fileObj;
+        const isDocument = isDocumentType(mimeType);
+
+        if (isDocument) {
+          // Extract text from documents
+          if (fileProgressText) fileProgressText.textContent = window.i18n ? window.i18n.t('fileUpload.extracting') : '提取中...';
+
+          const { extractedText, truncated, isEmpty } = await extractDocumentText(file, mimeType);
+
+          if (isEmpty) {
+            const msg = window.i18n
+              ? window.i18n.t('fileUpload.emptyDocument', { name: file.name })
+              : `文档内容为空或无法提取文本: ${file.name}`;
+            alert(msg);
+            continue;
+          }
+
+          if (truncated) {
+            const msg = window.i18n
+              ? window.i18n.t('fileUpload.textTruncated', { name: file.name })
+              : `文档 ${file.name} 内容过长，已截断至 ${MAX_EXTRACTED_TEXT_LENGTH} 字符`;
+            alert(msg);
+          }
+
+          fileObj = {
+            file: file,
+            name: file.name,
+            mimeType: mimeType,
+            data: null, // No base64 for documents - we use extracted text
+            extractedText: extractedText,
+            isDocument: true,
+            previewUrl: null
+          };
+        } else {
+          // Process images as before
+          let processedFile = file;
+          if (mimeType.startsWith('image/')) {
+            processedFile = await compressImage(file);
+          }
+
+          const base64Data = await fileToBase64(processedFile, (percent) => {
+            if (fileProgressBar) fileProgressBar.style.width = `${percent}%`;
+            if (fileProgressText) fileProgressText.textContent = `${percent}%`;
+          });
+
+          fileObj = {
+            file: processedFile,
+            name: file.name,
+            mimeType: processedFile.type,
+            data: base64Data,
+            extractedText: null,
+            isDocument: false,
+            previewUrl: processedFile.type.startsWith('image/') ? URL.createObjectURL(processedFile) : null
+          };
         }
 
-        const base64Data = await fileToBase64(processedFile, (percent) => {
-          // Update progress bar
-          if (fileProgressBar) fileProgressBar.style.width = `${percent}%`;
-          if (fileProgressText) fileProgressText.textContent = `${percent}%`;
-        });
-        const fileObj = {
-          file: processedFile,
-          name: file.name, // Keep original name
-          mimeType: processedFile.type,
-          data: base64Data,
-          previewUrl: processedFile.type.startsWith('image/') ? URL.createObjectURL(processedFile) : null
-        };
         uploadedFiles.push(fileObj);
       } catch (err) {
         console.error('Failed to process file:', err);
@@ -641,6 +702,111 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   }
 
+  // ============================================
+  // Document Text Extraction Functions
+  // ============================================
+
+  /**
+   * Check if a file is a document type that needs text extraction
+   */
+  function isDocumentType(mimeType) {
+    return Object.values(DOCUMENT_TYPES).includes(mimeType);
+  }
+
+  /**
+   * Extract text from a PDF file using pdf.js
+   */
+  async function extractTextFromPDF(arrayBuffer) {
+    try {
+      // Lazy load pdf.js
+      if (!window.pdfjsLib) {
+        await window.loadPdfJs();
+      }
+
+      const pdf = await window.pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+      let fullText = '';
+
+      for (let i = 1; i <= pdf.numPages; i++) {
+        const page = await pdf.getPage(i);
+        const textContent = await page.getTextContent();
+        const pageText = textContent.items.map(item => item.str).join(' ');
+        fullText += pageText + '\n\n';
+      }
+
+      return fullText.trim();
+    } catch (err) {
+      console.error('PDF text extraction failed:', err);
+      throw new Error('Failed to extract text from PDF');
+    }
+  }
+
+  /**
+   * Extract text from a DOCX file using mammoth.js
+   */
+  async function extractTextFromDOCX(arrayBuffer) {
+    try {
+      if (!window.mammoth) {
+        throw new Error('Mammoth.js not loaded');
+      }
+
+      const result = await window.mammoth.extractRawText({ arrayBuffer });
+      return result.value.trim();
+    } catch (err) {
+      console.error('DOCX text extraction failed:', err);
+      throw new Error('Failed to extract text from DOCX');
+    }
+  }
+
+  /**
+   * Extract text from plain text files (.txt, .md)
+   */
+  async function extractTextFromPlainText(file) {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve(reader.result);
+      reader.onerror = () => reject(new Error('Failed to read text file'));
+      reader.readAsText(file, 'UTF-8');
+    });
+  }
+
+  /**
+   * Main dispatcher for document text extraction
+   * Returns { extractedText, truncated }
+   */
+  async function extractDocumentText(file, mimeType) {
+    let text = '';
+
+    try {
+      if (mimeType === DOCUMENT_TYPES.pdf) {
+        const arrayBuffer = await file.arrayBuffer();
+        text = await extractTextFromPDF(arrayBuffer);
+      } else if (mimeType === DOCUMENT_TYPES.docx) {
+        const arrayBuffer = await file.arrayBuffer();
+        text = await extractTextFromDOCX(arrayBuffer);
+      } else if (mimeType === DOCUMENT_TYPES.txt || mimeType === DOCUMENT_TYPES.md) {
+        text = await extractTextFromPlainText(file);
+      } else {
+        throw new Error('Unsupported document type');
+      }
+
+      // Check for empty text (e.g., scanned PDF)
+      if (!text || text.trim().length === 0) {
+        return { extractedText: '', truncated: false, isEmpty: true };
+      }
+
+      // Truncate if too long
+      const truncated = text.length > MAX_EXTRACTED_TEXT_LENGTH;
+      if (truncated) {
+        text = text.substring(0, MAX_EXTRACTED_TEXT_LENGTH) + '\n\n[... Text truncated due to length ...]';
+      }
+
+      return { extractedText: text, truncated, isEmpty: false };
+    } catch (err) {
+      console.error('Document extraction error:', err);
+      throw err;
+    }
+  }
+
   function renderFilePreviewList() {
     if (!filePreviewList) return;
 
@@ -648,26 +814,97 @@ document.addEventListener('DOMContentLoaded', () => {
 
     uploadedFiles.forEach((fileObj, index) => {
       const item = document.createElement('div');
-      item.className = `file-preview-item ${fileObj.previewUrl ? 'image-preview' : ''}`;
+      item.className = `file-preview-item ${fileObj.previewUrl ? 'image-preview' : ''} ${fileObj.isDocument ? 'document-preview' : ''}`;
 
       if (fileObj.previewUrl) {
-        // Image preview
-        item.innerHTML = `
-          <img src="${fileObj.previewUrl}" alt="${fileObj.name}" class="file-preview-thumbnail">
-          <span class="file-preview-name" title="${fileObj.name}">${truncateFileName(fileObj.name, 12)}</span>
-          <button type="button" class="file-preview-remove" data-index="${index}">&times;</button>
-        `;
+        // Image preview - use safe DOM methods
+        const img = document.createElement('img');
+        img.src = fileObj.previewUrl;
+        img.alt = escapeHtml(fileObj.name);
+        img.className = 'file-preview-thumbnail';
+
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'file-preview-name';
+        nameSpan.title = fileObj.name;
+        nameSpan.textContent = truncateFileName(fileObj.name, 12);
+
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'file-preview-remove';
+        removeBtn.dataset.index = index;
+        removeBtn.textContent = '×';
+
+        item.appendChild(img);
+        item.appendChild(nameSpan);
+        item.appendChild(removeBtn);
+      } else if (fileObj.isDocument && fileObj.extractedText) {
+        // Document preview with text excerpt - use safe DOM methods
+        const iconDiv = document.createElement('div');
+        iconDiv.className = 'file-preview-icon';
+        iconDiv.innerHTML = getFileIcon(fileObj.mimeType); // SVG is safe
+
+        const infoDiv = document.createElement('div');
+        infoDiv.className = 'file-preview-info';
+
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'file-preview-name';
+        nameSpan.title = fileObj.name;
+        nameSpan.textContent = truncateFileName(fileObj.name, 15);
+
+        const textPreview = fileObj.extractedText.substring(0, 100).replace(/\n/g, ' ').trim();
+        const excerptSpan = document.createElement('span');
+        excerptSpan.className = 'file-preview-excerpt';
+        excerptSpan.title = textPreview + '...';
+        excerptSpan.textContent = textPreview.substring(0, 50) + '...';
+
+        const charCount = fileObj.extractedText.length.toLocaleString();
+        const charsSpan = document.createElement('span');
+        charsSpan.className = 'file-preview-chars';
+        charsSpan.textContent = `${charCount} ${window.i18n ? window.i18n.t('fileUpload.chars') : '字符'}`;
+
+        infoDiv.appendChild(nameSpan);
+        infoDiv.appendChild(excerptSpan);
+        infoDiv.appendChild(charsSpan);
+
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'file-preview-remove';
+        removeBtn.dataset.index = index;
+        removeBtn.textContent = '×';
+
+        item.appendChild(iconDiv);
+        item.appendChild(infoDiv);
+        item.appendChild(removeBtn);
       } else {
-        // Document preview (PDF, etc.)
-        const icon = getFileIcon(fileObj.mimeType);
-        item.innerHTML = `
-          <div class="file-preview-icon">${icon}</div>
-          <div class="file-preview-info">
-            <span class="file-preview-name" title="${fileObj.name}">${truncateFileName(fileObj.name, 15)}</span>
-            <span class="file-preview-size">${formatFileSize(fileObj.file.size)}</span>
-          </div>
-          <button type="button" class="file-preview-remove" data-index="${index}">&times;</button>
-        `;
+        // Generic file preview - use safe DOM methods
+        const iconDiv = document.createElement('div');
+        iconDiv.className = 'file-preview-icon';
+        iconDiv.innerHTML = getFileIcon(fileObj.mimeType); // SVG is safe
+
+        const infoDiv = document.createElement('div');
+        infoDiv.className = 'file-preview-info';
+
+        const nameSpan = document.createElement('span');
+        nameSpan.className = 'file-preview-name';
+        nameSpan.title = fileObj.name;
+        nameSpan.textContent = truncateFileName(fileObj.name, 15);
+
+        const sizeSpan = document.createElement('span');
+        sizeSpan.className = 'file-preview-size';
+        sizeSpan.textContent = formatFileSize(fileObj.file.size);
+
+        infoDiv.appendChild(nameSpan);
+        infoDiv.appendChild(sizeSpan);
+
+        const removeBtn = document.createElement('button');
+        removeBtn.type = 'button';
+        removeBtn.className = 'file-preview-remove';
+        removeBtn.dataset.index = index;
+        removeBtn.textContent = '×';
+
+        item.appendChild(iconDiv);
+        item.appendChild(infoDiv);
+        item.appendChild(removeBtn);
       }
 
       filePreviewList.appendChild(item);
@@ -706,7 +943,8 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function checkFileCompatibility() {
-    // Check if any uploaded files are Gemini-only when OpenAI is selected
+    // Check if any uploaded files are Gemini-only image formats when OpenAI is selected
+    // Note: Documents (PDF, TXT, MD, DOCX) work with all models via text extraction
     const currentModel = modelSelect.value;
 
     // First, clear all incompatible markers
@@ -719,8 +957,10 @@ document.addEventListener('DOMContentLoaded', () => {
     // If using Gemini or no files, nothing more to check
     if (currentModel === 'gemini' || uploadedFiles.length === 0) return;
 
+    // Only check for Gemini-only IMAGE formats (HEIC, HEIF)
+    // Documents are NOT incompatible since we extract text
     const incompatibleFiles = uploadedFiles.filter(f =>
-      SUPPORTED_TYPES.gemini.includes(f.mimeType)
+      SUPPORTED_TYPES.gemini.includes(f.mimeType) && !f.isDocument
     );
 
     if (incompatibleFiles.length > 0) {
@@ -768,8 +1008,22 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function getFileIcon(mimeType) {
     if (mimeType === 'application/pdf') {
-      return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>';
+      // PDF icon (red tinted)
+      return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#e53935" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><text x="7" y="18" font-size="6" fill="#e53935" stroke="none">PDF</text></svg>';
     }
+    if (mimeType === 'text/plain') {
+      // TXT icon
+      return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#607d8b" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="14" y2="17"/></svg>';
+    }
+    if (mimeType === 'text/markdown') {
+      // Markdown icon
+      return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#5c6bc0" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><text x="6" y="18" font-size="5" fill="#5c6bc0" stroke="none">MD</text></svg>';
+    }
+    if (mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+      // DOCX icon (blue tinted like Word)
+      return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1976d2" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><text x="5" y="18" font-size="5" fill="#1976d2" stroke="none">DOC</text></svg>';
+    }
+    // Default file icon
     return '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V9z"/><polyline points="13 2 13 9 20 9"/></svg>';
   }
 
@@ -1201,7 +1455,9 @@ document.addEventListener('DOMContentLoaded', () => {
       ? uploadedFiles.map(f => ({
           name: f.name,
           mimeType: f.mimeType,
-          data: f.data
+          data: f.data, // base64 for images, null for documents
+          extractedText: f.extractedText || null, // Text content for documents
+          isDocument: f.isDocument || false
         }))
       : null;
 

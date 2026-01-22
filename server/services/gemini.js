@@ -98,7 +98,7 @@ async function getModel() {
 /**
  * Stream chat completion from Gemini
  * @param {Array} messages - Conversation history
- * @param {Array} files - Optional array of files { name, mimeType, data (base64) }
+ * @param {Array} files - Optional array of files { name, mimeType, data, extractedText, isDocument }
  * @param {Function} onChunk - Callback for each streamed chunk
  * @param {Function} onDone - Callback when stream completes
  * @param {Function} onError - Callback for errors
@@ -126,12 +126,30 @@ export async function streamChat(messages, files = [], onChunk, onDone, onError)
     // Get the last message as the current prompt
     const lastMessage = messages[messages.length - 1];
 
-    // Build the message parts (text + any files)
-    const messageParts = [{ text: lastMessage.content }];
+    // Separate documents and images
+    const safeFiles = files || [];
+    const imageFiles = safeFiles.filter(f => !f.isDocument && f.data);
+    const documentFiles = safeFiles.filter(f => f.isDocument && f.extractedText);
 
-    // Add files to the message parts
-    if (files && files.length > 0) {
-      for (const file of files) {
+    // Build text content with document context
+    let textContent = lastMessage.content;
+
+    // Prepend document content as context
+    if (documentFiles.length > 0) {
+      let docContext = '\n\n[ATTACHED DOCUMENTS]\n';
+      for (const doc of documentFiles) {
+        docContext += `\n--- ${doc.name} ---\n${doc.extractedText}\n--- End of ${doc.name} ---\n`;
+      }
+      docContext += '\n[END OF ATTACHED DOCUMENTS]\n\n';
+      textContent = docContext + textContent;
+    }
+
+    // Build the message parts (text + any image files)
+    const messageParts = [{ text: textContent }];
+
+    // Add image files to the message parts
+    if (imageFiles.length > 0) {
+      for (const file of imageFiles) {
         messageParts.push({
           inlineData: {
             mimeType: file.mimeType,
@@ -153,7 +171,7 @@ export async function streamChat(messages, files = [], onChunk, onDone, onError)
         onChunk(text);
       }
     }
-    
+
     onDone();
   } catch (err) {
     console.error('Gemini streaming error:', err);
