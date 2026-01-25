@@ -71,6 +71,8 @@ const translations = {
     'promptBuilder.subtitle': '通过结构化提问学习与AI高效沟通',
     'promptBuilder.changeModel': '切换模型',
     'promptBuilder.backToModels': '返回选择',
+    'promptBuilder.minimized.text': '提问已发送',
+    'promptBuilder.minimized.hint': '点击展开继续提问',
     
     // Usage Counter
     'usage.prompts': '次提问',
@@ -282,6 +284,8 @@ const translations = {
     'promptBuilder.subtitle': 'Learn effective AI communication through structured prompts',
     'promptBuilder.changeModel': 'Change Model',
     'promptBuilder.backToModels': 'Back to models',
+    'promptBuilder.minimized.text': 'Prompt Sent',
+    'promptBuilder.minimized.hint': 'Click to expand and continue',
     
     // Usage Counter
     'usage.prompts': 'prompts',

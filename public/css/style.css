@@ -1851,7 +1851,7 @@ body {
 }
 
 .usage-counter {
-  display: flex;
+  display: none;  /* Hidden by default to prevent flicker for unlimited users */
   align-items: center;
   gap: var(--spacing-xs);
   padding: var(--spacing-xs) var(--spacing-sm);
@@ -1860,6 +1860,14 @@ body {
   font-size: 0.8rem;
   color: var(--text-secondary);
   white-space: nowrap;
+}
+
+.usage-counter.visible {
+  display: flex;
+}
+
+.header-left.hidden {
+  display: none !important;
 }
 
 .usage-counter.usage-warning {
@@ -2082,6 +2090,82 @@ body {
     transform: translateY(100%);
     opacity: 0;
   }
+}
+
+/* ============================================
+   Minimized Prompt Builder Bar
+   ============================================ */
+
+.prompt-minimized {
+  display: none;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--spacing-md);
+  padding-bottom: calc(var(--spacing-md) + var(--safe-bottom));
+  background: var(--bg-secondary);
+  border-top: 1px solid var(--bg-tertiary);
+  cursor: pointer;
+  transition: background var(--transition-fast);
+  animation: slideUpMinimized 0.3s ease forwards;
+}
+
+.prompt-minimized:hover {
+  background: var(--bg-tertiary);
+}
+
+@keyframes slideUpMinimized {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.prompt-minimized-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.prompt-minimized-text {
+  font-size: 0.9rem;
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.prompt-minimized-hint {
+  font-size: 0.75rem;
+  color: var(--text-muted);
+}
+
+.btn-expand-prompt {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--bg-hover);
+  border-radius: var(--radius-md);
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-expand-prompt:hover {
+  border-color: var(--accent-primary);
+  color: var(--text-primary);
+}
+
+/* Minimized state - show chat and minimized bar */
+.app-container.prompt-minimized-state .chat-messages {
+  display: flex !important;
+  flex: 1;
+}
+
+.app-container.prompt-minimized-state .chat-input-area {
+  display: none !important;
+}
+
+.app-container.prompt-minimized-state .prompt-minimized {
+  display: flex !important;
 }
 
 /* ============================================

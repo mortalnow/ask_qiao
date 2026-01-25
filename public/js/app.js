@@ -309,18 +309,16 @@ document.addEventListener('DOMContentLoaded', () => {
     if (hideUsage) {
       // Hide entire header-left for unlimited users/admins (and clear text)
       usageText.textContent = '';
-      usageCounter.style.setProperty('display', 'none', 'important');
+      usageCounter.classList.remove('visible');
       if (headerLeft) {
-        headerLeft.style.setProperty('display', 'none', 'important');
+        headerLeft.classList.add('hidden');
       }
     } else {
       // Show usage counter for limited users
       if (headerLeft) {
-        headerLeft.style.removeProperty('display');
-        headerLeft.style.display = 'flex';
+        headerLeft.classList.remove('hidden');
       }
-      usageCounter.style.removeProperty('display');
-      usageCounter.style.display = 'flex';
+      usageCounter.classList.add('visible');
       // Compact format: just show "0/5"
       usageText.textContent = `${usageInfo.count}/${usageInfo.limit}`;
 
@@ -336,6 +334,10 @@ document.addEventListener('DOMContentLoaded', () => {
   // App container for adding/removing prompt-active class
   const appContainer = document.getElementById('app');
   const backToModelsBtn = document.getElementById('back-to-models');
+  
+  // Minimized prompt bar elements
+  const promptMinimized = document.getElementById('prompt-minimized');
+  const expandPromptBtn = document.getElementById('expand-prompt-btn');
 
   function setupEventListeners() {
     // Model selection
@@ -359,6 +361,17 @@ document.addEventListener('DOMContentLoaded', () => {
     // Back to models button
     if (backToModelsBtn) {
       backToModelsBtn.addEventListener('click', hidePromptBuilder);
+    }
+    
+    // Minimized prompt bar - expand on click
+    if (promptMinimized) {
+      promptMinimized.addEventListener('click', expandPromptBuilder);
+    }
+    if (expandPromptBtn) {
+      expandPromptBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        expandPromptBuilder();
+      });
     }
 
     // Logout
@@ -2457,15 +2470,15 @@ document.addEventListener('DOMContentLoaded', () => {
             addSaveAsSkillButton(currentStreamingMessage);
           }
 
-          // Clear prompt builder after successful send
+          // Clear prompt builder after successful send and minimize it
           clearPromptFormFields();
+          minimizePromptBuilder();
 
           isStreaming = false;
           sendPromptBtn.disabled = false;
           currentStreamingMessage = null;
           currentStreamAbortController = null;
           currentStreamFullResponse = '';
-          personaInput?.focus();
         },
         // onError
         (error) => {
@@ -2956,6 +2969,19 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(() => {
       appContainer.classList.remove('prompt-active', 'prompt-closing');
     }, 400);
+  }
+  
+  function minimizePromptBuilder() {
+    if (!appContainer) return;
+    appContainer.classList.remove('prompt-active', 'prompt-closing');
+    appContainer.classList.add('prompt-minimized-state');
+    scrollToBottom();
+  }
+  
+  function expandPromptBuilder() {
+    if (!appContainer) return;
+    appContainer.classList.remove('prompt-minimized-state');
+    showPromptBuilder();
   }
   
   // Extension Modal Functions

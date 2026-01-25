@@ -111,6 +111,13 @@ node scripts/test-mongodb-connection.js # Test MongoDB connection
 node scripts/test-production-login.js   # Test production API login
 ```
 
+## Custom Cursor Commands
+
+Located in `.cursor/commands/`:
+
+- **`/commit`** - Smart commit workflow: creates meaningful commits and updates project tracking files (CLAUDE.md, task_plan.md, feature_list.json) as needed
+- **`/push`** - Smart push workflow: commits changes, updates docs, confirms with user, and pushes to git remote
+
 ## Deployment
 
 ### Vercel Deployment
