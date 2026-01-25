@@ -103,7 +103,67 @@ document.addEventListener('DOMContentLoaded', () => {
   // Skills State and Configuration
   let skills = []; // Array of { id, name, description, content, enabled, addedAt }
   const SKILLS_STORAGE_KEY = 'ask_qiao_skills';
+  const SKILLS_MIGRATED_KEY = 'ask_qiao_skills_migrated';
+  const SKILLS_MIGRATION_ERROR_KEY = 'ask_qiao_skills_migration_error';
   const SKILLS_TOKEN_WARNING_THRESHOLD = 2000; // characters
+  let skillsStatusTimeout = null;
+
+  // Generate Skill Modal Elements
+  const generateSkillModal = document.getElementById('generate-skill-modal');
+  const closeGenerateSkillModalBtn = document.getElementById('close-generate-skill-modal');
+  const cancelGenerateSkillBtn = document.getElementById('cancel-generate-skill');
+  const retryGenerateSkillBtn = document.getElementById('retry-generate-skill');
+  const saveGeneratedSkillBtn = document.getElementById('save-generated-skill');
+  const generateSkillLoading = document.getElementById('generate-skill-loading');
+  const generateSkillPreview = document.getElementById('generate-skill-preview');
+  const generateSkillError = document.getElementById('generate-skill-error');
+  const generateSkillErrorText = document.getElementById('generate-skill-error-text');
+  const generatedSkillName = document.getElementById('generated-skill-name');
+  const generatedSkillDescription = document.getElementById('generated-skill-description');
+  const generatedSkillCategory = document.getElementById('generated-skill-category');
+  const generatedSkillTags = document.getElementById('generated-skill-tags');
+  const generatedSkillContent = document.getElementById('generated-skill-content');
+
+  // Last sent prompt (for skill generation)
+  let lastSentPrompt = null;
+
+  // Skills Tab Elements
+  const skillsTabs = document.querySelectorAll('.skills-tab');
+  const skillsTabMySkills = document.getElementById('skills-tab-my-skills');
+  const skillsTabImport = document.getElementById('skills-tab-import');
+  const skillsServerList = document.getElementById('skills-server-list');
+  const skillsSearchInput = document.getElementById('skills-search-input');
+  const skillsCategoryFilter = document.getElementById('skills-category-filter');
+  const skillsTagFilter = document.getElementById('skills-tag-filter');
+  const clearSkillsFiltersBtn = document.getElementById('skills-clear-filters');
+  const skillsTagsDatalist = document.getElementById('skills-tags-datalist');
+  const exportAllSkillsBtn = document.getElementById('skills-export-all');
+  const exportEnabledSkillsBtn = document.getElementById('skills-export-enabled');
+  const importServerSkillsBtn = document.getElementById('skills-import-server-btn');
+  const skillsServerFileInput = document.getElementById('skills-server-file-input');
+  const skillsStatus = document.getElementById('skills-status');
+
+  // Edit Skill Modal Elements
+  const editSkillModal = document.getElementById('edit-skill-modal');
+  const closeEditSkillModalBtn = document.getElementById('close-edit-skill-modal');
+  const cancelEditSkillBtn = document.getElementById('cancel-edit-skill');
+  const saveEditSkillBtn = document.getElementById('save-edit-skill');
+  const deleteSkillBtn = document.getElementById('delete-skill-btn');
+  const editSkillId = document.getElementById('edit-skill-id');
+  const editSkillName = document.getElementById('edit-skill-name');
+  const editSkillDescription = document.getElementById('edit-skill-description');
+  const editSkillCategory = document.getElementById('edit-skill-category');
+  const editSkillTags = document.getElementById('edit-skill-tags');
+  const editSkillContent = document.getElementById('edit-skill-content');
+
+  // Server skills state
+  let serverSkills = [];
+  let serverSkillsLoaded = false;
+  let enabledServerSkills = [];
+  let enabledServerSkillsLoaded = false;
+  let skillsCategories = [];
+  let skillsTags = [];
+  let skillsFiltersLoaded = false;
 
   // Supported file types by model
   const SUPPORTED_TYPES = {
@@ -220,6 +280,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Initialize skills from localStorage
     loadSkills();
     updateSkillsUI();
+    migrateLocalSkillsToServer();
   }
   
   async function fetchUsageStatus() {
@@ -378,6 +439,21 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Skills Event Listeners
     setupSkillsListeners();
+
+    // Generate Skill Modal Event Listeners
+    setupGenerateSkillListeners();
+
+    // Skills Tab Event Listeners
+    setupSkillsTabListeners();
+
+    // Skills Filters Event Listeners
+    setupSkillsFilterListeners();
+
+    // Skills Export/Import Actions
+    setupSkillsActionsListeners();
+
+    // Edit Skill Modal Event Listeners
+    setupEditSkillListeners();
   }
 
   // ============================================
@@ -1104,12 +1180,630 @@ document.addEventListener('DOMContentLoaded', () => {
   function showSkillsModal() {
     if (!skillsModal) return;
     skillsModal.style.display = 'flex';
+
+    // Load server skills if not already loaded
+    if (!serverSkillsLoaded) {
+      loadServerSkills();
+    } else {
+      renderServerSkillsList();
+    }
+
+    // Load categories/tags filters
+    if (!skillsFiltersLoaded) {
+      loadSkillsFilters();
+    } else {
+      renderSkillsFilters();
+    }
+
+    refreshEnabledServerSkills();
+
+    // Also render local skills for import tab
     renderSkillsList();
+
+    showMigrationStatusIfNeeded();
   }
 
   function hideSkillsModal() {
     if (!skillsModal) return;
     skillsModal.style.display = 'none';
+  }
+
+  // Tab switching
+  function setupSkillsTabListeners() {
+    skillsTabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const tabName = tab.dataset.tab;
+        switchSkillsTab(tabName);
+      });
+    });
+
+    // Search input
+    if (skillsSearchInput) {
+      skillsSearchInput.addEventListener('input', debounce(() => {
+        renderServerSkillsList(skillsSearchInput.value.trim());
+      }, 300));
+    }
+  }
+
+  function setupSkillsFilterListeners() {
+    if (skillsCategoryFilter) {
+      skillsCategoryFilter.addEventListener('change', () => {
+        renderServerSkillsList(skillsSearchInput?.value.trim() || '');
+      });
+    }
+    if (skillsTagFilter) {
+      skillsTagFilter.addEventListener('change', () => {
+        renderServerSkillsList(skillsSearchInput?.value.trim() || '');
+      });
+    }
+    if (clearSkillsFiltersBtn) {
+      clearSkillsFiltersBtn.addEventListener('click', () => {
+        if (skillsSearchInput) {
+          skillsSearchInput.value = '';
+        }
+        if (skillsCategoryFilter) {
+          skillsCategoryFilter.value = '';
+        }
+        if (skillsTagFilter) {
+          skillsTagFilter.value = '';
+        }
+        renderServerSkillsList('');
+      });
+    }
+  }
+
+  function setupSkillsActionsListeners() {
+    if (exportAllSkillsBtn) {
+      exportAllSkillsBtn.addEventListener('click', () => {
+        exportSkills(false);
+      });
+    }
+
+    if (exportEnabledSkillsBtn) {
+      exportEnabledSkillsBtn.addEventListener('click', () => {
+        exportSkills(true);
+      });
+    }
+
+    if (importServerSkillsBtn && skillsServerFileInput) {
+      importServerSkillsBtn.addEventListener('click', () => {
+        skillsServerFileInput.click();
+      });
+
+      skillsServerFileInput.addEventListener('change', async (e) => {
+        const files = e.target.files;
+        await importSkillsFromFiles(files);
+        skillsServerFileInput.value = '';
+      });
+    }
+  }
+
+  async function exportSkills(enabledOnly) {
+    try {
+      if (exportAllSkillsBtn) exportAllSkillsBtn.disabled = true;
+      if (exportEnabledSkillsBtn) exportEnabledSkillsBtn.disabled = true;
+
+      const data = await window.API.exportSkills({ enabled: enabledOnly, bundle: true });
+      if (typeof data?.content !== 'string') {
+        showSkillsStatus(window.i18n ? window.i18n.t('skills.exportError') : 'Export failed', 'error');
+        return;
+      }
+
+      const filename = data.filename || 'skills_export.md';
+      downloadTextFile(filename, data.content);
+      showSkillsStatus(window.i18n ? window.i18n.t('skills.exportSuccess') : 'Export ready', 'success');
+    } catch (err) {
+      console.error('Export skills error:', err);
+      showSkillsStatus(err.message || (window.i18n ? window.i18n.t('skills.exportError') : 'Export failed'), 'error');
+    } finally {
+      if (exportAllSkillsBtn) exportAllSkillsBtn.disabled = false;
+      if (exportEnabledSkillsBtn) exportEnabledSkillsBtn.disabled = false;
+    }
+  }
+
+  async function importSkillsFromFiles(fileList) {
+    if (!fileList || fileList.length === 0) {
+      showSkillsStatus(window.i18n ? window.i18n.t('skills.importEmpty') : 'Select files to import', 'error');
+      return;
+    }
+
+    const files = Array.from(fileList);
+    const invalid = files.find(file => !file.name.endsWith('.md') && !file.name.endsWith('.markdown'));
+    if (invalid) {
+      const msg = window.i18n ? window.i18n.t('skills.invalidType') : 'Only Markdown files are supported';
+      showSkillsStatus(msg, 'error');
+      return;
+    }
+
+    try {
+      if (importServerSkillsBtn) {
+        importServerSkillsBtn.disabled = true;
+        importServerSkillsBtn.textContent = window.i18n ? window.i18n.t('skills.importing') : 'Importing...';
+      }
+
+      const payload = [];
+      for (const file of files) {
+        const content = await readFileAsText(file);
+        payload.push({ name: file.name, content });
+      }
+
+      const data = await window.API.importSkills(payload);
+      const results = data.results || {};
+      const msg = window.i18n
+        ? window.i18n.t('skills.importSuccess', {
+            created: results.created || 0,
+            updated: results.updated || 0,
+            skipped: results.skipped || 0
+          })
+        : `Import complete: ${results.created || 0} created, ${results.updated || 0} updated, ${results.skipped || 0} skipped`;
+      showSkillsStatus(msg, 'success');
+
+      serverSkillsLoaded = false;
+      skillsFiltersLoaded = false;
+      await loadServerSkills();
+    } catch (err) {
+      console.error('Import skills error:', err);
+      showSkillsStatus(err.message || (window.i18n ? window.i18n.t('skills.importError') : 'Import failed'), 'error');
+    } finally {
+      if (importServerSkillsBtn) {
+        importServerSkillsBtn.disabled = false;
+        importServerSkillsBtn.textContent = window.i18n ? window.i18n.t('skills.importToServer') : 'Import to Server';
+      }
+    }
+  }
+
+  function downloadTextFile(filename, content) {
+    const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    document.body.appendChild(link);
+    link.click();
+    link.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  async function loadSkillsFilters() {
+    if (!skillsCategoryFilter && !skillsTagFilter && !skillsTagsDatalist) return;
+
+    try {
+      const [categoriesData, tagsData] = await Promise.all([
+        window.API.getCategories(),
+        window.API.getTags()
+      ]);
+
+      const categoryNames = categoriesData?.all_category_names || categoriesData?.categories?.map(c => c.name) || [];
+      skillsCategories = categoryNames.filter(Boolean).sort((a, b) => a.localeCompare(b));
+      skillsTags = (tagsData?.tags || []).filter(Boolean).sort((a, b) => a.localeCompare(b));
+      skillsFiltersLoaded = true;
+
+      renderSkillsFilters();
+      updateTagsDatalist();
+      renderServerSkillsList(skillsSearchInput?.value.trim() || '');
+    } catch (err) {
+      console.error('Failed to load skills filters:', err);
+    }
+  }
+
+  function showSkillsStatus(message, type = 'success') {
+    if (!skillsStatus) return;
+    skillsStatus.textContent = message;
+    skillsStatus.classList.remove('success', 'error');
+    skillsStatus.classList.add(type);
+    skillsStatus.style.display = 'block';
+
+    if (skillsStatusTimeout) {
+      clearTimeout(skillsStatusTimeout);
+    }
+    skillsStatusTimeout = setTimeout(() => {
+      if (!skillsStatus) return;
+      skillsStatus.style.display = 'none';
+    }, 5000);
+  }
+
+  function showMigrationStatusIfNeeded() {
+    if (!skillsStatus) return;
+    try {
+      const raw = localStorage.getItem(SKILLS_MIGRATION_ERROR_KEY);
+      if (!raw) return;
+      const info = JSON.parse(raw);
+      if (!info?.message) return;
+      showSkillsStatus(info.message, 'error');
+      localStorage.removeItem(SKILLS_MIGRATION_ERROR_KEY);
+    } catch (err) {
+      console.error('Failed to read migration status:', err);
+    }
+  }
+
+  function renderSkillsFilters() {
+    if (skillsCategoryFilter) {
+      const selectedCategory = skillsCategoryFilter.value;
+      const allCategoriesLabel = window.i18n ? window.i18n.t('skills.filters.allCategories') : 'All categories';
+      const categoryOptions = [
+        `<option value="">${allCategoriesLabel}</option>`,
+        ...skillsCategories.map(category => `<option value="${escapeHtml(category)}">${escapeHtml(category)}</option>`)
+      ];
+      skillsCategoryFilter.innerHTML = categoryOptions.join('');
+      if (selectedCategory && skillsCategories.includes(selectedCategory)) {
+        skillsCategoryFilter.value = selectedCategory;
+      }
+    }
+
+    if (skillsTagFilter) {
+      const selectedTag = skillsTagFilter.value;
+      const allTagsLabel = window.i18n ? window.i18n.t('skills.filters.allTags') : 'All tags';
+      const tagOptions = [
+        `<option value="">${allTagsLabel}</option>`,
+        ...skillsTags.map(tag => `<option value="${escapeHtml(tag)}">${escapeHtml(tag)}</option>`)
+      ];
+      skillsTagFilter.innerHTML = tagOptions.join('');
+      if (selectedTag && skillsTags.includes(selectedTag)) {
+        skillsTagFilter.value = selectedTag;
+      }
+    }
+  }
+
+  function updateTagsDatalist() {
+    if (!skillsTagsDatalist) return;
+    skillsTagsDatalist.innerHTML = skillsTags
+      .map(tag => `<option value="${escapeHtml(tag)}"></option>`)
+      .join('');
+  }
+
+  function switchSkillsTab(tabName) {
+    // Update tab buttons
+    skillsTabs.forEach(tab => {
+      tab.classList.toggle('active', tab.dataset.tab === tabName);
+    });
+
+    // Update tab content
+    if (skillsTabMySkills) {
+      skillsTabMySkills.style.display = tabName === 'my-skills' ? 'block' : 'none';
+      skillsTabMySkills.classList.toggle('active', tabName === 'my-skills');
+    }
+    if (skillsTabImport) {
+      skillsTabImport.style.display = tabName === 'import' ? 'block' : 'none';
+      skillsTabImport.classList.toggle('active', tabName === 'import');
+    }
+  }
+
+  // Load skills from server
+  async function loadServerSkills() {
+    if (!skillsServerList) return;
+
+    // Show loading
+    skillsServerList.innerHTML = `
+      <div class="skills-loading">
+        <div class="skills-loading-spinner"></div>
+        <span>${window.i18n ? window.i18n.t('skills.loading') : '加载中...'}</span>
+      </div>
+    `;
+
+    try {
+      const data = await window.API.getSkills();
+      serverSkills = data.skills || [];
+      serverSkillsLoaded = true;
+      renderServerSkillsList();
+      updateSkillsUI();
+      loadSkillsFilters();
+      refreshEnabledServerSkills();
+    } catch (err) {
+      console.error('Failed to load skills:', err);
+      skillsServerList.innerHTML = `
+        <div class="skills-empty">
+          <span>${window.i18n ? window.i18n.t('skills.loadError') : '加载失败，请重试'}</span>
+        </div>
+      `;
+    }
+  }
+
+  // Render server skills list
+  function renderServerSkillsList(searchQuery = '') {
+    if (!skillsServerList) return;
+
+    let filteredSkills = serverSkills;
+
+    const selectedCategory = skillsCategoryFilter?.value || '';
+    const selectedTag = skillsTagFilter?.value || '';
+
+    if (selectedCategory) {
+      filteredSkills = filteredSkills.filter(skill => skill.category === selectedCategory);
+    }
+
+    if (selectedTag) {
+      filteredSkills = filteredSkills.filter(skill => skill.tags?.includes(selectedTag));
+    }
+
+    // Filter by search query
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      filteredSkills = filteredSkills.filter(skill =>
+        skill.name.toLowerCase().includes(query) ||
+        skill.description?.toLowerCase().includes(query) ||
+        skill.tags?.some(tag => tag.toLowerCase().includes(query))
+      );
+    }
+
+    if (filteredSkills.length === 0) {
+      const hasFilters = !!searchQuery || !!selectedCategory || !!selectedTag;
+      const emptyText = hasFilters
+        ? (window.i18n ? window.i18n.t('skills.noResults') : '没有找到匹配的技能')
+        : (window.i18n ? window.i18n.t('skills.emptyServer') : '还没有保存的技能');
+      skillsServerList.innerHTML = `<div class="skills-empty">${emptyText}</div>`;
+      return;
+    }
+
+    skillsServerList.innerHTML = filteredSkills.map(skill => `
+      <div class="skill-server-item ${skill.enabled ? '' : 'disabled'}" data-skill-id="${skill.id}">
+        <label class="skill-server-toggle skill-toggle">
+          <input type="checkbox" ${skill.enabled ? 'checked' : ''}>
+          <span class="skill-toggle-slider"></span>
+        </label>
+        <div class="skill-server-content">
+          <div class="skill-server-name">${escapeHtml(skill.name)}</div>
+          <div class="skill-server-description">${escapeHtml(skill.description || '')}</div>
+          ${skill.category || (skill.tags && skill.tags.length > 0) ? `
+            <div class="skill-server-meta">
+              ${skill.category ? `<span class="skill-server-category">${escapeHtml(skill.category)}</span>` : ''}
+              ${skill.tags?.slice(0, 3).map(tag => `<span class="skill-server-tag">${escapeHtml(tag)}</span>`).join('') || ''}
+            </div>
+          ` : ''}
+        </div>
+        <div class="skill-server-actions">
+          <button type="button" class="btn-edit" title="${window.i18n ? window.i18n.t('skills.edit.title') : '编辑'}">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+              <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+            </svg>
+          </button>
+          <button type="button" class="btn-delete" title="${window.i18n ? window.i18n.t('skills.delete') : '删除'}">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    `).join('');
+
+    // Add event listeners
+    skillsServerList.querySelectorAll('.skill-server-item').forEach(item => {
+      const skillId = item.dataset.skillId;
+
+      // Toggle
+      const checkbox = item.querySelector('input[type="checkbox"]');
+      if (checkbox) {
+        checkbox.addEventListener('change', () => toggleServerSkill(skillId));
+      }
+
+      // Edit
+      const editBtn = item.querySelector('.btn-edit');
+      if (editBtn) {
+        editBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          openEditSkillModal(skillId);
+        });
+      }
+
+      // Delete
+      const deleteBtn = item.querySelector('.btn-delete');
+      if (deleteBtn) {
+        deleteBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          deleteServerSkill(skillId);
+        });
+      }
+    });
+
+    updateSkillsTokenWarning();
+  }
+
+  // Toggle server skill enabled status
+  async function toggleServerSkill(skillId) {
+    try {
+      const result = await window.API.toggleSkill(skillId);
+      // Update local state
+      const skill = serverSkills.find(s => s.id === skillId);
+      if (skill) {
+        skill.enabled = result.enabled;
+      }
+      updateSkillsUI();
+      refreshEnabledServerSkills();
+    } catch (err) {
+      console.error('Failed to toggle skill:', err);
+      // Revert checkbox
+      renderServerSkillsList();
+    }
+  }
+
+  // Delete server skill
+  async function deleteServerSkill(skillId) {
+    const msg = window.i18n ? window.i18n.t('skills.deleteConfirm') : '确定要删除这个技能吗？';
+    if (!confirm(msg)) return;
+
+    try {
+      await window.API.deleteSkill(skillId);
+      // Remove from local state
+      serverSkills = serverSkills.filter(s => s.id !== skillId);
+      renderServerSkillsList();
+      updateSkillsUI();
+      loadSkillsFilters();
+      refreshEnabledServerSkills();
+    } catch (err) {
+      console.error('Failed to delete skill:', err);
+      alert(err.message || 'Failed to delete skill');
+    }
+  }
+
+  // Open edit skill modal
+  async function openEditSkillModal(skillId) {
+    if (!editSkillModal) return;
+
+    try {
+      // Fetch full skill data
+      const data = await window.API.getSkill(skillId);
+      const skill = data.skill;
+
+      // Populate form
+      editSkillId.value = skill.id;
+      editSkillName.value = skill.name || '';
+      editSkillDescription.value = skill.description || '';
+      editSkillCategory.value = skill.category || '';
+      editSkillTags.value = skill.tags?.join(', ') || '';
+      editSkillContent.value = skill.content || '';
+
+      // Show modal
+      editSkillModal.style.display = 'flex';
+    } catch (err) {
+      console.error('Failed to load skill:', err);
+      alert(err.message || 'Failed to load skill');
+    }
+  }
+
+  function closeEditSkillModal() {
+    if (!editSkillModal) return;
+    editSkillModal.style.display = 'none';
+  }
+
+  async function saveEditedSkill() {
+    const skillId = editSkillId?.value;
+    if (!skillId) return;
+
+    const name = editSkillName?.value.trim();
+    const description = editSkillDescription?.value.trim();
+    const category = editSkillCategory?.value.trim() || null;
+    const tagsInput = editSkillTags?.value.trim();
+    const content = editSkillContent?.value.trim();
+
+    if (!name || !content) {
+      alert(window.i18n ? window.i18n.t('skills.generate.validation') : '请填写技能名称和内容');
+      return;
+    }
+
+    const tags = tagsInput
+      ? tagsInput.split(',').map(t => t.trim().toLowerCase()).filter(t => t.length > 0)
+      : [];
+
+    try {
+      saveEditSkillBtn.disabled = true;
+      saveEditSkillBtn.textContent = window.i18n ? window.i18n.t('common.saving') : '保存中...';
+
+      await window.API.updateSkill(skillId, {
+        name,
+        description,
+        content,
+        category,
+        tags
+      });
+
+      // Update local state
+      const skill = serverSkills.find(s => s.id === skillId);
+      if (skill) {
+        skill.name = name;
+        skill.description = description;
+        skill.category = category;
+        skill.tags = tags;
+      }
+
+      closeEditSkillModal();
+      renderServerSkillsList();
+      loadSkillsFilters();
+      refreshEnabledServerSkills();
+    } catch (err) {
+      console.error('Failed to save skill:', err);
+      alert(err.message || 'Failed to save skill');
+    } finally {
+      saveEditSkillBtn.disabled = false;
+      saveEditSkillBtn.textContent = window.i18n ? window.i18n.t('skills.edit.save') : '保存';
+    }
+  }
+
+  async function deleteSkillFromEditModal() {
+    const skillId = editSkillId?.value;
+    if (!skillId) return;
+
+    const msg = window.i18n ? window.i18n.t('skills.deleteConfirm') : '确定要删除这个技能吗？';
+    if (!confirm(msg)) return;
+
+    try {
+      await window.API.deleteSkill(skillId);
+      serverSkills = serverSkills.filter(s => s.id !== skillId);
+      closeEditSkillModal();
+      renderServerSkillsList();
+      updateSkillsUI();
+      loadSkillsFilters();
+      refreshEnabledServerSkills();
+    } catch (err) {
+      console.error('Failed to delete skill:', err);
+      alert(err.message || 'Failed to delete skill');
+    }
+  }
+
+  function setupEditSkillListeners() {
+    if (closeEditSkillModalBtn) {
+      closeEditSkillModalBtn.addEventListener('click', closeEditSkillModal);
+    }
+    if (cancelEditSkillBtn) {
+      cancelEditSkillBtn.addEventListener('click', closeEditSkillModal);
+    }
+    if (saveEditSkillBtn) {
+      saveEditSkillBtn.addEventListener('click', saveEditedSkill);
+    }
+    if (deleteSkillBtn) {
+      deleteSkillBtn.addEventListener('click', deleteSkillFromEditModal);
+    }
+    if (editSkillModal) {
+      editSkillModal.querySelector('.modal-overlay')?.addEventListener('click', closeEditSkillModal);
+    }
+  }
+
+  async function refreshEnabledServerSkills() {
+    try {
+      const data = await window.API.getEnabledSkills();
+      enabledServerSkills = data.skills || [];
+      enabledServerSkillsLoaded = true;
+      updateSkillsTokenWarning();
+    } catch (err) {
+      console.error('Failed to fetch enabled skills:', err);
+    }
+  }
+
+  // Update token warning based on enabled skills content length
+  function updateSkillsTokenWarning() {
+    if (!skillsTokenWarning) return;
+
+    const enabledLocalSkills = skills.filter(s => s.enabled);
+    let totalLength = enabledLocalSkills.reduce((sum, s) => sum + (s.content?.length || 0), 0);
+
+    if (enabledServerSkillsLoaded) {
+      totalLength += enabledServerSkills.reduce((sum, s) => sum + (s.content?.length || 0), 0);
+    } else if (serverSkills.some(s => s.enabled)) {
+      // Fallback if server content isn't loaded yet
+      const totalEnabled = enabledLocalSkills.length + serverSkills.filter(s => s.enabled).length;
+      if (totalEnabled > 3) {
+        skillsTokenWarning.style.display = 'flex';
+        return;
+      }
+    }
+
+    if (totalLength > SKILLS_TOKEN_WARNING_THRESHOLD) {
+      skillsTokenWarning.style.display = 'flex';
+    } else {
+      skillsTokenWarning.style.display = 'none';
+    }
+  }
+
+  // Debounce helper
+  function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+      const later = () => {
+        clearTimeout(timeout);
+        func(...args);
+      };
+      clearTimeout(timeout);
+      timeout = setTimeout(later, wait);
+    };
   }
 
   async function handleSkillsFileSelection(files) {
@@ -1168,6 +1862,87 @@ document.addEventListener('DOMContentLoaded', () => {
       reader.onerror = reject;
       reader.readAsText(file);
     });
+  }
+
+  function buildMarkdownFromLocalSkill(skill) {
+    const name = skill.name || 'Skill';
+    const description = skill.description || '';
+    return `---\nname: ${name}\ndescription: ${description}\n---\n\n${skill.content || ''}`.trim();
+  }
+
+  function computeSkillsFingerprint(skillsList) {
+    const normalized = skillsList
+      .map(skill => ({
+        name: skill.name || '',
+        description: skill.description || '',
+        content: skill.content || ''
+      }))
+      .sort((a, b) => {
+        const nameCompare = a.name.localeCompare(b.name);
+        if (nameCompare !== 0) return nameCompare;
+        const descCompare = a.description.localeCompare(b.description);
+        if (descCompare !== 0) return descCompare;
+        return a.content.localeCompare(b.content);
+      });
+
+    const json = JSON.stringify(normalized);
+    let hash = 5381;
+    for (let i = 0; i < json.length; i += 1) {
+      hash = ((hash << 5) + hash) + json.charCodeAt(i);
+      hash >>>= 0;
+    }
+    return `${json.length}-${hash}`;
+  }
+
+  function getSkillsMigrationInfo() {
+    try {
+      const raw = localStorage.getItem(SKILLS_MIGRATED_KEY);
+      if (!raw) return null;
+      return JSON.parse(raw);
+    } catch (err) {
+      console.error('Failed to read migration info:', err);
+      return null;
+    }
+  }
+
+  function setSkillsMigrationInfo(info) {
+    try {
+      localStorage.setItem(SKILLS_MIGRATED_KEY, JSON.stringify(info));
+    } catch (err) {
+      console.error('Failed to store migration info:', err);
+    }
+  }
+
+  async function migrateLocalSkillsToServer() {
+    if (!skills.length) return;
+
+    const fingerprint = computeSkillsFingerprint(skills);
+    const migrationInfo = getSkillsMigrationInfo();
+    if (migrationInfo?.fingerprint === fingerprint) {
+      return;
+    }
+
+    try {
+      const payload = skills.map(skill => ({
+        name: `${skill.name || 'skill'}.md`,
+        content: buildMarkdownFromLocalSkill(skill)
+      }));
+
+      await window.API.importSkills(payload, false);
+      serverSkillsLoaded = false;
+      skillsFiltersLoaded = false;
+      setSkillsMigrationInfo({ count: skills.length, fingerprint, migrated_at: Date.now() });
+    } catch (err) {
+      console.error('Failed to migrate local skills:', err);
+      try {
+        const message = window.i18n
+          ? window.i18n.t('skills.migrationError')
+          : 'Local skills sync failed';
+        localStorage.setItem(SKILLS_MIGRATION_ERROR_KEY, JSON.stringify({ message, at: Date.now() }));
+      } catch (storageErr) {
+        console.error('Failed to store migration error:', storageErr);
+      }
+    }
   }
 
   /**
@@ -1265,7 +2040,9 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function updateSkillsUI() {
-    const enabledCount = skills.filter(s => s.enabled).length;
+    const enabledLocalCount = skills.filter(s => s.enabled).length;
+    const enabledServerCount = serverSkills.filter(s => s.enabled).length;
+    const enabledCount = enabledLocalCount + enabledServerCount;
     
     // Update badge count
     if (skillsCount) {
@@ -1282,20 +2059,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Update token warning
-    updateTokenWarning();
-  }
-
-  function updateTokenWarning() {
-    if (!skillsTokenWarning) return;
-
-    const enabledSkills = skills.filter(s => s.enabled);
-    const totalLength = enabledSkills.reduce((sum, s) => sum + s.content.length, 0);
-
-    if (totalLength > SKILLS_TOKEN_WARNING_THRESHOLD) {
-      skillsTokenWarning.style.display = 'flex';
-    } else {
-      skillsTokenWarning.style.display = 'none';
-    }
+    updateSkillsTokenWarning();
   }
 
   function renderSkillsList() {
@@ -1348,23 +2112,206 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     });
 
-    updateTokenWarning();
+    updateSkillsTokenWarning();
   }
 
   /**
    * Build the skills prefix to prepend to prompts
    * Returns empty string if no skills are enabled
    */
-  function buildSkillsPrefix() {
-    const enabledSkills = skills.filter(s => s.enabled);
-    if (enabledSkills.length === 0) return '';
+  async function buildSkillsPrefix() {
+    // Combine localStorage skills and server skills
+    const enabledLocalSkills = skills.filter(s => s.enabled);
+    let enabledServerSkillsForPrompt = [];
+
+    try {
+      const data = await window.API.getEnabledSkills();
+      enabledServerSkillsForPrompt = data.skills || [];
+      enabledServerSkills = enabledServerSkillsForPrompt;
+      enabledServerSkillsLoaded = true;
+      updateSkillsTokenWarning();
+    } catch (err) {
+      console.error('Failed to load enabled skills:', err);
+    }
+
+    const allEnabledSkills = [
+      ...enabledServerSkillsForPrompt.map(s => ({ name: s.name, content: s.content })),
+      ...enabledLocalSkills.map(s => ({ name: s.name, content: s.content }))
+    ];
+
+    if (allEnabledSkills.length === 0) return '';
 
     let prefix = '[SKILLS]\n';
-    enabledSkills.forEach(skill => {
+    allEnabledSkills.forEach(skill => {
       prefix += `--- ${skill.name} ---\n${skill.content}\n\n`;
     });
 
     return prefix;
+  }
+
+  // ============================================
+  // Generate Skill Functions
+  // ============================================
+
+  function addSaveAsSkillButton(messageTextElement) {
+    // Find the message-bubble parent
+    const messageBubble = messageTextElement?.closest('.message-bubble');
+    if (!messageBubble) return;
+
+    // Check if button already exists
+    if (messageBubble.querySelector('.save-as-skill-btn')) return;
+
+    // Create the button
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'save-as-skill-btn';
+    btn.innerHTML = `
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M12 2L2 7l10 5 10-5-10-5z"/>
+        <path d="M2 17l10 5 10-5"/>
+        <path d="M2 12l10 5 10-5"/>
+      </svg>
+      <span>${window.i18n ? window.i18n.t('skills.saveAsSkill') : '保存为技能'}</span>
+    `;
+
+    btn.addEventListener('click', () => {
+      openGenerateSkillModal();
+    });
+
+    messageBubble.appendChild(btn);
+  }
+
+  function openGenerateSkillModal() {
+    if (!generateSkillModal || !lastSentPrompt) return;
+
+    // Reset modal state
+    generateSkillLoading.style.display = 'flex';
+    generateSkillPreview.style.display = 'none';
+    generateSkillError.style.display = 'none';
+    saveGeneratedSkillBtn.style.display = 'none';
+    retryGenerateSkillBtn.style.display = 'none';
+
+    // Show modal
+    generateSkillModal.style.display = 'flex';
+
+    // Generate the skill
+    generateSkillFromCurrentPrompt();
+  }
+
+  function closeGenerateSkillModal() {
+    if (!generateSkillModal) return;
+    generateSkillModal.style.display = 'none';
+  }
+
+  async function generateSkillFromCurrentPrompt() {
+    if (!lastSentPrompt) {
+      showGenerateSkillError(window.i18n ? window.i18n.t('skills.generate.noPrompt') : '没有可用的提示词');
+      return;
+    }
+
+    try {
+      const result = await window.API.generateSkill(lastSentPrompt);
+
+      if (result.success && result.skill) {
+        // Show preview
+        generatedSkillName.value = result.skill.name || '';
+        generatedSkillDescription.value = result.skill.description || '';
+        generatedSkillCategory.value = '';
+        generatedSkillTags.value = '';
+        generatedSkillContent.value = result.skill.content || '';
+
+        generateSkillLoading.style.display = 'none';
+        generateSkillPreview.style.display = 'flex';
+        saveGeneratedSkillBtn.style.display = 'inline-flex';
+      } else {
+        showGenerateSkillError(result.error || 'Failed to generate skill');
+      }
+    } catch (err) {
+      console.error('Generate skill error:', err);
+      showGenerateSkillError(err.message || 'Failed to generate skill');
+    }
+  }
+
+  function showGenerateSkillError(message) {
+    generateSkillLoading.style.display = 'none';
+    generateSkillPreview.style.display = 'none';
+    generateSkillError.style.display = 'flex';
+    generateSkillErrorText.textContent = message;
+    retryGenerateSkillBtn.style.display = 'inline-flex';
+    saveGeneratedSkillBtn.style.display = 'none';
+  }
+
+  async function saveGeneratedSkill() {
+    const name = generatedSkillName?.value.trim();
+    const description = generatedSkillDescription?.value.trim();
+    const category = generatedSkillCategory?.value.trim() || null;
+    const tagsInput = generatedSkillTags?.value.trim();
+    const content = generatedSkillContent?.value.trim();
+
+    if (!name || !content) {
+      alert(window.i18n ? window.i18n.t('skills.generate.validation') : '请填写技能名称和内容');
+      return;
+    }
+
+    // Parse tags
+    const tags = tagsInput
+      ? tagsInput.split(',').map(t => t.trim().toLowerCase()).filter(t => t.length > 0)
+      : [];
+
+    try {
+      saveGeneratedSkillBtn.disabled = true;
+      saveGeneratedSkillBtn.textContent = window.i18n ? window.i18n.t('common.saving') : '保存中...';
+
+      await window.API.createSkill({
+        name,
+        description,
+        content,
+        category,
+        tags,
+        enabled: true,
+        source_prompt: JSON.stringify(lastSentPrompt)
+      });
+
+      // Success
+      closeGenerateSkillModal();
+      alert(window.i18n ? window.i18n.t('skills.generate.success') : '技能保存成功！');
+
+      // Refresh server skills list and filters
+      serverSkillsLoaded = false;
+      await loadServerSkills();
+
+      // Clear lastSentPrompt
+      lastSentPrompt = null;
+    } catch (err) {
+      console.error('Save skill error:', err);
+      alert(err.message || 'Failed to save skill');
+    } finally {
+      saveGeneratedSkillBtn.disabled = false;
+      saveGeneratedSkillBtn.textContent = window.i18n ? window.i18n.t('skills.generate.save') : '保存技能';
+    }
+  }
+
+  function setupGenerateSkillListeners() {
+    if (closeGenerateSkillModalBtn) {
+      closeGenerateSkillModalBtn.addEventListener('click', closeGenerateSkillModal);
+    }
+    if (cancelGenerateSkillBtn) {
+      cancelGenerateSkillBtn.addEventListener('click', closeGenerateSkillModal);
+    }
+    if (retryGenerateSkillBtn) {
+      retryGenerateSkillBtn.addEventListener('click', () => {
+        generateSkillLoading.style.display = 'flex';
+        generateSkillError.style.display = 'none';
+        retryGenerateSkillBtn.style.display = 'none';
+        generateSkillFromCurrentPrompt();
+      });
+    }
+    if (saveGeneratedSkillBtn) {
+      saveGeneratedSkillBtn.addEventListener('click', saveGeneratedSkill);
+    }
+    if (generateSkillModal) {
+      generateSkillModal.querySelector('.modal-overlay')?.addEventListener('click', closeGenerateSkillModal);
+    }
   }
 
   function updateModelLabel() {
@@ -1401,8 +2348,11 @@ document.addEventListener('DOMContentLoaded', () => {
     const format = formatInput?.value.trim() || '';
     const references = referencesInput?.value.trim() || '';
 
+    // Store prompt for potential skill generation
+    lastSentPrompt = { persona, task, context, format, references };
+
     // Build structured prompt with skills prefix
-    const skillsPrefix = buildSkillsPrefix();
+    const skillsPrefix = await buildSkillsPrefix();
     let message = skillsPrefix;
     message += `[PERSONA]\n${persona}\n\n[TASK]\n${task}\n\n[CONTEXT]\n${context}`;
     if (format) {
@@ -1485,7 +2435,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // onDone
         (usage) => {
           if (!currentStreamingMessage) return;
-          
+
           // Update usage info if provided
           if (usage) {
             usageInfo.count = usage.count;
@@ -1494,17 +2444,22 @@ document.addEventListener('DOMContentLoaded', () => {
             usageInfo.remaining = usage.is_unlimited ? null : Math.max(0, usage.limit - usage.count);
             updateUsageDisplay();
           }
-          
+
           // Update chat history with full response
           const lastAssistantMsg = chatHistory[chatHistory.length - 1];
           if (lastAssistantMsg && lastAssistantMsg.role === 'assistant') {
             lastAssistantMsg.content = currentStreamFullResponse;
           }
           saveChatHistory();
-          
+
+          // Add "Save as Skill" button after the response
+          if (lastSentPrompt) {
+            addSaveAsSkillButton(currentStreamingMessage);
+          }
+
           // Clear prompt builder after successful send
           clearPromptFormFields();
-          
+
           isStreaming = false;
           sendPromptBtn.disabled = false;
           currentStreamingMessage = null;

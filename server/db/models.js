@@ -102,7 +102,106 @@ const extensionRequestSchema = new mongoose.Schema({
   }
 });
 
+// Skill Schema - user-created reusable prompt templates
+const skillSchema = new mongoose.Schema({
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  name: {
+    type: String,
+    required: true,
+    trim: true,
+    maxlength: 100
+  },
+  description: {
+    type: String,
+    trim: true,
+    maxlength: 500,
+    default: ''
+  },
+  content: {
+    type: String,
+    required: true,
+    maxlength: 50000  // Allow large skill content
+  },
+  category: {
+    type: String,
+    trim: true,
+    maxlength: 50,
+    default: null
+  },
+  tags: {
+    type: [String],
+    default: []
+  },
+  is_public: {
+    type: Boolean,
+    default: false  // Future: allow sharing skills
+  },
+  source_prompt: {
+    type: String,
+    default: null  // Original prompt if AI-generated
+  },
+  enabled: {
+    type: Boolean,
+    default: true
+  },
+  created_at: {
+    type: Date,
+    default: Date.now
+  },
+  updated_at: {
+    type: Date,
+    default: Date.now
+  }
+});
+
+// Update updated_at on save
+skillSchema.pre('save', function(next) {
+  this.updated_at = new Date();
+  next();
+});
+
+// Index for efficient queries
+skillSchema.index({ user: 1, enabled: 1 });
+skillSchema.index({ user: 1, category: 1 });
+skillSchema.index({ user: 1, tags: 1 });
+
+// Category Schema - for organizing skills
+const categorySchema = new mongoose.Schema({
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
+    required: true
+  },
+  name: {
+    type: String,
+    required: true,
+    trim: true,
+    maxlength: 50
+  },
+  color: {
+    type: String,
+    default: '#6366f1'  // Default indigo color
+  },
+  icon: {
+    type: String,
+    default: null
+  },
+  created_at: {
+    type: Date,
+    default: Date.now
+  }
+});
+
+// Ensure unique category names per user
+categorySchema.index({ user: 1, name: 1 }, { unique: true });
+
 export const User = mongoose.model('User', userSchema);
 export const InviteCode = mongoose.model('InviteCode', inviteCodeSchema);
 export const ExtensionRequest = mongoose.model('ExtensionRequest', extensionRequestSchema);
+export const Skill = mongoose.model('Skill', skillSchema);
+export const Category = mongoose.model('Category', categorySchema);
 

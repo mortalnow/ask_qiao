@@ -325,51 +325,218 @@
             </svg>
           </button>
         </div>
+
+        <!-- Tabs -->
+        <div class="skills-tabs">
+          <button type="button" class="skills-tab active" data-tab="my-skills" data-i18n="skills.tabs.mySkills">我的技能</button>
+          <button type="button" class="skills-tab" data-tab="import" data-i18n="skills.tabs.import">导入</button>
+        </div>
+
         <div class="modal-body">
-          <p class="skills-info" data-i18n="skills.info">
-            上传 Claude 技能文件 (.md)，选择的技能将作为系统指令添加到您的提示词中。
-          </p>
-          
-          <!-- Skills Upload Zone -->
-          <div class="skills-upload-zone" id="skills-upload-zone" tabindex="0" role="button">
-            <input type="file" id="skills-file-input" multiple accept=".md,.markdown,text/markdown" hidden>
-            <div class="skills-upload-prompt">
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+          <div id="skills-status" class="skills-status" style="display: none;"></div>
+          <!-- My Skills Tab -->
+          <div id="skills-tab-my-skills" class="skills-tab-content active">
+            <!-- Search Bar -->
+            <div class="skills-search">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="11" cy="11" r="8"/>
+                <path d="M21 21l-4.35-4.35"/>
               </svg>
-              <span data-i18n="skills.uploadPrompt">拖拽技能文件到此处，或点击选择</span>
-              <span class="skills-upload-hint" data-i18n="skills.uploadHint">支持 .md 文件（来自 ~/.claude/skills 文件夹）</span>
+              <input type="text" id="skills-search-input" data-i18n-placeholder="skills.searchPlaceholder" placeholder="搜索技能...">
+            </div>
+
+            <!-- Filters -->
+            <div class="skills-filters">
+              <div class="skills-filter">
+                <label for="skills-category-filter" data-i18n="skills.filters.category">分类</label>
+                <select id="skills-category-filter"></select>
+              </div>
+              <div class="skills-filter">
+                <label for="skills-tag-filter" data-i18n="skills.filters.tag">标签</label>
+                <select id="skills-tag-filter"></select>
+              </div>
+              <button type="button" id="skills-clear-filters" class="btn-text-small" data-i18n="skills.filters.clear">清除筛选</button>
+            </div>
+
+            <!-- Actions -->
+            <div class="skills-actions">
+              <button type="button" id="skills-export-all" class="btn-secondary" data-i18n="skills.exportAll">导出全部技能</button>
+              <button type="button" id="skills-export-enabled" class="btn-secondary" data-i18n="skills.exportEnabled">导出已启用技能</button>
+            </div>
+
+            <!-- Skills List from Server -->
+            <div class="skills-list-container">
+              <div id="skills-server-list" class="skills-list">
+                <div class="skills-loading">
+                  <div class="skills-loading-spinner"></div>
+                  <span data-i18n="skills.loading">加载中...</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Token Warning -->
+            <div id="skills-token-warning" class="skills-token-warning" style="display: none;">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
+                <line x1="12" y1="9" x2="12" y2="13"/>
+                <line x1="12" y1="17" x2="12.01" y2="17"/>
+              </svg>
+              <span data-i18n="skills.tokenWarning">选中的技能内容较长，可能影响响应质量</span>
             </div>
           </div>
 
-          <!-- Skills List -->
-          <div class="skills-list-container">
-            <div class="skills-list-header">
-              <span data-i18n="skills.listTitle">已上传的技能</span>
-              <button type="button" id="clear-all-skills" class="btn-text-small" data-i18n="skills.clearAll">
-                清空全部
-              </button>
-            </div>
-            <div id="skills-list" class="skills-list">
-              <div class="skills-empty" data-i18n="skills.empty">暂无上传的技能</div>
-            </div>
-          </div>
+          <!-- Import Tab -->
+          <div id="skills-tab-import" class="skills-tab-content" style="display: none;">
+            <p class="skills-info" data-i18n="skills.info">
+              上传 Claude 技能文件 (.md)，选择的技能将作为系统指令添加到您的提示词中。
+            </p>
 
-          <!-- Token Warning -->
-          <div id="skills-token-warning" class="skills-token-warning" style="display: none;">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
-              <line x1="12" y1="9" x2="12" y2="13"/>
-              <line x1="12" y1="17" x2="12.01" y2="17"/>
-            </svg>
-            <span data-i18n="skills.tokenWarning">选中的技能内容较长，可能影响响应质量</span>
+            <!-- Skills Upload Zone -->
+            <div class="skills-upload-zone" id="skills-upload-zone" tabindex="0" role="button">
+              <input type="file" id="skills-file-input" multiple accept=".md,.markdown,text/markdown" hidden>
+              <div class="skills-upload-prompt">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+                </svg>
+                <span data-i18n="skills.uploadPrompt">拖拽技能文件到此处，或点击选择</span>
+                <span class="skills-upload-hint" data-i18n="skills.uploadHint">支持 .md 文件（来自 ~/.claude/skills 文件夹）</span>
+              </div>
+            </div>
+
+            <!-- Import to Server -->
+            <div class="skills-import-server">
+              <input type="file" id="skills-server-file-input" multiple accept=".md,.markdown,text/markdown" hidden>
+              <button type="button" id="skills-import-server-btn" class="btn-secondary" data-i18n="skills.importToServer">导入到云端</button>
+            </div>
+
+            <!-- Local Skills List (legacy) -->
+            <div class="skills-list-container">
+              <div class="skills-list-header">
+                <span data-i18n="skills.localSkills">本地技能（未同步）</span>
+                <button type="button" id="clear-all-skills" class="btn-text-small" data-i18n="skills.clearAll">
+                  清空全部
+                </button>
+              </div>
+              <div id="skills-list" class="skills-list">
+                <div class="skills-empty" data-i18n="skills.empty">暂无上传的技能</div>
+              </div>
+            </div>
           </div>
         </div>
+
         <div class="modal-footer">
           <button type="button" id="close-skills-btn" class="btn-primary" data-i18n="common.close">关闭</button>
         </div>
       </div>
     </div>
+
+    <!-- Edit Skill Modal -->
+    <div id="edit-skill-modal" class="modal edit-skill-modal" style="display: none;">
+      <div class="modal-overlay"></div>
+      <div class="modal-content edit-skill-modal-content">
+        <div class="modal-header">
+          <h3 data-i18n="skills.edit.title">编辑技能</h3>
+          <button type="button" id="close-edit-skill-modal" class="btn-icon-small">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 6L6 18M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+        <div class="modal-body">
+          <input type="hidden" id="edit-skill-id">
+          <div class="form-field">
+            <label for="edit-skill-name" data-i18n="skills.generate.name">技能名称</label>
+            <input type="text" id="edit-skill-name" maxlength="100">
+          </div>
+          <div class="form-field">
+            <label for="edit-skill-description" data-i18n="skills.generate.description">简短描述</label>
+            <input type="text" id="edit-skill-description" maxlength="200">
+          </div>
+          <div class="form-field">
+            <label for="edit-skill-category" data-i18n="skills.generate.category">分类（可选）</label>
+            <input type="text" id="edit-skill-category" maxlength="50">
+          </div>
+          <div class="form-field">
+            <label for="edit-skill-tags" data-i18n="skills.generate.tags">标签（可选，用逗号分隔）</label>
+            <input type="text" id="edit-skill-tags" list="skills-tags-datalist">
+          </div>
+          <div class="form-field">
+            <label for="edit-skill-content" data-i18n="skills.generate.content">技能内容</label>
+            <textarea id="edit-skill-content" rows="12"></textarea>
+          </div>
+        </div>
+        <div class="modal-footer edit-skill-footer">
+          <button type="button" id="delete-skill-btn" class="btn-danger" data-i18n="skills.delete">删除</button>
+          <div class="modal-footer-right">
+            <button type="button" id="cancel-edit-skill" class="btn-secondary" data-i18n="common.cancel">取消</button>
+            <button type="button" id="save-edit-skill" class="btn-primary" data-i18n="skills.edit.save">保存</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Generate Skill Modal -->
+    <div id="generate-skill-modal" class="modal generate-skill-modal" style="display: none;">
+      <div class="modal-overlay"></div>
+      <div class="modal-content generate-skill-modal-content">
+        <div class="modal-header">
+          <h3 data-i18n="skills.generate.title">保存为技能</h3>
+          <button type="button" id="close-generate-skill-modal" class="btn-icon-small">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 6L6 18M6 6l12 12"/>
+            </svg>
+          </button>
+        </div>
+        <div class="modal-body">
+          <!-- Generating State -->
+          <div id="generate-skill-loading" class="generate-skill-loading">
+            <div class="generate-skill-spinner"></div>
+            <p data-i18n="skills.generate.analyzing">正在分析您的提示词，生成可复用技能...</p>
+          </div>
+
+          <!-- Preview/Edit State -->
+          <div id="generate-skill-preview" class="generate-skill-preview" style="display: none;">
+            <div class="form-field">
+              <label for="generated-skill-name" data-i18n="skills.generate.name">技能名称</label>
+              <input type="text" id="generated-skill-name" maxlength="100" placeholder="技能名称">
+            </div>
+            <div class="form-field">
+              <label for="generated-skill-description" data-i18n="skills.generate.description">简短描述</label>
+              <input type="text" id="generated-skill-description" maxlength="200" placeholder="一句话描述这个技能">
+            </div>
+            <div class="form-field">
+              <label for="generated-skill-category" data-i18n="skills.generate.category">分类（可选）</label>
+              <input type="text" id="generated-skill-category" maxlength="50" placeholder="例如：写作、编程、分析">
+            </div>
+            <div class="form-field">
+            <label for="generated-skill-tags" data-i18n="skills.generate.tags">标签（可选，用逗号分隔）</label>
+            <input type="text" id="generated-skill-tags" list="skills-tags-datalist" placeholder="例如：react, typescript, code-review">
+            </div>
+            <div class="form-field">
+              <label for="generated-skill-content" data-i18n="skills.generate.content">技能内容</label>
+              <textarea id="generated-skill-content" rows="10" placeholder="技能内容（Markdown格式）"></textarea>
+            </div>
+          </div>
+
+          <!-- Error State -->
+          <div id="generate-skill-error" class="generate-skill-error" style="display: none;">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="12" y1="8" x2="12" y2="12"/>
+              <line x1="12" y1="16" x2="12.01" y2="16"/>
+            </svg>
+            <p id="generate-skill-error-text" data-i18n="skills.generate.error">生成失败，请重试</p>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" id="cancel-generate-skill" class="btn-secondary" data-i18n="common.cancel">取消</button>
+          <button type="button" id="retry-generate-skill" class="btn-secondary" style="display: none;" data-i18n="skills.generate.retry">重试</button>
+          <button type="button" id="save-generated-skill" class="btn-primary" style="display: none;" data-i18n="skills.generate.save">保存技能</button>
+        </div>
+      </div>
+    </div>
+
+    <datalist id="skills-tags-datalist"></datalist>
   </div>
 
   <!-- PDF.js for PDF text extraction (lazy loaded) -->

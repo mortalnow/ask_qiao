@@ -448,6 +448,262 @@ async function getUsers() {
   return data;
 }
 
+// ============================================
+// Skills Management Functions
+// ============================================
+
+/**
+ * Get user's skills list
+ * @param {Object} options - Query options { category, tag, enabled, search, page, limit }
+ */
+async function getSkills(options = {}) {
+  const params = new URLSearchParams();
+  if (options.category) params.set('category', options.category);
+  if (options.tag) params.set('tag', options.tag);
+  if (options.enabled !== undefined) params.set('enabled', options.enabled);
+  if (options.search) params.set('search', options.search);
+  if (options.page) params.set('page', options.page);
+  if (options.limit) params.set('limit', options.limit);
+
+  const queryString = params.toString();
+  const url = queryString ? `/skills?${queryString}` : '/skills';
+
+  const response = await apiRequest(url);
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || 'Failed to get skills');
+  }
+
+  return data;
+}
+
+/**
+ * Get a single skill by ID
+ */
+async function getSkill(id) {
+  const response = await apiRequest(`/skills/${id}`);
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || 'Failed to get skill');
+  }
+
+  return data;
+}
+
+/**
+ * Create a new skill
+ * @param {Object} skill - { name, description, content, category, tags, enabled }
+ */
+async function createSkill(skill) {
+  const response = await apiRequest('/skills', {
+    method: 'POST',
+    body: JSON.stringify(skill),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || 'Failed to create skill');
+  }
+
+  return data;
+}
+
+/**
+ * Update an existing skill
+ * @param {string} id - Skill ID
+ * @param {Object} updates - Fields to update
+ */
+async function updateSkill(id, updates) {
+  const response = await apiRequest(`/skills/${id}`, {
+    method: 'PUT',
+    body: JSON.stringify(updates),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || 'Failed to update skill');
+  }
+
+  return data;
+}
+
+/**
+ * Delete a skill
+ */
+async function deleteSkill(id) {
+  const response = await apiRequest(`/skills/${id}`, {
+    method: 'DELETE',
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || 'Failed to delete skill');
+  }
+
+  return data;
+}
+
+/**
+ * Toggle a skill's enabled status
+ */
+async function toggleSkill(id) {
+  const response = await apiRequest(`/skills/${id}/toggle`, {
+    method: 'PATCH',
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || 'Failed to toggle skill');
+  }
+
+  return data;
+}
+
+/**
+ * Generate a skill from a structured prompt using AI
+ * @param {Object} prompt - { persona, task, context, format, references }
+ * @returns {Object} - { success, skill: { name, description, content }, source_prompt }
+ */
+async function generateSkill(prompt) {
+  const response = await apiRequest('/skills/generate', {
+    method: 'POST',
+    body: JSON.stringify(prompt),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || 'Failed to generate skill');
+  }
+
+  return data;
+}
+
+/**
+ * Get all enabled skills with content (for prompt building)
+ */
+async function getEnabledSkills() {
+  const response = await apiRequest('/skills/enabled/list');
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || 'Failed to get enabled skills');
+  }
+
+  return data;
+}
+
+/**
+ * Get user's categories
+ */
+async function getCategories() {
+  const response = await apiRequest('/skills/categories/list');
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || 'Failed to get categories');
+  }
+
+  return data;
+}
+
+/**
+ * Create a new category
+ */
+async function createCategory(name, color = null) {
+  const response = await apiRequest('/skills/categories', {
+    method: 'POST',
+    body: JSON.stringify({ name, color }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || 'Failed to create category');
+  }
+
+  return data;
+}
+
+/**
+ * Delete a category
+ */
+async function deleteCategory(id) {
+  const response = await apiRequest(`/skills/categories/${id}`, {
+    method: 'DELETE',
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || 'Failed to delete category');
+  }
+
+  return data;
+}
+
+/**
+ * Get all unique tags
+ */
+async function getTags() {
+  const response = await apiRequest('/skills/tags/list');
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || 'Failed to get tags');
+  }
+
+  return data;
+}
+
+/**
+ * Export skills as markdown (bundle or per-skill)
+ * @param {Object} options - { enabled, bundle }
+ */
+async function exportSkills(options = {}) {
+  const params = new URLSearchParams();
+  if (options.enabled !== undefined) params.set('enabled', options.enabled);
+  if (options.bundle !== undefined) params.set('bundle', options.bundle);
+
+  const queryString = params.toString();
+  const url = queryString ? `/skills/export?${queryString}` : '/skills/export';
+
+  const response = await apiRequest(url);
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || 'Failed to export skills');
+  }
+
+  return data;
+}
+
+/**
+ * Import skills from markdown files
+ * @param {Array} files - [{ name, content }]
+ * @param {boolean} overwrite
+ */
+async function importSkills(files, overwrite = false) {
+  const response = await apiRequest('/skills/import', {
+    method: 'POST',
+    body: JSON.stringify({ files, overwrite }),
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.error || 'Failed to import skills');
+  }
+
+  return data;
+}
+
 // Export for use in other scripts
 window.API = {
   getToken,
@@ -468,5 +724,19 @@ window.API = {
   approveExtension,
   rejectExtension,
   getUsers,
+  // Skills functions
+  getSkills,
+  getSkill,
+  createSkill,
+  updateSkill,
+  deleteSkill,
+  toggleSkill,
+  generateSkill,
+  getEnabledSkills,
+  getCategories,
+  createCategory,
+  deleteCategory,
+  getTags,
+  exportSkills,
+  importSkills,
 };
-

@@ -1,97 +1,180 @@
-# Task Plan: Add File Upload to Prompt Builder Context
+# Task Plan: Skills Manager Enhancement
 
 ## Goal
-Add file upload functionality to the Context section of the Prompt Builder, supporting all file formats that OpenAI and Gemini LLMs support, with ephemeral (no server storage) file handling.
+Transform the Skills Manager from a simple upload/toggle system to a full-featured skill management system with server-side storage, AI-powered skill generation from prompts, and organization via categories/tags.
 
 ## Phases
-- [x] Phase 1: Research - Understand current architecture and LLM file support
-- [x] Phase 2: Design - Plan the implementation approach
-- [x] Phase 3: Frontend - Add file upload UI to Prompt Builder Context
-- [x] Phase 4: Backend - Handle file processing and pass to AI providers
-- [x] Phase 5: Testing - Verify file upload works with both models
+- [x] Phase 1: Database Design & Backend API
+- [x] Phase 2: Auto-generate Skills from Prompts (AI Integration)
+- [x] Phase 3: Skills CRUD UI (View, Edit, Delete)
+- [ ] Phase 4: Categories/Tags System
+- [ ] Phase 5: Export/Import Features
+- [ ] Phase 6: Migration & Testing
 
-## Implementation Summary
+## Key Questions
+1. ~~Storage: localStorage vs MongoDB vs hybrid?~~ → **MongoDB** (user choice)
+2. ~~Creation method: Save prompt or dedicated editor?~~ → **AI auto-generation** (user choice)
+3. ~~Management features?~~ → **Full CRUD + categories/tags + export/import** (user choice)
 
-### Files Modified
-1. `public/index.html` - Added file upload zone HTML
-2. `public/css/style.css` - Added file upload styles + file indicator + incompatible warning
-3. `public/js/app.js` - File handling, base64 conversion, preview rendering, compatibility checks
-4. `public/js/api.js` - Updated sendMessage to include files
-5. `public/js/i18n.js` - Added file upload translations (zh-CN/en-US)
-6. `server/routes/chat.js` - Accept and validate files in request
-7. `server/services/openai.js` - Format multimodal messages for OpenAI
-8. `server/services/gemini.js` - Format multimodal messages for Gemini
-9. `server/index.js` - Increased body parser limit to 50MB
-10. `api/index.js` - Increased body parser limit to 50MB (Vercel)
+## Architecture Decisions
 
-### Key Features Implemented
-- Drag & drop file upload zone
-- Click to select files
-- **Clipboard paste support** for images (Ctrl+V / Cmd+V)
-- Image thumbnail preview
-- Document icon preview (PDF)
-- File size validation (20MB max)
-- File type validation per model
-- File count limit (5 files max)
-- Base64 encoding (ephemeral, no server storage)
-- **Automatic image compression** for large files (>2MB)
-- Clear files on form reset
-- i18n support for both languages
-- **Model compatibility warnings** (Gemini-only formats)
-- **File indicator in message bubbles**
-- **Visual incompatible file markers**
-- **Keyboard accessibility** (Tab navigation, Enter/Space activation)
-- **Progress bar** during file encoding
-- **Loading state** with spinner animation
+### Database Schema (MongoDB)
+```javascript
+// Skill Schema
+{
+  _id: ObjectId,
+  user: ObjectId (ref: User),      // Owner
+  name: String,                     // Skill name
+  description: String,              // Short description
+  content: String,                  // Full skill content (markdown)
+  category: String,                 // Category name (optional)
+  tags: [String],                   // Array of tags
+  is_public: Boolean,               // Future: share skills
+  source_prompt_id: String,         // If generated from prompt
+  enabled: Boolean,                 // Currently active
+  created_at: Date,
+  updated_at: Date
+}
 
-### Supported Formats
-- **Both models**: PNG, JPEG, GIF, WebP (images)
-- **Gemini only**: HEIC, HEIF, PDF
+// Category Schema (optional - could just be string in skill)
+{
+  _id: ObjectId,
+  user: ObjectId,
+  name: String,
+  color: String,                    // For UI display
+  icon: String,                     // Optional icon
+  created_at: Date
+}
+```
 
-## Ralph Loop Progress
+### API Endpoints
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| GET | `/api/skills` | List user's skills (with filters) |
+| POST | `/api/skills` | Create new skill |
+| GET | `/api/skills/:id` | Get single skill |
+| PUT | `/api/skills/:id` | Update skill |
+| DELETE | `/api/skills/:id` | Delete skill |
+| POST | `/api/skills/generate` | AI-generate skill from prompt |
+| POST | `/api/skills/import` | Import skills from .md files |
+| GET | `/api/skills/export` | Export skills as .md files |
+| GET | `/api/skills/categories` | List user's categories |
+| POST | `/api/skills/categories` | Create category |
 
-### Iteration 1: Core Implementation
-- Added file upload UI to Context section
-- Implemented base64 conversion and file validation
-- Updated API client and backend routes
-- Modified AI services for multimodal messages
-- Added i18n translations
+### AI Skill Generation Flow
+1. User sends prompt via Prompt Builder
+2. After successful response, offer "Save as Skill" button
+3. Backend sends prompt + response to AI (GPT/Gemini)
+4. AI extracts & generalizes into reusable skill format:
+   - Identifies the core capability/role
+   - Removes specific context, keeps general pattern
+   - Generates name + description
+5. User can edit before saving
 
-### Iteration 2: Polish and Safety
-- Increased Express body parser limit (100KB → 50MB) for file uploads
-- Added model compatibility warnings (Gemini-only format detection)
-- Added file attachment indicator in user message bubbles
-- Added visual "incompatible" styling for Gemini-only files when OpenAI selected
-- Added new i18n keys for compatibility warnings
+### Frontend UI Changes
+1. **Skills Modal Redesign**:
+   - Replace upload-only view with tabbed interface:
+     - "My Skills" tab: List/grid of skills with search/filter
+     - "Create" tab: Manual skill editor OR generate from prompt
+     - "Import" tab: Upload .md files (keep existing)
+   - Each skill card shows: name, description, category badge, tags, toggle
 
-### Iteration 3: Bug Fixes and UX Improvements
-- Fixed incompatible class not being removed when switching to Gemini
-- Added loading state with spinner during file processing
-- Improved mobile UX with touch feedback
-- Verified all file paths and imports work correctly
+2. **Skill Detail/Edit View**:
+   - Full content editor (markdown)
+   - Category selector (dropdown + "new category")
+   - Tags input (pill-style, autocomplete existing)
+   - Enable/disable toggle
+   - Delete button
 
-### Iteration 4: Enhanced Accessibility and UX
-- Added **clipboard paste support** for images (Ctrl+V / Cmd+V)
-- Added **keyboard accessibility** for file zone (Tab focus, Enter/Space to activate)
-- Added **progress bar** for file encoding (shows percentage during large file processing)
-- Added ARIA attributes for screen reader support
-- Added paste hint text in UI
-- Added focus outline styles for keyboard navigation
-- Updated i18n with new translation keys
+3. **Post-Prompt "Save as Skill" CTA**:
+   - After successful AI response, show small button/link
+   - Opens skill generation modal with preview
+   - User can edit before confirming save
 
-### Iteration 5: Performance and Polish
-- Added **automatic image compression** for large files (>2MB)
-  - Uses canvas API to resize images to max 2048px dimension
-  - Applies JPEG compression at 85% quality
-  - Only uses compressed version if smaller than original
-  - Logs compression results to console for debugging
-- Verified memory management (Object URLs properly revoked)
-- Final code quality review completed
+## Files to Create/Modify
+
+### New Files
+- `server/db/models.js` - Add Skill and Category schemas
+- `server/routes/skills.js` - Skills API endpoints
+- `server/services/skillGenerator.js` - AI skill generation logic
+- `public/js/skills.js` - Skills management frontend (refactored from app.js)
+- `public/css/skills.css` - Skills-specific styles
+
+### Modified Files
+- `server/index.js` - Register skills routes
+- `public/index.html` - Update skills modal HTML
+- `public/js/app.js` - Integrate new skills system
+- `public/js/api.js` - Add skills API functions
+- `public/js/i18n.js` - Add new translation strings
+
+## Errors Encountered
+(None yet)
+
+## Implementation Progress
+
+### Phase 1 Complete - Files Changed:
+- `server/db/models.js` - Added Skill and Category schemas with indexes
+- `server/routes/skills.js` - Full CRUD + toggle + categories + tags endpoints
+- `server/index.js` - Registered skills routes
+- `public/js/api.js` - Added all skills API functions
+
+### Phase 2 Complete - Files Changed:
+- `server/services/skillGenerator.js` - AI skill generation using OpenAI
+- `server/routes/skills.js` - Added `/generate` endpoint
+- `public/index.html` - Added generate skill modal HTML
+- `public/css/style.css` - Added generate skill modal styles + save as skill button
+- `public/js/app.js` - Added generate skill functions and UI handlers
+- `public/js/i18n.js` - Added translations for skill generation
+
+### Phase 3 Complete - Files Changed:
+- `public/index.html` - Redesigned skills modal with tabs (My Skills, Import), added edit skill modal
+- `public/css/style.css` - Added skills tabs, search bar, server skills list, edit modal styles
+- `public/js/app.js` - Added tab switching, server skills loading/rendering, edit modal functionality, integrated server skills with prompt building
+- `public/js/i18n.js` - Added translations for tabs, search, edit modal, error messages
+
+### Phase 3 Fixes:
+- `public/js/app.js` - Server skills now included in prompt prefix, badge counts, token warning
+- `server/services/skillGenerator.js` - Model selection now uses config
+- `server/routes/skills.js` - Added per-user rate limit for skill generation
+- `public/js/i18n.js` - Added missing load error string
+
+### Phase 4 In Progress:
+- `public/index.html` - Added category/tag filters and tags datalist
+- `public/js/app.js` - Wired category/tag filters and tags suggestions (API-backed)
+- `public/css/style.css` - Added styles for filters
+- `public/js/i18n.js` - Added filter labels
+
+### Phase 5 Kickoff: Export/Import Features
+- Server: implement `/api/skills/export` (bulk export .md or zip) and `/api/skills/import` (parse uploaded .md, create skills)
+- Client: add export button(s) and import-to-server flow in Skills modal
+- Shared: reuse YAML frontmatter parsing + validation rules
+- i18n: add strings for export/import UI and errors
+- QA: add basic manual checklist for export/import
+
+### Phase 6 Kickoff: Migration & Testing
+- Migration: sync localStorage skills to server on login (idempotent)
+- Fallback: keep localStorage as offline cache; mark migrated flag
+- Testing: add manual test cases for CRUD, generation, filters, import/export, migration
+- Error handling: confirm 401/403/404/429 behaviors in UI
+
+### Phase 5 In Progress - Files Changed:
+- `server/routes/skills.js` - Added import/export endpoints and markdown parsing/serialization helpers
+- `public/js/api.js` - Added `exportSkills` and `importSkills` API helpers
+- `public/index.html` - Added export buttons and import-to-server button/input
+- `public/js/app.js` - Wired export/import flows and download helper
+- `public/css/style.css` - Added styles for export/import actions
+- `public/js/i18n.js` - Added export/import strings
+- `server/routes/skills.js` - Import now supports bundled exports split by separator
+- `public/index.html` - Moved skills status banner to be visible across tabs
+
+### Phase 6 In Progress - Files Changed:
+- `public/js/app.js` - Added localStorage-to-server migration on init (idempotent)
+- `public/index.html` - Added status area for skills actions
+- `public/css/style.css` - Added success/error status styles
+- `public/js/app.js` - Added export/import/migration status messages
+- `public/js/i18n.js` - Added export/migration status strings
+- `docs/skills_notes.md` - Added manual test checklist for export/import/migration
+- `public/js/app.js` - Migration now uses fingerprint (not just count) for idempotency
 
 ## Status
-**COMPLETED** - All 5 Ralph Loop iterations complete. Feature fully implemented with:
-- Core file upload functionality
-- Safety and compatibility features
-- Bug fixes and mobile UX
-- Accessibility improvements
-- Performance optimizations
+**Phase 6 In Progress** - Migration + manual test checklist added; ready for verification
