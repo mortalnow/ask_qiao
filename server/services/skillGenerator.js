@@ -1,11 +1,25 @@
 import OpenAI from 'openai';
+import { HttpsProxyAgent } from 'https-proxy-agent';
 import { config } from '../config.js';
 
 let openai = null;
 
 function getClient() {
-  if (!openai && config.openaiApiKey) {
-    openai = new OpenAI({ apiKey: config.openaiApiKey });
+  // Always recreate client to ensure fresh config
+  if (config.openaiApiKey) {
+    const clientOptions = {
+      apiKey: config.openaiApiKey,
+      timeout: 30000, // 30 second timeout
+      maxRetries: 1
+    };
+
+    // Use proxy if configured (respects https_proxy env var)
+    const proxyUrl = process.env.https_proxy || process.env.HTTPS_PROXY;
+    if (proxyUrl) {
+      clientOptions.httpAgent = new HttpsProxyAgent(proxyUrl);
+    }
+
+    openai = new OpenAI(clientOptions);
   }
   return openai;
 }
@@ -14,7 +28,8 @@ function getSkillGenerationModel() {
   if (config.openaiModel && config.openaiModel !== 'latest') {
     return config.openaiModel;
   }
-  return 'gpt-4o';
+  // Use gpt-4o-mini for faster skill generation (still high quality)
+  return 'gpt-4o-mini';
 }
 
 /**
@@ -73,15 +88,21 @@ ${prompt.format ? `\n[FORMAT]\n${prompt.format}` : ''}
 ${prompt.references ? `\n[REFERENCES]\n${prompt.references}` : ''}`;
 
   try {
+    // Create abort controller for request timeout
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 25000); // 25 second timeout
+
     const response = await client.chat.completions.create({
-      model: getSkillGenerationModel(),  // Use configured model if provided
+      model: getSkillGenerationModel(),
       messages: [
         { role: 'system', content: SKILL_GENERATION_PROMPT },
         { role: 'user', content: userMessage }
       ],
       temperature: 0.7,
       max_tokens: 2000,
-    });
+    }, { signal: controller.signal });
+
+    clearTimeout(timeoutId);
 
     const content = response.choices[0]?.message?.content;
 
@@ -92,7 +113,17 @@ ${prompt.references ? `\n[REFERENCES]\n${prompt.references}` : ''}`;
     // Parse the response
     return parseSkillResponse(content);
   } catch (err) {
-    console.error('Skill generation error:', err);
+    console.error('Skill generation error:', err.name, err.message);
+    console.error('Full error:', JSON.stringify(err, Object.getOwnPropertyNames(err), 2));
+    if (err.name === 'AbortError' || err.code === 'ETIMEDOUT' || err.code === 'ECONNABORTED') {
+      throw new Error('Skill generation timed out. Please try again.');
+    }
+    if (err.status === 401 || err.status === 403) {
+      throw new Error('OpenAI API authentication failed');
+    }
+    if (err.status === 429) {
+      throw new Error('OpenAI rate limit exceeded. Please try again later.');
+    }
     throw new Error(err.message || 'Failed to generate skill');
   }
 }

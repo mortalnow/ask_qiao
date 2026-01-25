@@ -7,9 +7,9 @@ Transform the Skills Manager from a simple upload/toggle system to a full-featur
 - [x] Phase 1: Database Design & Backend API
 - [x] Phase 2: Auto-generate Skills from Prompts (AI Integration)
 - [x] Phase 3: Skills CRUD UI (View, Edit, Delete)
-- [ ] Phase 4: Categories/Tags System
-- [ ] Phase 5: Export/Import Features
-- [ ] Phase 6: Migration & Testing
+- [x] Phase 4: Categories/Tags System
+- [x] Phase 5: Export/Import Features
+- [x] Phase 6: Migration & Testing
 
 ## Key Questions
 1. ~~Storage: localStorage vs MongoDB vs hybrid?~~ → **MongoDB** (user choice)
@@ -138,7 +138,7 @@ Transform the Skills Manager from a simple upload/toggle system to a full-featur
 - `server/routes/skills.js` - Added per-user rate limit for skill generation
 - `public/js/i18n.js` - Added missing load error string
 
-### Phase 4 In Progress:
+### Phase 4 Complete:
 - `public/index.html` - Added category/tag filters and tags datalist
 - `public/js/app.js` - Wired category/tag filters and tags suggestions (API-backed)
 - `public/css/style.css` - Added styles for filters
@@ -157,7 +157,7 @@ Transform the Skills Manager from a simple upload/toggle system to a full-featur
 - Testing: add manual test cases for CRUD, generation, filters, import/export, migration
 - Error handling: confirm 401/403/404/429 behaviors in UI
 
-### Phase 5 In Progress - Files Changed:
+### Phase 5 Complete - Files Changed:
 - `server/routes/skills.js` - Added import/export endpoints and markdown parsing/serialization helpers
 - `public/js/api.js` - Added `exportSkills` and `importSkills` API helpers
 - `public/index.html` - Added export buttons and import-to-server button/input
@@ -167,7 +167,7 @@ Transform the Skills Manager from a simple upload/toggle system to a full-featur
 - `server/routes/skills.js` - Import now supports bundled exports split by separator
 - `public/index.html` - Moved skills status banner to be visible across tabs
 
-### Phase 6 In Progress - Files Changed:
+### Phase 6 Complete - Files Changed:
 - `public/js/app.js` - Added localStorage-to-server migration on init (idempotent)
 - `public/index.html` - Added status area for skills actions
 - `public/css/style.css` - Added success/error status styles
@@ -177,4 +177,4 @@ Transform the Skills Manager from a simple upload/toggle system to a full-featur
 - `public/js/app.js` - Migration now uses fingerprint (not just count) for idempotency
 
 ## Status
-**Phase 6 In Progress** - Migration + manual test checklist added; ready for verification
+**All Phases Complete** - Skills Manager enhancement fully implemented. Manual test checklist available in `docs/skills_notes.md`.

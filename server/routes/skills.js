@@ -117,15 +117,36 @@ function buildSkillMarkdown(skill) {
 }
 
 function splitBundleContent(content) {
-  const separator = '<!-- skill separator -->';
-  if (!content.includes(separator)) {
-    return [content];
+  // Try explicit separator first
+  const explicitSeparator = '<!-- skill separator -->';
+  if (content.includes(explicitSeparator)) {
+    return content
+      .split(explicitSeparator)
+      .map(chunk => chunk.trim())
+      .filter(Boolean);
   }
 
-  return content
-    .split(separator)
-    .map(chunk => chunk.trim())
-    .filter(Boolean);
+  // Try triple-dash separator (---\n---\n--- or similar)
+  const tripleDashPattern = /\n---\s*\n---\s*\n---\s*\n/;
+  if (tripleDashPattern.test(content)) {
+    return content
+      .split(tripleDashPattern)
+      .map(chunk => chunk.trim())
+      .filter(Boolean);
+  }
+
+  // Try detecting multiple YAML frontmatters (new skill starts with ---\nname:)
+  // Split on newline followed by --- and then name: on next line
+  const yamlBoundaryPattern = /\n(?=---\s*\nname:\s*)/;
+  if (yamlBoundaryPattern.test(content)) {
+    return content
+      .split(yamlBoundaryPattern)
+      .map(chunk => chunk.trim())
+      .filter(Boolean);
+  }
+
+  // No separator found, return as single skill
+  return [content];
 }
 
 // Rate limit for AI skill generation (per user)
