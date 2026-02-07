@@ -166,6 +166,36 @@ The project uses MongoDB Atlas for user and invite code storage. To initialize:
 
 ## Development Log
 
+### 2026-02-07: UX Polish - Eliminate Flash and Improve Modal Consistency
+
+**Goal**: Fix visual flashing issues and improve modal animation consistency.
+
+**Problems Fixed**:
+1. **Initial Load Flash**: Page content would briefly appear in wrong state before JavaScript initialization
+2. **Usage Pill Modal Animation**: Welcome modal opened from usage pill button would incorrectly animate to header logo instead of back to the pill
+3. **Misleading Extension Message**: "已用完免费提问次数" shown even when users had remaining prompts
+4. **Extension Form Styling**: Select dropdown had misaligned text and awkward default arrow
+
+**Changes**:
+1. **Smooth Page Load**: Added `.app-ready` class mechanism with opacity transition to prevent flash
+   - App container starts at `opacity: 0`
+   - Synchronously set correct initial view state before async operations
+   - Fade in to `opacity: 1` after full initialization (0.15s)
+2. **Smart Modal Animations**: Track modal source (`welcomeModalSource`) to animate icon to correct target
+   - New `animateIconToPill()` function for usage pill animations
+   - Welcome modal from pill → animates back to pill
+   - Welcome modal auto-shown → animates to header logo
+3. **Remove Page Reloads**: Clicking welcome icon now resets state without full page refresh
+4. **Cleaner Extension Form**:
+   - Removed misleading "已用完免费提问次数" message
+   - Custom select wrapper with SVG arrow for consistent styling
+   - Improved text alignment and padding
+
+**Files Modified**:
+- `public/css/style.css`: Added app-ready opacity transition, extension form select styling
+- `public/index.html`: Removed misleading message, wrapped select in custom container
+- `public/js/app.js`: Refactored init() for sync state setting, added modal source tracking
+
 ### 2026-01-21: PWA Cache Freshness
 
 **Goal**: Prevent stale UI after deployments without manual cache clearing.
