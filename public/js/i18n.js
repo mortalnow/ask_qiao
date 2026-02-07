@@ -34,8 +34,8 @@ const translations = {
 
     // Home mission copy
     'home.mission.title': '学会更好地提问，得到更好的答案',
-    'home.mission.line1': '这里是一个提示词训练场，帮助您用结构化方式向大模型提问。',
-    'home.mission.line2': '先发送提示词，再用 AI 把本次提示词和回答沉淀成可复用的 Markdown 技能。',
+    'home.mission.description1': '这里是一个提示词训练场，帮助您用结构化方式向大模型提问。',
+    'home.mission.description2': '先发送提示词，再用 AI 把本次提示词和回答沉淀成可复用的 Markdown 技能。',
     'home.mission.start': '开始构建提示词',
     'home.mission.skills': '了解技能生成',
     'home.steps.promptTitle': '用结构化方式提问',
@@ -49,6 +49,14 @@ const translations = {
     'welcome.modal.remaining': '剩余提问次数',
     'welcome.modal.gotIt': '我知道了',
     'welcome.modal.applyUnlimited': '申请无限次数',
+
+    // Usage confirmation modal (shown before each prompt for limited users)
+    'usageConfirmation.title': '确认发送提问',
+    'usageConfirmation.description': '此次提问将消耗 1 次使用机会',
+    'usageConfirmation.currentRemaining': '当前剩余',
+    'usageConfirmation.afterSending': '发送后剩余',
+    'usageConfirmation.times': '次',
+    'usageConfirmation.confirm': '确认发送',
 
     // Chat input
     'chat.placeholder': '输入您的消息...',
@@ -86,6 +94,7 @@ const translations = {
     'promptBuilder.subtitle': '通过结构化提问学习与AI高效沟通',
     'promptBuilder.changeModel': '切换模型',
     'promptBuilder.backToModels': '返回选择',
+    'promptBuilder.backToMain': '返回主页',
     'promptBuilder.minimized.text': '提问已发送',
     'promptBuilder.minimized.hint': '点击展开继续提问',
 
@@ -139,6 +148,7 @@ const translations = {
     'skills.button': '技能',
     'skills.buildFromPrompt': '从本次提示词创建技能',
     'skills.modalTitle': '技能管理',
+    'skills.intro': '技能是可复用的提示词指令，帮助你稳定输出高质量结果。',
     'skills.info': '先发送提示词，再用 AI 基于提示词与回答生成可复用技能。',
     'skills.uploadPrompt': '技能上传已移除',
     'skills.uploadHint': '请使用“从本次提示词创建技能”',
@@ -262,8 +272,8 @@ const translations = {
 
     // Home mission copy
     'home.mission.title': 'Prompt Better, Get Better Answers',
-    'home.mission.line1': 'This is a prompt coaching workspace for structured requests to large language models.',
-    'home.mission.line2': 'Send your prompt first, then use AI to turn that prompt + answer into reusable markdown skills.',
+    'home.mission.description1': 'A prompt coaching workspace for structured requests.',
+    'home.mission.description2': 'Send a prompt, then turn it into a reusable skill.',
     'home.mission.start': 'Start a structured prompt',
     'home.mission.skills': 'See how skills work',
     'home.steps.promptTitle': 'Ask with structure',
@@ -277,6 +287,14 @@ const translations = {
     'welcome.modal.remaining': 'Prompts remaining',
     'welcome.modal.gotIt': 'Got it',
     'welcome.modal.applyUnlimited': 'Apply for unlimited',
+
+    // Usage confirmation modal (shown before each prompt for limited users)
+    'usageConfirmation.title': 'Confirm Send Prompt',
+    'usageConfirmation.description': 'This prompt will consume 1 usage',
+    'usageConfirmation.currentRemaining': 'Current remaining',
+    'usageConfirmation.afterSending': 'After sending',
+    'usageConfirmation.times': 'prompts',
+    'usageConfirmation.confirm': 'Confirm',
 
     // Chat input
     'chat.placeholder': 'Type your message...',
@@ -314,6 +332,7 @@ const translations = {
     'promptBuilder.subtitle': 'Learn effective AI communication through structured prompts',
     'promptBuilder.changeModel': 'Change Model',
     'promptBuilder.backToModels': 'Back to models',
+    'promptBuilder.backToMain': 'Back to main',
     'promptBuilder.minimized.text': 'Prompt Sent',
     'promptBuilder.minimized.hint': 'Click to expand and continue',
 
@@ -367,6 +386,7 @@ const translations = {
     'skills.button': 'Skills',
     'skills.buildFromPrompt': 'Build Skill from this Prompt',
     'skills.modalTitle': 'Skills Manager',
+    'skills.intro': 'Skills are reusable prompt instructions for consistent results.',
     'skills.info': 'Send a prompt first, then use AI to generate reusable skills from prompt + answer.',
     'skills.uploadPrompt': 'Skill upload removed',
     'skills.uploadHint': 'Use "Build Skill from this Prompt"',

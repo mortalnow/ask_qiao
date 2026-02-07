@@ -51,12 +51,21 @@
           </button>
         </div>
       </div>
+      <div class="header-center">
+        <img id="header-logo" class="header-logo" src="/icons/qiao.png" alt="Qiao">
+      </div>
       <div class="header-right">
-        <button id="history-btn" class="btn-icon btn-history" data-i18n-title="header.history" title="历史记录">
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-          </svg>
-        </button>
+        <div class="header-nav-left">
+          <button id="history-btn" class="btn-icon btn-history" data-i18n-title="header.history" title="历史记录">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </button>
+          <button id="welcome-usage-pill" class="welcome-usage-pill" data-i18n-title="welcome.modal.remaining"
+            title="剩余提问次数">
+            <span id="welcome-usage-pill-text">0/5</span>
+          </button>
+        </div>
         <a id="admin-link" href="/admin.html" class="btn-icon admin-link" data-i18n-title="header.admin" title="管理面板"
           style="display: none;">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -87,8 +96,8 @@
       <div class="welcome-message mission-message">
         <img class="welcome-icon" src="/icons/qiao.png" alt="Qiao">
         <h2 data-i18n="home.mission.title">学会更好地提问，得到更好的答案</h2>
-        <p data-i18n="home.mission.line1">这里是一个提示词训练场，帮助您用结构化方式向大模型提问。</p>
-        <p data-i18n="home.mission.line2">先发送提示词，再用 AI 把本次提示词和回答沉淀成可复用的 Markdown 技能。</p>
+        <p data-i18n="home.mission.description1">这里是一个提示词训练场，帮助您用结构化方式向大模型提问。</p>
+        <p data-i18n="home.mission.description2">先发送提示词，再用 AI 把本次提示词和回答沉淀成可复用的 Markdown 技能。</p>
         <div class="mission-cta">
           <button id="mission-start-btn" class="btn-primary btn-mission" data-i18n="home.mission.start">开始构建提示词</button>
           <button id="mission-skills-btn" class="btn-tertiary" data-i18n="home.mission.skills">了解技能生成</button>
@@ -122,6 +131,13 @@
             <span class="prompt-builder-subtitle" data-i18n="promptBuilder.subtitle">通过结构化提问学习与AI高效沟通</span>
           </div>
           <div class="prompt-builder-header-actions">
+            <button type="button" id="back-to-main-btn" class="btn-back-to-models"
+              data-i18n-title="promptBuilder.backToMain" title="返回主页">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M15 18l-6-6 6-6" />
+              </svg>
+              <span data-i18n="promptBuilder.backToMain">返回主页</span>
+            </button>
             <button type="button" id="skills-btn" class="btn-skills" data-i18n-title="skills.title" title="技能">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M12 2L2 7l10 5 10-5-10-5z" />
@@ -201,7 +217,7 @@
             </label>
             <div class="prompt-textarea">
               <textarea id="format-input" data-i18n-placeholder="promptBuilder.format.placeholder"
-                placeholder="&#10;例如：输出格式：正式邮件&#10;长度：200-300字&#10;风格：专业但友好" rows="3"></textarea>
+                placeholder="&#10;例如：输出格式：正式邮件&#10;长度：200-300字&#10;风格：专业但友好" rows="4"></textarea>
               <div class="field-hint prompt-hint-inline" data-i18n="promptBuilder.format.hint">指定输出格式、长度和风格（可选）</div>
             </div>
           </div>
@@ -289,6 +305,40 @@
       </div>
     </div>
 
+    <!-- Usage Confirmation Modal (for limited users before each prompt) -->
+    <div id="usage-confirmation-modal" class="modal usage-confirmation-modal" style="display: none;">
+      <div class="modal-overlay"></div>
+      <div class="modal-content usage-confirmation-content">
+        <div class="usage-confirmation-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+        </div>
+        <h3 data-i18n="usageConfirmation.title">确认发送提问</h3>
+        <p class="usage-confirmation-desc" data-i18n="usageConfirmation.description">
+          此次提问将消耗 1 次使用机会
+        </p>
+        <div class="usage-confirmation-remaining">
+          <span data-i18n="usageConfirmation.currentRemaining">当前剩余</span>
+          <span id="usage-confirmation-count" class="usage-confirmation-badge">5</span>
+          <span data-i18n="usageConfirmation.times">次</span>
+        </div>
+        <div class="usage-confirmation-after">
+          <span data-i18n="usageConfirmation.afterSending">发送后剩余</span>
+          <span id="usage-confirmation-after-count" class="usage-confirmation-after-badge">4</span>
+          <span data-i18n="usageConfirmation.times">次</span>
+        </div>
+        <div class="usage-confirmation-actions">
+          <button id="usage-confirmation-cancel" class="btn-secondary" data-i18n="common.cancel">
+            取消
+          </button>
+          <button id="usage-confirmation-confirm" class="btn-primary" data-i18n="usageConfirmation.confirm">
+            确认发送
+          </button>
+        </div>
+      </div>
+    </div>
+
     <!-- Welcome Modal for New Users -->
     <div id="welcome-modal" class="modal welcome-modal" style="display: none;">
       <div class="modal-overlay"></div>
@@ -320,7 +370,10 @@
       <div class="modal-overlay"></div>
       <div class="modal-content skills-modal-content">
         <div class="modal-header">
-          <h3 data-i18n="skills.modalTitle">技能管理</h3>
+          <div class="skills-header-text">
+            <h3 data-i18n="skills.modalTitle">技能管理</h3>
+            <p class="skills-intro" data-i18n="skills.intro">技能是可复用的提示词指令，帮助你稳定输出高质量结果。</p>
+          </div>
           <button type="button" id="close-skills-modal" class="btn-icon-small">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M18 6L6 18M6 6l12 12" />
@@ -329,32 +382,7 @@
         </div>
 
         <div class="modal-body">
-          <div id="skills-status" class="skills-status" style="display: none;"></div>
           <div id="skills-tab-my-skills" class="skills-tab-content active">
-            <!-- Search Bar -->
-            <div class="skills-search">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="11" cy="11" r="8" />
-                <path d="M21 21l-4.35-4.35" />
-              </svg>
-              <input type="text" id="skills-search-input" data-i18n-placeholder="skills.searchPlaceholder"
-                placeholder="搜索技能...">
-            </div>
-
-            <!-- Filters -->
-            <div class="skills-filters">
-              <div class="skills-filter">
-                <label for="skills-category-filter" data-i18n="skills.filters.category">分类</label>
-                <select id="skills-category-filter"></select>
-              </div>
-              <div class="skills-filter">
-                <label for="skills-tag-filter" data-i18n="skills.filters.tag">标签</label>
-                <select id="skills-tag-filter"></select>
-              </div>
-              <button type="button" id="skills-clear-filters" class="btn-text-small"
-                data-i18n="skills.filters.clear">清除筛选</button>
-            </div>
-
             <!-- Actions -->
             <div class="skills-actions">
               <button type="button" id="skills-export-all" class="btn-secondary"
@@ -371,16 +399,6 @@
                   <span data-i18n="skills.loading">加载中...</span>
                 </div>
               </div>
-            </div>
-
-            <!-- Token Warning -->
-            <div id="skills-token-warning" class="skills-token-warning" style="display: none;">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
-                <line x1="12" y1="9" x2="12" y2="13" />
-                <line x1="12" y1="17" x2="12.01" y2="17" />
-              </svg>
-              <span data-i18n="skills.tokenWarning">选中的技能内容较长，可能影响响应质量</span>
             </div>
           </div>
         </div>

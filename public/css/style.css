@@ -144,10 +144,62 @@ body {
   justify-content: flex-end;
 }
 
+.header-center {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  height: 100%;
+}
+
+.header-nav-left {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-right: auto;
+}
+
 .btn-history {
   width: 48px;
   height: 48px;
-  margin-right: auto;
+}
+
+.header-logo {
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-md);
+  object-fit: cover;
+  cursor: pointer;
+}
+
+.app-container.landing-state .header-logo {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.welcome-usage-pill {
+  display: none;
+  align-items: center;
+  gap: var(--spacing-xs);
+  padding: 4px 10px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--bg-hover);
+  border-radius: var(--radius-full);
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.welcome-usage-pill.visible {
+  display: inline-flex;
+}
+
+.welcome-usage-pill:hover {
+  border-color: var(--accent-primary);
+  color: var(--text-primary);
+  background: var(--bg-hover);
 }
 
 .admin-link {
@@ -295,12 +347,25 @@ body {
   animation: pulse 3s infinite;
 }
 
+.welcome-icon-hidden {
+  opacity: 0;
+}
+
+.mission-message .welcome-icon {
+  width: 120px;
+  height: 120px;
+  align-self: center;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 .landing-icon-fly {
   position: fixed;
   border-radius: 50%;
   object-fit: cover;
   z-index: 1200;
   pointer-events: none;
+  transform-origin: top left;
   transform: translate(0, 0) scale(1);
   transition: transform 450ms cubic-bezier(0.4, 0, 0.2, 1), opacity 300ms ease;
   opacity: 1;
@@ -2389,6 +2454,18 @@ body {
   border-bottom: 1px solid var(--bg-tertiary);
 }
 
+.skills-header-text {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.skills-intro {
+  margin: 0;
+  font-size: 0.85rem;
+  color: var(--text-secondary);
+}
+
 .modal-header h3 {
   font-size: 1.1rem;
   font-weight: 600;
@@ -2508,6 +2585,104 @@ body {
   .form-actions button {
     width: 100%;
   }
+}
+
+/* ========================================
+   Usage Confirmation Modal Styles
+   ======================================== */
+
+.usage-confirmation-modal .modal-overlay {
+  background: rgba(0, 0, 0, 0.85);
+  animation: fadeIn 0.3s ease;
+}
+
+.usage-confirmation-content {
+  text-align: center;
+  padding: var(--spacing-xl) var(--spacing-lg);
+  max-width: 380px;
+  animation: modalSlideIn 0.4s ease-out;
+}
+
+.usage-confirmation-icon {
+  margin-bottom: var(--spacing-md);
+}
+
+.usage-confirmation-icon svg {
+  color: var(--primary-color);
+  filter: drop-shadow(0 2px 8px rgba(99, 102, 241, 0.3));
+}
+
+.usage-confirmation-content h3 {
+  font-size: 1.3rem;
+  margin-bottom: var(--spacing-sm);
+  color: var(--text-primary);
+}
+
+.usage-confirmation-desc {
+  font-size: 0.95rem;
+  color: var(--text-secondary);
+  line-height: 1.6;
+  margin-bottom: var(--spacing-lg);
+}
+
+.usage-confirmation-remaining {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  background: var(--bg-tertiary);
+  border-radius: var(--radius-md);
+  margin-bottom: var(--spacing-sm);
+}
+
+.usage-confirmation-remaining span:first-child {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+}
+
+.usage-confirmation-badge {
+  display: inline-block;
+  padding: 4px 12px;
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-hover));
+  color: white;
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  font-size: 1.1rem;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.3);
+}
+
+.usage-confirmation-after {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm);
+  margin-bottom: var(--spacing-lg);
+  font-size: 0.9rem;
+  color: var(--text-tertiary);
+}
+
+.usage-confirmation-after-badge {
+  display: inline-block;
+  padding: 2px 8px;
+  background: var(--bg-tertiary);
+  color: var(--text-secondary);
+  border-radius: var(--radius-sm);
+  font-weight: 600;
+  border: 1px solid var(--border-color);
+}
+
+.usage-confirmation-actions {
+  display: flex;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-lg);
+}
+
+.usage-confirmation-actions button {
+  flex: 1;
+  padding: 12px;
+  font-size: 1rem;
 }
 
 /* ========================================

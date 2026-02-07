@@ -22,6 +22,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const logoutBtn = document.getElementById('logout-btn');
   const adminLink = document.getElementById('admin-link');
   const langToggleBtn = document.getElementById('lang-toggle');
+  const headerLogo = document.getElementById('header-logo');
+  const welcomeUsagePill = document.getElementById('welcome-usage-pill');
+  const welcomeUsagePillText = document.getElementById('welcome-usage-pill-text');
 
   // Usage Counter Elements
   const headerLeft = document.querySelector('.header-left');
@@ -30,6 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Prompt Builder Elements
   const promptBuilder = document.getElementById('prompt-builder');
+  const backToMainBtn = document.getElementById('back-to-main-btn');
   const promptForm = document.getElementById('prompt-form');
   const personaInput = document.getElementById('persona-input');
   const taskInput = document.getElementById('task-input');
@@ -72,6 +76,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const welcomeAckBtn = document.getElementById('welcome-ack-btn');
   const welcomeUsageCount = document.getElementById('welcome-usage-count');
   const welcomeApplyUnlimitedBtn = document.getElementById('welcome-apply-unlimited');
+
+  // Usage Confirmation Modal Elements (shown before each prompt for limited users)
+  const usageConfirmationModal = document.getElementById('usage-confirmation-modal');
+  const usageConfirmationCount = document.getElementById('usage-confirmation-count');
+  const usageConfirmationAfterCount = document.getElementById('usage-confirmation-after-count');
+  const usageConfirmationCancelBtn = document.getElementById('usage-confirmation-cancel');
+  const usageConfirmationConfirmBtn = document.getElementById('usage-confirmation-confirm');
 
   // Apply Unlimited Button (next to usage counter)
   const applyUnlimitedBtn = document.getElementById('apply-unlimited-btn');
@@ -197,7 +208,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Track whether we should show welcome modal (check AFTER API call)
   const shouldShowWelcome = !sessionStorage.getItem('welcomeShown');
-  let pendingWelcomeModal = false;
+  let hasStartedPromptFlow = false;
 
   // Initialize
   init();
@@ -221,9 +232,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Decide whether to show the welcome modal later (AFTER we know user type)
     const isLimitedUser = !userIsAdmin && !usageInfo.is_unlimited;
 
-    if (shouldShowWelcome && isLimitedUser) {
-      pendingWelcomeModal = true;
-    } else if (shouldShowWelcome) {
+    if (shouldShowWelcome && !isLimitedUser) {
       // Mark as shown for admin/unlimited users without displaying
       sessionStorage.setItem('welcomeShown', 'true');
     }
@@ -317,6 +326,27 @@ document.addEventListener('DOMContentLoaded', () => {
         usageCounter.classList.remove('usage-warning');
       }
     }
+
+    updateWelcomeUsagePill();
+  }
+
+  function updateWelcomeUsagePill(forceShow = false) {
+    if (!welcomeUsagePill || !welcomeUsagePillText) return;
+
+    const isLimitedUser = !userIsAdmin && !usageInfo.is_unlimited;
+    if (!isLimitedUser) {
+      welcomeUsagePill.classList.remove('visible');
+      return;
+    }
+
+    if (usageInfo.is_unlimited) {
+      welcomeUsagePillText.textContent = '∞';
+    } else {
+      const used = usageInfo.count ?? 0;
+      const limit = usageInfo.limit ?? 0;
+      welcomeUsagePillText.textContent = `${used}/${limit}`;
+    }
+    welcomeUsagePill.classList.add('visible');
   }
 
   // App container for managing minimized prompt state
@@ -326,27 +356,25 @@ document.addEventListener('DOMContentLoaded', () => {
   const promptMinimized = document.getElementById('prompt-minimized');
   const expandPromptBtn = document.getElementById('expand-prompt-btn');
 
-  function animateLandingIconToHeader() {
-    const icon = messagesContainer?.querySelector('.welcome-icon');
-    const header = document.querySelector('.chat-header');
-    if (!icon || !header) return;
+  function animateIconBetweenRects(iconEl, startRect, endRect, onDone) {
+    if (!iconEl || !startRect || !endRect) return false;
+    if (startRect.width === 0 || startRect.height === 0) return false;
 
-    const iconRect = icon.getBoundingClientRect();
-    const headerRect = header.getBoundingClientRect();
-    const targetSize = Math.min(32, iconRect.width);
-    const targetX = headerRect.left + 16;
-    const targetY = headerRect.top + 12;
-    const scale = targetSize / iconRect.width;
+    const targetSize = Math.max(24, Math.min(endRect.width, startRect.width));
+    const scale = targetSize / startRect.width;
+    // Center the icon on the target element
+    const targetX = endRect.left + (endRect.width / 2) - (startRect.width * scale / 2);
+    const targetY = endRect.top + (endRect.height / 2) - (startRect.height * scale / 2);
 
-    const clone = icon.cloneNode(true);
+    const clone = iconEl.cloneNode(true);
     clone.classList.add('landing-icon-fly');
     clone.style.position = 'fixed';
-    clone.style.left = `${iconRect.left}px`;
-    clone.style.top = `${iconRect.top}px`;
-    clone.style.width = `${iconRect.width}px`;
-    clone.style.height = `${iconRect.height}px`;
-    clone.style.setProperty('--fly-x', `${targetX - iconRect.left}px`);
-    clone.style.setProperty('--fly-y', `${targetY - iconRect.top}px`);
+    clone.style.left = `${startRect.left}px`;
+    clone.style.top = `${startRect.top}px`;
+    clone.style.width = `${startRect.width}px`;
+    clone.style.height = `${startRect.height}px`;
+    clone.style.setProperty('--fly-x', `${targetX - startRect.left}px`);
+    clone.style.setProperty('--fly-y', `${targetY - startRect.top}px`);
     clone.style.setProperty('--fly-scale', `${scale}`);
 
     document.body.appendChild(clone);
@@ -356,7 +384,42 @@ document.addEventListener('DOMContentLoaded', () => {
 
     clone.addEventListener('transitionend', () => {
       clone.remove();
+      if (onDone) onDone();
     }, { once: true });
+
+    return true;
+  }
+
+  function animateIconToHeader(iconEl, onDone) {
+    const header = document.querySelector('.chat-header');
+    const targetEl = headerLogo || header;
+    if (!iconEl || !targetEl) return false;
+
+    const targetRect = targetEl.getBoundingClientRect();
+    const iconRect = iconEl.getBoundingClientRect();
+    return animateIconBetweenRects(iconEl, iconRect, targetRect, onDone);
+  }
+
+  function animateLandingIconToHeader() {
+    const icon = messagesContainer?.querySelector('.welcome-icon');
+    const didAnimate = animateIconToHeader(icon, () => {
+      // No-op: header logo is always visible outside landing.
+    });
+    return didAnimate;
+  }
+
+  function animateHeaderLogoToLandingIcon(startRect = null) {
+    if (!headerLogo) return false;
+    const landingIcon = messagesContainer?.querySelector('.welcome-icon');
+    if (!landingIcon) return false;
+
+    const iconRect = startRect || headerLogo.getBoundingClientRect();
+    const landingRect = landingIcon.getBoundingClientRect();
+    landingIcon.classList.add('welcome-icon-hidden');
+
+    return animateIconBetweenRects(headerLogo, iconRect, landingRect, () => {
+      landingIcon.classList.remove('welcome-icon-hidden');
+    });
   }
 
   function bindLandingActions() {
@@ -372,6 +435,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (startBtn && !startBtn.dataset.bound) {
       startBtn.dataset.bound = 'true';
       startBtn.addEventListener('click', () => {
+        hasStartedPromptFlow = true;
         animateLandingIconToHeader();
         expandPromptBuilder();
         scrollToBottom();
@@ -436,6 +500,31 @@ document.addEventListener('DOMContentLoaded', () => {
     if (clearPromptFormBtn) {
       clearPromptFormBtn.addEventListener('click', clearPromptForm);
     }
+    if (backToMainBtn) {
+      backToMainBtn.addEventListener('click', () => {
+        if (isStreaming) return;
+        if (chatHistory.length === 0) {
+          showLanding();
+          scrollToBottom();
+        } else {
+          minimizePromptBuilder();
+        }
+      });
+    }
+    if (headerLogo) {
+      headerLogo.addEventListener('click', () => {
+        if (isStreaming) return;
+        const startRect = headerLogo.getBoundingClientRect();
+        showLanding();
+        scrollToBottom();
+        animateHeaderLogoToLandingIcon(startRect);
+      });
+    }
+    if (welcomeUsagePill) {
+      welcomeUsagePill.addEventListener('click', () => {
+        showWelcomeModal();
+      });
+    }
 
     // New Chat Button - goes back to model selection
     if (newChatBtn) {
@@ -479,6 +568,23 @@ document.addEventListener('DOMContentLoaded', () => {
       applyUnlimitedBtn.addEventListener('click', () => {
         showExtensionModal(true); // Pre-select unlimited
       });
+    }
+
+    // Usage Confirmation Modal (for limited users before each prompt)
+    if (usageConfirmationCancelBtn) {
+      usageConfirmationCancelBtn.addEventListener('click', hideUsageConfirmationModal);
+    }
+    if (usageConfirmationConfirmBtn) {
+      usageConfirmationConfirmBtn.addEventListener('click', () => {
+        // Set confirmation flag and hide modal
+        window._usageConfirmed = true;
+        hideUsageConfirmationModal();
+        // Call sendPrompt again, which will now proceed with the actual send
+        sendPrompt();
+      });
+    }
+    if (usageConfirmationModal) {
+      usageConfirmationModal.querySelector('.modal-overlay')?.addEventListener('click', hideUsageConfirmationModal);
     }
 
     // File Upload Event Listeners
@@ -1885,11 +1991,34 @@ document.addEventListener('DOMContentLoaded', () => {
   async function sendPrompt() {
     if (isStreaming) return;
 
+    const shouldShowWelcomeModal = hasStartedPromptFlow &&
+      !userIsAdmin &&
+      !usageInfo.is_unlimited &&
+      sessionStorage.getItem('welcomeShown') !== 'true';
+    if (shouldShowWelcomeModal) {
+      showWelcomeModal();
+      return;
+    }
+
     // Check usage limit first
     if (!usageInfo.is_unlimited && usageInfo.remaining <= 0) {
       showExtensionModal();
       return;
     }
+
+    // For limited users: show usage confirmation modal before sending
+    // (Skip if already confirmed in this session)
+    const isLimitedUser = !usageInfo.is_unlimited && !userIsAdmin;
+    const needsConfirmation = isLimitedUser && !window._usageConfirmed;
+
+    if (needsConfirmation) {
+      window._usageConfirmed = false; // Reset flag
+      showUsageConfirmationModal();
+      return; // Wait for user confirmation
+    }
+
+    // Reset confirmation flag for next prompt
+    window._usageConfirmed = false;
 
     // Get required fields
     const persona = personaInput?.value.trim() || '';
@@ -2161,8 +2290,8 @@ document.addEventListener('DOMContentLoaded', () => {
     if (chatHistory.length === 0) {
       const t = window.i18n ? window.i18n.t.bind(window.i18n) : (k) => k;
       const missionTitle = t('home.mission.title');
-      const missionLine1 = t('home.mission.line1');
-      const missionLine2 = t('home.mission.line2');
+      const missionDescription1 = t('home.mission.description1');
+      const missionDescription2 = t('home.mission.description2');
       const missionStart = t('home.mission.start');
       const missionSkills = t('home.mission.skills');
       const stepPromptTitle = t('home.steps.promptTitle');
@@ -2174,8 +2303,8 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="welcome-message mission-message">
           <img class="welcome-icon" src="/icons/qiao.png" alt="Qiao">
           <h2>${missionTitle}</h2>
-          <p>${missionLine1}</p>
-          <p>${missionLine2}</p>
+          <p>${missionDescription1}</p>
+          <p>${missionDescription2}</p>
           <div class="mission-cta">
             <button id="mission-start-btn" class="btn-primary btn-mission">${missionStart}</button>
             <button id="mission-skills-btn" class="btn-tertiary">${missionSkills}</button>
@@ -2519,10 +2648,6 @@ document.addEventListener('DOMContentLoaded', () => {
     appContainer.classList.add('prompt-active');
     appContainer.classList.remove('prompt-minimized-state', 'landing-state');
     updateUsageDisplay();
-    if (pendingWelcomeModal) {
-      pendingWelcomeModal = false;
-      showWelcomeModal();
-    }
     personaInput?.focus();
   }
 
@@ -2672,7 +2797,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Update the usage count display
     if (welcomeUsageCount) {
-      welcomeUsageCount.textContent = usageInfo.is_unlimited ? '∞' : usageInfo.remaining;
+      if (usageInfo.is_unlimited) {
+        welcomeUsageCount.textContent = '∞';
+      } else {
+        const used = usageInfo.count ?? 0;
+        const limit = usageInfo.limit ?? 0;
+        welcomeUsageCount.textContent = `${used}/${limit}`;
+      }
     }
 
     welcomeModal.style.display = 'flex';
@@ -2688,62 +2819,66 @@ document.addEventListener('DOMContentLoaded', () => {
     sessionStorage.setItem('welcomeShown', 'true');
 
     // Get positions for shrink animation
-    const usageCounterRect = usageCounter?.getBoundingClientRect();
     const modalContent = welcomeModal.querySelector('.welcome-modal-content');
 
-    // Check if we can animate to the counter
-    const counterVisible = usageCounter &&
-      usageCounter.offsetParent !== null &&
-      headerLeft &&
-      headerLeft.offsetParent !== null;
+    if (appContainer) {
+      appContainer.classList.add('header-logo-visible');
+    }
+    const modalIcon = welcomeModal.querySelector('.welcome-modal-icon img');
+    const canAnimateIcon = !skipHighlight && modalIcon && headerLogo && modalContent;
 
-    const canAnimateToCounter = !skipHighlight && usageCounterRect && modalContent && counterVisible;
-
-    if (canAnimateToCounter) {
-      // Calculate the offset to shrink towards the usage counter
-      const modalRect = modalContent.getBoundingClientRect();
-      const centerX = modalRect.left + modalRect.width / 2;
-      const centerY = modalRect.top + modalRect.height / 2;
-      const targetX = usageCounterRect.left + usageCounterRect.width / 2;
-      const targetY = usageCounterRect.top + usageCounterRect.height / 2;
-
-      // Calculate translation needed (scale factor is 0.15 at end of animation)
-      // In CSS, transform: scale(s) translate(x, y) applies translate first, then scale
-      // So final_position = original_center + (translate * scale)
-      // We need: translate = (target - center) / scale
-      const scale = 0.15;
-      const translateX = (targetX - centerX) / scale;
-      const translateY = (targetY - centerY) / scale;
-
-      // Set CSS variables for animation target
-      modalContent.style.setProperty('--shrink-x', `${translateX}px`);
-      modalContent.style.setProperty('--shrink-y', `${translateY}px`);
-
-      // Add shrinking class to trigger animation
-      welcomeModal.classList.add('shrinking');
-
-      // After animation, hide modal and highlight usage counter
-      setTimeout(() => {
-        welcomeModal.style.display = 'none';
-        welcomeModal.classList.remove('shrinking');
-        document.body.style.overflow = '';
-
-        // Highlight the usage counter
-        if (usageCounter) {
-          usageCounter.classList.add('highlight');
-          setTimeout(() => {
-            usageCounter.classList.remove('highlight');
-          }, 800);
-        }
-      }, 600);
-    } else {
-      // Fallback: just fade out
+    if (canAnimateIcon) {
+      if (appContainer) {
+        appContainer.classList.add('header-logo-visible');
+      }
       welcomeModal.classList.add('fading-out');
-      setTimeout(() => {
+
+      const didAnimate = animateIconToHeader(modalIcon, () => {
         welcomeModal.style.display = 'none';
         welcomeModal.classList.remove('fading-out');
         document.body.style.overflow = '';
-      }, 300);
+        updateWelcomeUsagePill(true);
+      });
+
+      if (didAnimate) return;
     }
+
+    // Fallback: just fade out
+    welcomeModal.classList.add('fading-out');
+    setTimeout(() => {
+      welcomeModal.style.display = 'none';
+      welcomeModal.classList.remove('fading-out');
+      document.body.style.overflow = '';
+      updateWelcomeUsagePill(true);
+    }, 300);
+  }
+
+  // ==========================================
+  // Usage Confirmation Modal (for limited users before each prompt)
+  // ==========================================
+
+  function showUsageConfirmationModal() {
+    if (!usageConfirmationModal) return;
+
+    // Update counts
+    const currentRemaining = usageInfo.remaining ?? 0;
+    const afterSending = Math.max(0, currentRemaining - 1);
+
+    if (usageConfirmationCount) {
+      usageConfirmationCount.textContent = currentRemaining;
+    }
+    if (usageConfirmationAfterCount) {
+      usageConfirmationAfterCount.textContent = afterSending;
+    }
+
+    // Show modal
+    usageConfirmationModal.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+
+  function hideUsageConfirmationModal() {
+    if (!usageConfirmationModal) return;
+    usageConfirmationModal.style.display = 'none';
+    document.body.style.overflow = '';
   }
 });
