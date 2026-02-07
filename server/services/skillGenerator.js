@@ -28,7 +28,7 @@ function getSkillGenerationModel() {
   if (config.openaiModel && config.openaiModel !== 'latest') {
     return config.openaiModel;
   }
-  return 'gpt-5.2';
+  return 'gpt-5';
 }
 
 /**

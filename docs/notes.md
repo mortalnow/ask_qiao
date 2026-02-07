@@ -7,7 +7,7 @@ Last updated: 2026-02-07
 - Frontend: Vanilla JS + HTML/CSS (PWA)
 - Backend: Express
 - DB: MongoDB (Mongoose)
-- AI: OpenAI only (ChatGPT 5.2)
+- AI: OpenAI only (ChatGPT)
 
 ## Auth and Access
 

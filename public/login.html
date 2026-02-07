@@ -115,7 +115,7 @@
       </form>
 
       <div class="login-footer">
-        <p data-i18n="login.footer">由 ChatGPT 5.2 驱动</p>
+        <p data-i18n="login.footer">由 ChatGPT 驱动</p>
       </div>
     </div>
   </div>
@@ -170,7 +170,8 @@
           return;
         }
         refreshing = true;
-        window.location.reload();
+        // Avoid forced reload (prevents visible flash on login).
+        // New assets will load on next navigation.
       });
     }
   </script>

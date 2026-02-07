@@ -25,7 +25,7 @@ async function getLatestModel() {
 
   const configuredModel = config.openaiModel && config.openaiModel !== 'latest'
     ? config.openaiModel
-    : 'gpt-5.2';
+    : 'gpt-5';
 
   cachedModelName = configuredModel;
   modelCacheTime = Date.now();
@@ -130,15 +130,15 @@ export async function getModelInfo() {
   return {
     id: 'chatgpt',
     model: modelName,
-    name: 'ChatGPT 5.2',
+    name: 'ChatGPT',
     provider: 'OpenAI',
-    description: 'Single-model ChatGPT 5.2 prompting workspace'
+    description: 'Single-model ChatGPT prompting workspace'
   };
 }
 
 export const modelInfo = {
   id: 'chatgpt',
-  name: 'ChatGPT 5.2',
+  name: 'ChatGPT',
   provider: 'OpenAI',
-  description: 'ChatGPT 5.2 single-model prompt coaching'
+  description: 'ChatGPT single-model prompt coaching'
 };

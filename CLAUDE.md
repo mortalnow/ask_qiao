@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-This is a prompt-based AI instruction service designed to teach users how to communicate with AI effectively. Users must use structured prompts (via the mandatory Prompt Builder) to interact with AI models (ChatGPT 5.2, Gemini 3.1). The service has usage limits to encourage thoughtful prompt construction.
+This is a prompt-based AI instruction service designed to teach users how to communicate with AI effectively. Users must use structured prompts (via the mandatory Prompt Builder) to interact with AI models (ChatGPT, Gemini 3.1). The service has usage limits to encourage thoughtful prompt construction.
 
 ## Tech Stack
 

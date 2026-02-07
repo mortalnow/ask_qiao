@@ -466,7 +466,7 @@
       "steps": [
         "Call `/api/chat/models` with valid token.",
         "Verify models array is returned.",
-        "Verify entry id is `chatgpt` and model resolves to `gpt-5.2` default."
+        "Verify entry id is `chatgpt` and model resolves to `gpt-5` default."
       ],
       "passes": false
     },
@@ -923,11 +923,11 @@
     {
       "id": "AI-001",
       "category": "ai",
-      "description": "ChatGPT-only runtime selection with default `gpt-5.2` model",
+      "description": "ChatGPT-only runtime selection with default `gpt-5` model",
       "steps": [
         "Call `/api/chat/models`.",
         "Verify only `chatgpt` provider/model is exposed.",
-        "Verify default model value resolves to `gpt-5.2` unless overridden."
+        "Verify default model value resolves to `gpt-5` unless overridden."
       ],
       "passes": false
     },

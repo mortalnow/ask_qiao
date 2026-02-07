@@ -1,7 +1,7 @@
 {
   "name": "ask-qiao",
   "version": "1.0.0",
-  "description": "Prompt coaching workspace powered by ChatGPT 5.2",
+  "description": "Prompt coaching workspace powered by ChatGPT",
   "type": "module",
   "main": "server/index.js",
   "scripts": {

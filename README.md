@@ -1,6 +1,6 @@
 # Ask Qiao
 
-Ask Qiao is a prompt-coaching workspace focused on helping users write better prompts and get better answers from ChatGPT 5.2. Users send structured prompts, then turn successful prompt + answer pairs into reusable Markdown skills.
+Ask Qiao is a prompt-coaching workspace focused on helping users write better prompts and get better answers from ChatGPT. Users send structured prompts, then turn successful prompt + answer pairs into reusable Markdown skills.
 
 ## Product Philosophy
 
@@ -9,7 +9,7 @@ Ask Qiao is a prompt-coaching workspace focused on helping users write better pr
 
 ## Current Scope (2026-02-07)
 
-- ChatGPT-only runtime (`chatgpt` / `gpt-5.2`)
+- ChatGPT-only runtime (`chatgpt` / `gpt-5`)
 - Mandatory structured prompt builder
 - AI-assisted skill generation from prompt + answer
 - Server-side skill storage, edit, toggle, filter, export
@@ -46,7 +46,7 @@ Required variables:
 PORT=3002
 JWT_SECRET=your-super-secret-jwt-key-change-this
 OPENAI_API_KEY=sk-your-openai-api-key
-OPENAI_MODEL=gpt-5.2
+OPENAI_MODEL=gpt-5
 
 MONGODB_USER=your-mongodb-username
 MONGODB_PASSWORD=your-mongodb-password
@@ -123,7 +123,7 @@ Set these env vars in Vercel:
 
 - Backend: Node.js, Express.js
 - Database: MongoDB Atlas (Mongoose)
-- AI: OpenAI SDK (ChatGPT 5.2)
+- AI: OpenAI SDK (ChatGPT)
 - Auth: JWT + bcrypt
 - Frontend: Vanilla JS, HTML, CSS
 

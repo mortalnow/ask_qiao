@@ -22,12 +22,12 @@ document.addEventListener('DOMContentLoaded', () => {
   const logoutBtn = document.getElementById('logout-btn');
   const adminLink = document.getElementById('admin-link');
   const langToggleBtn = document.getElementById('lang-toggle');
-  
+
   // Usage Counter Elements
   const headerLeft = document.querySelector('.header-left');
   const usageCounter = document.getElementById('usage-counter');
   const usageText = document.getElementById('usage-text');
-  
+
   // Prompt Builder Elements
   const promptBuilder = document.getElementById('prompt-builder');
   const promptForm = document.getElementById('prompt-form');
@@ -55,7 +55,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const closeHistoryBtn = document.getElementById('close-history');
   const historyList = document.getElementById('history-list');
   const historyOverlay = document.getElementById('history-overlay');
-  
+
   // Extension Modal Elements
   const extensionModal = document.getElementById('extension-modal');
   const closeExtensionModalBtn = document.getElementById('close-extension-modal');
@@ -66,13 +66,13 @@ document.addEventListener('DOMContentLoaded', () => {
   const submitExtensionBtn = document.getElementById('submit-extension');
   const extensionPendingNotice = document.getElementById('extension-pending-notice');
   const extensionStatus = document.getElementById('extension-status');
-  
+
   // Welcome Modal Elements
   const welcomeModal = document.getElementById('welcome-modal');
   const welcomeAckBtn = document.getElementById('welcome-ack-btn');
   const welcomeUsageCount = document.getElementById('welcome-usage-count');
   const welcomeApplyUnlimitedBtn = document.getElementById('welcome-apply-unlimited');
-  
+
   // Apply Unlimited Button (next to usage counter)
   const applyUnlimitedBtn = document.getElementById('apply-unlimited-btn');
 
@@ -169,7 +169,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Max extracted text length (to prevent context overflow)
   const MAX_EXTRACTED_TEXT_LENGTH = 50000;
-  
+
   // Usage state
   let usageInfo = {
     count: 0,
@@ -179,14 +179,14 @@ document.addEventListener('DOMContentLoaded', () => {
   };
   // Admin state
   let userIsAdmin = false;
-  
+
   // Session management
   let currentSessionId = null;
   let sessions = {};
 
   // Model display names
   const modelNames = {
-    chatgpt: 'ChatGPT 5.2'
+    chatgpt: 'ChatGPT'
   };
 
   // Model icons
@@ -197,6 +197,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Track whether we should show welcome modal (check AFTER API call)
   const shouldShowWelcome = !sessionStorage.getItem('welcomeShown');
+  let pendingWelcomeModal = false;
 
   // Initialize
   init();
@@ -213,21 +214,15 @@ document.addEventListener('DOMContentLoaded', () => {
     } catch (err) {
       console.error('Failed to get current user:', err);
     }
-    
+
     // Fetch usage status (always attempt, even if getCurrentUser failed)
     await fetchUsageStatus();
-    
-    // Now decide whether to show the welcome modal (AFTER we know user type)
+
+    // Decide whether to show the welcome modal later (AFTER we know user type)
     const isLimitedUser = !userIsAdmin && !usageInfo.is_unlimited;
-    
-    if (shouldShowWelcome && welcomeModal && isLimitedUser) {
-      // Only show welcome modal for limited users
-      welcomeModal.style.display = 'flex';
-      document.body.style.overflow = 'hidden';
-      if (welcomeUsageCount) {
-        welcomeUsageCount.textContent = usageInfo.remaining;
-      }
-      setupWelcomeModalHandlers();
+
+    if (shouldShowWelcome && isLimitedUser) {
+      pendingWelcomeModal = true;
     } else if (shouldShowWelcome) {
       // Mark as shown for admin/unlimited users without displaying
       sessionStorage.setItem('welcomeShown', 'true');
@@ -235,7 +230,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Load sessions from local storage
     loadSessions();
-    
+
     // Load current session or create new one
     const savedSessionId = localStorage.getItem('current_session_id');
     if (savedSessionId && sessions[savedSessionId]) {
@@ -244,9 +239,16 @@ document.addEventListener('DOMContentLoaded', () => {
     } else {
       startNewSession();
     }
-    
+
     renderChatHistory();
     renderHistoryList();
+
+    // Set initial view state based on chat history
+    if (chatHistory.length === 0) {
+      showLanding(); // Landing page when no messages
+    } else {
+      minimizePromptBuilder(); // Show chat with minimized bar when messages exist
+    }
 
     // Update model label
     updateModelLabel();
@@ -258,12 +260,12 @@ document.addEventListener('DOMContentLoaded', () => {
     refreshEnabledServerSkills();
     updateSkillsUI();
   }
-  
+
   async function fetchUsageStatus() {
     try {
       const data = await window.API.getUsageStatus();
       usageInfo = data.usage;
-      
+
       // Check for pending extension request
       if (data.extension?.has_pending) {
         // User has a pending request
@@ -276,9 +278,19 @@ document.addEventListener('DOMContentLoaded', () => {
     // ALWAYS update display - even on API error, show default (0/5)
     updateUsageDisplay();
   }
-  
+
   function updateUsageDisplay() {
     if (!usageCounter || !usageText) return;
+
+    const isLanding = appContainer?.classList.contains('landing-state');
+    if (isLanding) {
+      usageText.textContent = '';
+      usageCounter.classList.remove('visible', 'usage-warning');
+      if (headerLeft) {
+        headerLeft.classList.add('hidden');
+      }
+      return;
+    }
 
     const hideUsage = usageInfo.is_unlimited || userIsAdmin;
 
@@ -309,10 +321,71 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // App container for managing minimized prompt state
   const appContainer = document.getElementById('app');
-  
+
   // Minimized prompt bar elements
   const promptMinimized = document.getElementById('prompt-minimized');
   const expandPromptBtn = document.getElementById('expand-prompt-btn');
+
+  function animateLandingIconToHeader() {
+    const icon = messagesContainer?.querySelector('.welcome-icon');
+    const header = document.querySelector('.chat-header');
+    if (!icon || !header) return;
+
+    const iconRect = icon.getBoundingClientRect();
+    const headerRect = header.getBoundingClientRect();
+    const targetSize = Math.min(32, iconRect.width);
+    const targetX = headerRect.left + 16;
+    const targetY = headerRect.top + 12;
+    const scale = targetSize / iconRect.width;
+
+    const clone = icon.cloneNode(true);
+    clone.classList.add('landing-icon-fly');
+    clone.style.position = 'fixed';
+    clone.style.left = `${iconRect.left}px`;
+    clone.style.top = `${iconRect.top}px`;
+    clone.style.width = `${iconRect.width}px`;
+    clone.style.height = `${iconRect.height}px`;
+    clone.style.setProperty('--fly-x', `${targetX - iconRect.left}px`);
+    clone.style.setProperty('--fly-y', `${targetY - iconRect.top}px`);
+    clone.style.setProperty('--fly-scale', `${scale}`);
+
+    document.body.appendChild(clone);
+    requestAnimationFrame(() => {
+      clone.classList.add('landing-icon-fly-active');
+    });
+
+    clone.addEventListener('transitionend', () => {
+      clone.remove();
+    }, { once: true });
+  }
+
+  function bindLandingActions() {
+    const welcomeIcon = messagesContainer?.querySelector('.welcome-icon');
+    if (welcomeIcon && !welcomeIcon.dataset.bound) {
+      welcomeIcon.dataset.bound = 'true';
+      welcomeIcon.addEventListener('click', () => {
+        window.location.reload();
+      });
+    }
+
+    const startBtn = document.getElementById('mission-start-btn');
+    if (startBtn && !startBtn.dataset.bound) {
+      startBtn.dataset.bound = 'true';
+      startBtn.addEventListener('click', () => {
+        animateLandingIconToHeader();
+        expandPromptBuilder();
+        scrollToBottom();
+      });
+    }
+
+    const skillsBtn = document.getElementById('mission-skills-btn');
+    if (skillsBtn && !skillsBtn.dataset.bound) {
+      skillsBtn.dataset.bound = 'true';
+      skillsBtn.addEventListener('click', () => {
+        showSkillsModal();
+      });
+    }
+  }
 
   function setupEventListeners() {
     // Model selection
@@ -320,7 +393,7 @@ document.addEventListener('DOMContentLoaded', () => {
       updateModelLabel();
       checkFileCompatibility();
     });
-    
+
     // Minimized prompt bar - expand on click
     if (promptMinimized) {
       promptMinimized.addEventListener('click', expandPromptBuilder);
@@ -353,6 +426,9 @@ document.addEventListener('DOMContentLoaded', () => {
       });
     }
 
+    // Landing CTA -> open prompt builder / skills
+    bindLandingActions();
+
     // Prompt Builder - Send button (main action)
     if (sendPromptBtn) {
       sendPromptBtn.addEventListener('click', sendPrompt);
@@ -360,7 +436,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (clearPromptFormBtn) {
       clearPromptFormBtn.addEventListener('click', clearPromptForm);
     }
-    
+
     // New Chat Button - goes back to model selection
     if (newChatBtn) {
       newChatBtn.addEventListener('click', () => {
@@ -372,7 +448,7 @@ document.addEventListener('DOMContentLoaded', () => {
         expandPromptBuilder();
       });
     }
-    
+
     // History Sidebar
     if (historyBtn) {
       historyBtn.addEventListener('click', toggleHistorySidebar);
@@ -383,7 +459,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (historyOverlay) {
       historyOverlay.addEventListener('click', toggleHistorySidebar);
     }
-    
+
     // Extension Modal
     if (closeExtensionModalBtn) {
       closeExtensionModalBtn.addEventListener('click', hideExtensionModal);
@@ -397,7 +473,7 @@ document.addEventListener('DOMContentLoaded', () => {
     if (extensionModal) {
       extensionModal.querySelector('.modal-overlay')?.addEventListener('click', hideExtensionModal);
     }
-    
+
     // Apply Unlimited Button (next to usage counter)
     if (applyUnlimitedBtn) {
       applyUnlimitedBtn.addEventListener('click', () => {
@@ -720,7 +796,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
           // Only use compressed if it's actually smaller
           if (compressedFile.size < file.size) {
-            console.log(`Compressed ${file.name}: ${Math.round(file.size/1024)}KB → ${Math.round(compressedFile.size/1024)}KB`);
+            console.log(`Compressed ${file.name}: ${Math.round(file.size / 1024)}KB → ${Math.round(compressedFile.size / 1024)}KB`);
             resolve(compressedFile);
           } else {
             resolve(file);
@@ -1582,7 +1658,7 @@ document.addEventListener('DOMContentLoaded', () => {
       ? serverSkills.filter(s => s.enabled).length
       : enabledServerSkills.length;
     const enabledCount = enabledServerCount;
-    
+
     // Update badge count
     if (skillsCount) {
       skillsCount.textContent = enabledCount;
@@ -1808,13 +1884,13 @@ document.addEventListener('DOMContentLoaded', () => {
   // Main send function - builds prompt and sends
   async function sendPrompt() {
     if (isStreaming) return;
-    
+
     // Check usage limit first
     if (!usageInfo.is_unlimited && usageInfo.remaining <= 0) {
       showExtensionModal();
       return;
     }
-    
+
     // Get required fields
     const persona = personaInput?.value.trim() || '';
     const task = taskInput?.value.trim() || '';
@@ -1885,12 +1961,12 @@ document.addEventListener('DOMContentLoaded', () => {
     // Prepare files for API (if any)
     const files = uploadedFiles.length > 0
       ? uploadedFiles.map(f => ({
-          name: f.name,
-          mimeType: f.mimeType,
-          data: f.data, // base64 for images, null for documents
-          extractedText: f.extractedText || null, // Text content for documents
-          isDocument: f.isDocument || false
-        }))
+        name: f.name,
+        mimeType: f.mimeType,
+        data: f.data, // base64 for images, null for documents
+        extractedText: f.extractedText || null, // Text content for documents
+        isDocument: f.isDocument || false
+      }))
       : null;
 
     // Create abort controller
@@ -1906,7 +1982,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // onChunk
         (chunk) => {
           if (!currentStreamingMessage) return;
-          
+
           if (currentStreamingMessage.querySelector('.typing-indicator')) {
             currentStreamingMessage.innerHTML = '';
           }
@@ -1956,23 +2032,23 @@ document.addEventListener('DOMContentLoaded', () => {
         // onError
         (error) => {
           console.error('Chat error:', error);
-          
+
           if (!currentStreamingMessage) return;
-          
+
           if (error.name === 'AbortError') {
             return;
           }
-          
+
           currentStreamingMessage.innerHTML = `
             <span style="color: var(--error)">错误：${error.message}</span>
           `;
-          
+
           // Remove failed message from history
           if (chatHistory.length > 0 && chatHistory[chatHistory.length - 1].role === 'assistant') {
             chatHistory.pop();
           }
           saveChatHistory();
-          
+
           isStreaming = false;
           sendPromptBtn.disabled = false;
           currentStreamingMessage = null;
@@ -1987,25 +2063,25 @@ document.addEventListener('DOMContentLoaded', () => {
             messages[messages.length - 1].remove(); // Remove assistant placeholder
             messages[messages.length - 2].remove(); // Remove user message
           }
-          
+
           // Remove from history
           if (chatHistory.length >= 2) {
             chatHistory.pop(); // assistant
             chatHistory.pop(); // user
           }
-          
+
           // Update usage info
           usageInfo.count = data.usage_count;
           usageInfo.limit = data.usage_limit;
           usageInfo.remaining = 0;
           updateUsageDisplay();
-          
+
           isStreaming = false;
           sendPromptBtn.disabled = false;
           currentStreamingMessage = null;
           currentStreamAbortController = null;
           currentStreamFullResponse = '';
-          
+
           // Show extension modal
           showExtensionModal();
         }
@@ -2019,7 +2095,7 @@ document.addEventListener('DOMContentLoaded', () => {
           `;
         }
       }
-      
+
       isStreaming = false;
       sendPromptBtn.disabled = false;
       currentStreamingMessage = null;
@@ -2087,15 +2163,46 @@ document.addEventListener('DOMContentLoaded', () => {
       const missionTitle = t('home.mission.title');
       const missionLine1 = t('home.mission.line1');
       const missionLine2 = t('home.mission.line2');
-      
+      const missionStart = t('home.mission.start');
+      const missionSkills = t('home.mission.skills');
+      const stepPromptTitle = t('home.steps.promptTitle');
+      const stepPromptDesc = t('home.steps.promptDesc');
+      const stepSkillTitle = t('home.steps.skillTitle');
+      const stepSkillDesc = t('home.steps.skillDesc');
+
       messagesContainer.innerHTML = `
         <div class="welcome-message mission-message">
           <img class="welcome-icon" src="/icons/qiao.png" alt="Qiao">
           <h2>${missionTitle}</h2>
           <p>${missionLine1}</p>
           <p>${missionLine2}</p>
+          <div class="mission-cta">
+            <button id="mission-start-btn" class="btn-primary btn-mission">${missionStart}</button>
+            <button id="mission-skills-btn" class="btn-tertiary">${missionSkills}</button>
+          </div>
+          <div class="mission-steps">
+            <div class="mission-step">
+              <span class="mission-step-number">1</span>
+              <div>
+                <h4>${stepPromptTitle}</h4>
+                <p>${stepPromptDesc}</p>
+              </div>
+            </div>
+            <div class="mission-step">
+              <span class="mission-step-number">2</span>
+              <div>
+                <h4>${stepSkillTitle}</h4>
+                <p>${stepSkillDesc}</p>
+              </div>
+            </div>
+          </div>
         </div>
       `;
+      if (appContainer?.classList.contains('prompt-active')) {
+        bindLandingActions();
+      } else {
+        showLanding();
+      }
       return;
     }
 
@@ -2174,7 +2281,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function saveChatHistory() {
     if (!currentSessionId) return;
-    
+
     if (!sessions[currentSessionId]) {
       sessions[currentSessionId] = {
         id: currentSessionId,
@@ -2188,14 +2295,14 @@ document.addEventListener('DOMContentLoaded', () => {
       sessions[currentSessionId].updatedAt = Date.now();
       sessions[currentSessionId].title = getSessionTitle(chatHistory);
     }
-    
+
     saveSessions();
   }
-  
+
   function generateSessionId() {
     return 'session_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
   }
-  
+
   function getSessionTitle(messages) {
     const firstUserMsg = messages.find(m => m.role === 'user');
     if (firstUserMsg && firstUserMsg.content) {
@@ -2210,7 +2317,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     return window.i18n ? window.i18n.t('header.newChat') : '新对话';
   }
-  
+
   function loadSessions() {
     const savedSessions = localStorage.getItem('chat_sessions');
     if (savedSessions) {
@@ -2222,57 +2329,61 @@ document.addEventListener('DOMContentLoaded', () => {
       }
     }
   }
-  
+
   function saveSessions() {
     localStorage.setItem('chat_sessions', JSON.stringify(sessions));
     localStorage.setItem('current_session_id', currentSessionId);
   }
-  
+
   function startNewSession() {
     if (currentSessionId && chatHistory.length > 0) {
       saveChatHistory();
     }
-    
+
     currentSessionId = generateSessionId();
     chatHistory = [];
     saveSessions();
   }
-  
+
   function switchToSession(sessionId) {
     if (isStreaming) return;
     if (!sessions[sessionId]) return;
-    
+
     if (currentSessionId && chatHistory.length > 0) {
       saveChatHistory();
     }
-    
+
     currentSessionId = sessionId;
     chatHistory = sessions[sessionId].messages || [];
     saveSessions();
-    
+
     renderChatHistory();
     toggleHistorySidebar();
-    
-    expandPromptBuilder();
+
+    if (chatHistory.length > 0) {
+      minimizePromptBuilder(); // Show chat with minimized bar
+    } else {
+      showLanding(); // Landing page for empty sessions
+    }
   }
-  
+
   function deleteSession(sessionId, event) {
     event.stopPropagation();
-    
+
     const msg = window.i18n ? window.i18n.t('history.deleteConfirm') : '确定要删除这个对话吗？';
     if (!confirm(msg)) return;
-    
+
     delete sessions[sessionId];
-    
+
     if (sessionId === currentSessionId) {
       startNewSession();
       renderChatHistory();
     }
-    
+
     saveSessions();
     renderHistoryList();
   }
-  
+
   function toggleHistorySidebar() {
     if (historySidebar) {
       historySidebar.classList.toggle('open');
@@ -2281,31 +2392,31 @@ document.addEventListener('DOMContentLoaded', () => {
       historyOverlay.classList.toggle('visible');
     }
   }
-  
+
   function renderHistoryList() {
     if (!historyList) return;
-    
+
     const sessionArray = Object.values(sessions)
       .filter(s => s.messages && s.messages.length > 0)
       .sort((a, b) => b.updatedAt - a.updatedAt);
-    
+
     if (sessionArray.length === 0) {
       const emptyText = window.i18n ? window.i18n.t('history.empty') : '暂无历史对话';
       historyList.innerHTML = `<div class="history-empty">${emptyText}</div>`;
       return;
     }
-    
+
     const today = new Date();
     today.setHours(0, 0, 0, 0);
     const yesterday = new Date(today);
     yesterday.setDate(yesterday.getDate() - 1);
-    
+
     const groups = { today: [], yesterday: [], earlier: [] };
-    
+
     sessionArray.forEach(session => {
       const sessionDate = new Date(session.updatedAt);
       sessionDate.setHours(0, 0, 0, 0);
-      
+
       if (sessionDate.getTime() === today.getTime()) {
         groups.today.push(session);
       } else if (sessionDate.getTime() === yesterday.getTime()) {
@@ -2314,10 +2425,10 @@ document.addEventListener('DOMContentLoaded', () => {
         groups.earlier.push(session);
       }
     });
-    
+
     const t = window.i18n ? window.i18n.t.bind(window.i18n) : (k) => k;
     let html = '';
-    
+
     if (groups.today.length > 0) {
       html += renderHistoryGroup(t('history.today'), groups.today);
     }
@@ -2327,30 +2438,30 @@ document.addEventListener('DOMContentLoaded', () => {
     if (groups.earlier.length > 0) {
       html += renderHistoryGroup(t('history.earlier'), groups.earlier);
     }
-    
+
     historyList.innerHTML = html;
-    
+
     historyList.querySelectorAll('.history-item').forEach(item => {
       const sessionId = item.dataset.sessionId;
       item.addEventListener('click', () => switchToSession(sessionId));
-      
+
       const deleteBtn = item.querySelector('.history-item-delete');
       if (deleteBtn) {
         deleteBtn.addEventListener('click', (e) => deleteSession(sessionId, e));
       }
     });
   }
-  
+
   function renderHistoryGroup(title, sessions) {
     let html = `<div class="history-group">
       <div class="history-group-title">${title}</div>`;
-    
+
     sessions.forEach(session => {
       const isActive = session.id === currentSessionId;
       const model = session.messages.find(m => m.model)?.model || 'chatgpt';
       const icon = modelIcons[model] || defaultAssistantIcon;
       const time = new Date(session.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      
+
       html += `
         <div class="history-item ${isActive ? 'active' : ''}" data-session-id="${session.id}">
           <div class="history-item-icon">${icon}</div>
@@ -2365,11 +2476,11 @@ document.addEventListener('DOMContentLoaded', () => {
           </button>
         </div>`;
     });
-    
+
     html += '</div>';
     return html;
   }
-  
+
   function escapeHtml(text) {
     const div = document.createElement('div');
     div.textContent = text;
@@ -2394,36 +2505,56 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
+  function showLanding() {
+    if (!appContainer) return;
+    appContainer.classList.remove('prompt-active', 'prompt-minimized-state');
+    appContainer.classList.add('landing-state');
+    updateUsageDisplay();
+    bindLandingActions();
+  }
+
   // Prompt builder visibility controls
   function showPromptBuilder() {
     if (!appContainer) return;
-    appContainer.classList.remove('prompt-minimized-state');
+    appContainer.classList.add('prompt-active');
+    appContainer.classList.remove('prompt-minimized-state', 'landing-state');
+    updateUsageDisplay();
+    if (pendingWelcomeModal) {
+      pendingWelcomeModal = false;
+      showWelcomeModal();
+    }
     personaInput?.focus();
   }
 
   function hidePromptBuilder() {
     if (!appContainer) return;
+    appContainer.classList.remove('prompt-active');
     appContainer.classList.add('prompt-minimized-state');
+    appContainer.classList.remove('landing-state');
+    updateUsageDisplay();
   }
   
   function minimizePromptBuilder() {
     if (!appContainer) return;
+    appContainer.classList.remove('prompt-active');
     appContainer.classList.add('prompt-minimized-state');
+    appContainer.classList.remove('landing-state');
+    updateUsageDisplay();
     scrollToBottom();
   }
-  
+
   function expandPromptBuilder() {
     if (!appContainer) return;
     showPromptBuilder();
   }
-  
+
   // Extension Modal Functions
   function showExtensionModal(requestUnlimited = false) {
     if (!extensionModal) return;
-    
+
     // Check for pending request first
     checkPendingExtensionRequest();
-    
+
     // Pre-select unlimited if requested
     if (requestUnlimited && extensionAmountSelect) {
       extensionAmountSelect.value = '';
@@ -2431,25 +2562,25 @@ document.addEventListener('DOMContentLoaded', () => {
 
     extensionModal.style.display = 'flex';
   }
-  
+
   function hideExtensionModal() {
     if (!extensionModal) return;
     extensionModal.style.display = 'none';
-    
+
     // Reset form
     if (extensionAmountSelect) extensionAmountSelect.value = '5';
     if (extensionReasonInput) extensionReasonInput.value = '';
   }
-  
+
   async function checkPendingExtensionRequest() {
     try {
       const data = await window.API.getUsageStatus();
-      
+
       if (data.extension?.has_pending) {
         // Show pending notice, hide form
         if (extensionPendingNotice) extensionPendingNotice.style.display = 'block';
         if (extensionForm) extensionForm.style.display = 'none';
-        
+
         // Show status of last request
         if (extensionStatus && data.extension.pending_request) {
           extensionStatus.style.display = 'block';
@@ -2471,7 +2602,7 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('Failed to check pending request:', err);
     }
   }
-  
+
   async function handleExtensionSubmit(e) {
     e.preventDefault();
 
@@ -2509,12 +2640,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function setupWelcomeModalHandlers() {
     if (!welcomeModal) return;
-    
+
     // Setup acknowledge button
     if (welcomeAckBtn) {
       welcomeAckBtn.addEventListener('click', () => hideWelcomeModal(false), { once: true });
     }
-    
+
     // Setup apply unlimited button (only for limited users)
     if (welcomeApplyUnlimitedBtn) {
       if (usageInfo.is_unlimited) {
@@ -2528,7 +2659,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }, { once: true });
       }
     }
-    
+
     // Close on overlay click
     const overlay = welcomeModal.querySelector('.modal-overlay');
     if (overlay) {
@@ -2538,34 +2669,34 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function showWelcomeModal() {
     if (!welcomeModal) return;
-    
+
     // Update the usage count display
     if (welcomeUsageCount) {
       welcomeUsageCount.textContent = usageInfo.is_unlimited ? '∞' : usageInfo.remaining;
     }
-    
+
     welcomeModal.style.display = 'flex';
     document.body.style.overflow = 'hidden';
-    
+
     setupWelcomeModalHandlers();
   }
 
   function hideWelcomeModal(skipHighlight = false) {
     if (!welcomeModal) return;
-    
+
     // Mark as shown for this session
     sessionStorage.setItem('welcomeShown', 'true');
-    
+
     // Get positions for shrink animation
     const usageCounterRect = usageCounter?.getBoundingClientRect();
     const modalContent = welcomeModal.querySelector('.welcome-modal-content');
-    
+
     // Check if we can animate to the counter
-    const counterVisible = usageCounter && 
-      usageCounter.offsetParent !== null && 
-      headerLeft && 
+    const counterVisible = usageCounter &&
+      usageCounter.offsetParent !== null &&
+      headerLeft &&
       headerLeft.offsetParent !== null;
-    
+
     const canAnimateToCounter = !skipHighlight && usageCounterRect && modalContent && counterVisible;
 
     if (canAnimateToCounter) {
@@ -2575,7 +2706,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const centerY = modalRect.top + modalRect.height / 2;
       const targetX = usageCounterRect.left + usageCounterRect.width / 2;
       const targetY = usageCounterRect.top + usageCounterRect.height / 2;
-      
+
       // Calculate translation needed (scale factor is 0.15 at end of animation)
       // In CSS, transform: scale(s) translate(x, y) applies translate first, then scale
       // So final_position = original_center + (translate * scale)
@@ -2583,20 +2714,20 @@ document.addEventListener('DOMContentLoaded', () => {
       const scale = 0.15;
       const translateX = (targetX - centerX) / scale;
       const translateY = (targetY - centerY) / scale;
-      
+
       // Set CSS variables for animation target
       modalContent.style.setProperty('--shrink-x', `${translateX}px`);
       modalContent.style.setProperty('--shrink-y', `${translateY}px`);
-      
+
       // Add shrinking class to trigger animation
       welcomeModal.classList.add('shrinking');
-      
+
       // After animation, hide modal and highlight usage counter
       setTimeout(() => {
         welcomeModal.style.display = 'none';
         welcomeModal.classList.remove('shrinking');
         document.body.style.overflow = '';
-        
+
         // Highlight the usage counter
         if (usageCounter) {
           usageCounter.classList.add('highlight');

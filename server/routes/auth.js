@@ -5,6 +5,10 @@ import { generateToken, authenticateToken } from '../middleware/auth.js';
 
 const router = Router();
 
+function escapeRegExp(value) {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+}
+
 /**
  * POST /api/auth/register
  * Open registration - create user account with username and password
@@ -27,8 +31,10 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ error: 'Password must be at least 6 characters' });
     }
 
-    // Check if username is taken
-    const existingUser = await User.findOne({ username: trimmedUsername });
+    // Check if username is taken (case-insensitive)
+    const existingUser = await User.findOne({
+      username: new RegExp(`^${escapeRegExp(trimmedUsername)}$`, 'i')
+    });
     if (existingUser) {
       return res.status(400).json({ error: 'Username is already taken' });
     }
@@ -74,10 +80,21 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Username and password are required' });
     }
 
-    // Find user
-    const user = await User.findOne({ username: username.trim() });
+    // Find user (exact match first, then case-insensitive guidance)
+    const trimmedUsername = username.trim();
+    let user = await User.findOne({ username: trimmedUsername });
 
     if (!user) {
+      const caseInsensitiveUser = await User.findOne({
+        username: new RegExp(`^${escapeRegExp(trimmedUsername)}$`, 'i')
+      });
+
+      if (caseInsensitiveUser) {
+        return res.status(401).json({
+          error: 'Username is case-sensitive. Please use the exact casing you registered with.'
+        });
+      }
+
       return res.status(401).json({ error: 'Invalid username or password' });
     }
 

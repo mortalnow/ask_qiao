@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
@@ -12,9 +13,12 @@
   <link rel="apple-touch-icon" href="/icons/qiao.png">
   <link rel="preconnect" href="https://fonts.font.im">
   <link rel="preconnect" href="https://gstatic.font.im" crossorigin>
-  <link href="https://fonts.font.im/css2?family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.font.im/css2?family=JetBrains+Mono:wght@400;500;600&family=Noto+Sans+SC:wght@300;400;500;600&display=swap"
+    rel="stylesheet">
   <link rel="stylesheet" href="/css/style.css">
 </head>
+
 <body>
   <!-- History Sidebar -->
   <aside id="history-sidebar" class="history-sidebar">
@@ -22,7 +26,7 @@
       <h3 data-i18n="history.title">对话历史</h3>
       <button id="close-history" class="btn-icon-small">
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M18 6L6 18M6 6l12 12"/>
+          <path d="M18 6L6 18M6 6l12 12" />
         </svg>
       </button>
     </div>
@@ -32,16 +36,17 @@
   </aside>
   <div class="history-overlay" id="history-overlay"></div>
 
-  <div id="app" class="app-container">
+  <div id="app" class="app-container landing-state">
     <!-- Header -->
     <header class="chat-header">
       <div class="header-left">
         <!-- Usage Counter -->
         <div id="usage-counter" class="usage-counter" style="display: none;">
           <span id="usage-text">0/5</span>
-          <button id="apply-unlimited-btn" class="btn-apply-unlimited" data-i18n-title="usage.applyUnlimited" title="申请无限次数">
+          <button id="apply-unlimited-btn" class="btn-apply-unlimited" data-i18n-title="usage.applyUnlimited"
+            title="申请无限次数">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M12 5v14M5 12h14"/>
+              <path d="M12 5v14M5 12h14" />
             </svg>
           </button>
         </div>
@@ -49,20 +54,21 @@
       <div class="header-right">
         <button id="history-btn" class="btn-icon btn-history" data-i18n-title="header.history" title="历史记录">
           <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+            <path d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
         </button>
-        <a id="admin-link" href="/admin.html" class="btn-icon admin-link" data-i18n-title="header.admin" title="管理面板" style="display: none;">
+        <a id="admin-link" href="/admin.html" class="btn-icon admin-link" data-i18n-title="header.admin" title="管理面板"
+          style="display: none;">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
           </svg>
         </a>
         <select id="model-select" class="model-select-hidden" aria-hidden="true" tabindex="-1">
-          <option value="chatgpt">ChatGPT 5.2</option>
+          <option value="chatgpt">ChatGPT</option>
         </select>
         <button id="new-chat-btn" class="btn-icon" data-i18n-title="header.newChat" title="新对话">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M12 5v14M5 12h14"/>
+            <path d="M12 5v14M5 12h14" />
           </svg>
         </button>
         <button id="lang-toggle" class="btn-icon" title="切换语言 / Switch Language">
@@ -70,19 +76,39 @@
         </button>
         <button id="logout-btn" class="btn-icon" data-i18n-title="header.logout" title="退出登录">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9"/>
+            <path d="M9 21H5a2 2 0 01-2-2V5a2 2 0 012-2h4M16 17l5-5-5-5M21 12H9" />
           </svg>
         </button>
       </div>
     </header>
 
-    <!-- Chat Messages -->
+    <!-- Chat Messages / Landing -->
     <main class="chat-messages" id="chat-messages">
       <div class="welcome-message mission-message">
         <img class="welcome-icon" src="/icons/qiao.png" alt="Qiao">
         <h2 data-i18n="home.mission.title">学会更好地提问，得到更好的答案</h2>
         <p data-i18n="home.mission.line1">这里是一个提示词训练场，帮助您用结构化方式向大模型提问。</p>
         <p data-i18n="home.mission.line2">先发送提示词，再用 AI 把本次提示词和回答沉淀成可复用的 Markdown 技能。</p>
+        <div class="mission-cta">
+          <button id="mission-start-btn" class="btn-primary btn-mission" data-i18n="home.mission.start">开始构建提示词</button>
+          <button id="mission-skills-btn" class="btn-tertiary" data-i18n="home.mission.skills">了解技能生成</button>
+        </div>
+        <div class="mission-steps">
+          <div class="mission-step">
+            <span class="mission-step-number">1</span>
+            <div>
+              <h4 data-i18n="home.steps.promptTitle">用结构化方式提问</h4>
+              <p data-i18n="home.steps.promptDesc">选择角色、任务、背景与格式，先把问题问好。</p>
+            </div>
+          </div>
+          <div class="mission-step">
+            <span class="mission-step-number">2</span>
+            <div>
+              <h4 data-i18n="home.steps.skillTitle">把好答案沉淀成技能</h4>
+              <p data-i18n="home.steps.skillDesc">用 AI 将本次提示词 + 回答转成可复用的 Markdown 技能。</p>
+            </div>
+          </div>
+        </div>
       </div>
     </main>
 
@@ -98,9 +124,9 @@
           <div class="prompt-builder-header-actions">
             <button type="button" id="skills-btn" class="btn-skills" data-i18n-title="skills.title" title="技能">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M12 2L2 7l10 5 10-5-10-5z"/>
-                <path d="M2 17l10 5 10-5"/>
-                <path d="M2 12l10 5 10-5"/>
+                <path d="M12 2L2 7l10 5 10-5-10-5z" />
+                <path d="M2 17l10 5 10-5" />
+                <path d="M2 12l10 5 10-5" />
               </svg>
               <span data-i18n="skills.button">技能</span>
               <span class="skills-badge" id="skills-count">0</span>
@@ -110,55 +136,50 @@
         <form id="prompt-form" class="prompt-form">
           <div class="prompt-field">
             <label for="persona-input">
-              <span class="label-text">[PERSONA]</span>
-              <span class="label-required">*</span>
+              <span class="label-tag" data-i18n="promptBuilder.persona.label">角色设定</span>
             </label>
-            <textarea
-              id="persona-input"
-              data-i18n-placeholder="promptBuilder.persona.placeholder"
-              placeholder="例如：你是一位经验丰富的写作助手，擅长帮助用户撰写清晰、有条理的文章。"
-              rows="2"
-            ></textarea>
-            <div class="field-hint" data-i18n="promptBuilder.persona.hint">定义AI的角色和专业领域</div>
+            <div class="prompt-textarea">
+              <textarea id="persona-input" data-i18n-placeholder="promptBuilder.persona.placeholder"
+                placeholder="&#10;例如：你是一位经验丰富的写作助手，擅长帮助用户撰写清晰、有条理的文章。" rows="3"></textarea>
+              <div class="field-hint prompt-hint-inline" data-i18n="promptBuilder.persona.hint">定义AI的角色和专业领域</div>
+            </div>
           </div>
 
           <div class="prompt-field">
             <label for="task-input">
-              <span class="label-text">[TASK]</span>
-              <span class="label-required">*</span>
+              <span class="label-tag" data-i18n="promptBuilder.task.label">任务描述</span>
             </label>
-            <textarea
-              id="task-input"
-              data-i18n-placeholder="promptBuilder.task.placeholder"
-              placeholder="例如：请帮我写一封给客户的感谢邮件，表达对他们支持的感激之情。"
-              rows="3"
-            ></textarea>
-            <div class="field-hint" data-i18n="promptBuilder.task.hint">描述您需要完成的具体任务</div>
+            <div class="prompt-textarea">
+              <textarea id="task-input" data-i18n-placeholder="promptBuilder.task.placeholder"
+                placeholder="&#10;例如：请帮我写一封给客户的感谢邮件，表达对他们支持的感激之情。" rows="3"></textarea>
+              <div class="field-hint prompt-hint-inline" data-i18n="promptBuilder.task.hint">描述您需要完成的具体任务</div>
+            </div>
           </div>
 
           <div class="prompt-field">
             <label for="context-input">
-              <span class="label-text">[CONTEXT]</span>
-              <span class="label-required">*</span>
+              <span class="label-tag" data-i18n="promptBuilder.context.label">背景信息</span>
             </label>
-            <textarea
-              id="context-input"
-              data-i18n-placeholder="promptBuilder.context.placeholder"
-              placeholder="例如：背景：客户刚刚完成了一笔大订单。&#10;受众：长期合作的商业客户。"
-              rows="3"
-            ></textarea>
-            <div class="field-hint" data-i18n="promptBuilder.context.hint">提供背景信息和目标受众</div>
+            <div class="prompt-textarea">
+              <textarea id="context-input" data-i18n-placeholder="promptBuilder.context.placeholder"
+                placeholder="&#10;例如：背景：客户刚刚完成了一笔大订单。&#10;受众：长期合作的商业客户。" rows="3"></textarea>
+              <div class="field-hint prompt-hint-inline" data-i18n="promptBuilder.context.hint">提供背景信息和目标受众</div>
+            </div>
 
             <!-- File Upload Area -->
             <div class="file-upload-area" id="file-upload-area">
-              <div class="file-upload-zone" id="file-upload-zone" tabindex="0" role="button" aria-label="Drop files here, or click to select">
-                <input type="file" id="file-input" multiple accept="image/png,image/jpeg,image/gif,image/webp,application/pdf,text/plain,.txt,text/markdown,.md,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx" hidden>
+              <div class="file-upload-zone" id="file-upload-zone" tabindex="0" role="button"
+                aria-label="Drop files here, or click to select">
+                <input type="file" id="file-input" multiple
+                  accept="image/png,image/jpeg,image/gif,image/webp,application/pdf,text/plain,.txt,text/markdown,.md,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx"
+                  hidden>
                 <div class="file-upload-prompt">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
+                    <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12" />
                   </svg>
                   <span data-i18n="fileUpload.dropzone">拖拽文件到此处，或点击选择</span>
-                  <span class="file-upload-formats" data-i18n="fileUpload.formats">支持: PNG, JPG, PDF, TXT, MD, DOCX</span>
+                  <span class="file-upload-formats" data-i18n="fileUpload.formats">支持: PNG, JPG, PDF, TXT, MD,
+                    DOCX</span>
                   <span class="file-upload-paste-hint" data-i18n="fileUpload.pasteHint">也可以直接粘贴图片</span>
                 </div>
                 <div class="file-upload-progress" id="file-upload-progress">
@@ -176,35 +197,31 @@
 
           <div class="prompt-field optional">
             <label for="format-input">
-              <span class="label-text">[FORMAT]</span>
-              <span class="label-optional" data-i18n="promptBuilder.optional">（可选）</span>
+              <span class="label-tag" data-i18n="promptBuilder.format.label">输出格式</span>
             </label>
-            <textarea
-              id="format-input"
-              data-i18n-placeholder="promptBuilder.format.placeholder"
-              placeholder="例如：输出格式：正式邮件&#10;长度：200-300字&#10;风格：专业但友好"
-              rows="3"
-            ></textarea>
-            <div class="field-hint" data-i18n="promptBuilder.format.hint">指定输出格式、长度和风格（可选）</div>
+            <div class="prompt-textarea">
+              <textarea id="format-input" data-i18n-placeholder="promptBuilder.format.placeholder"
+                placeholder="&#10;例如：输出格式：正式邮件&#10;长度：200-300字&#10;风格：专业但友好" rows="3"></textarea>
+              <div class="field-hint prompt-hint-inline" data-i18n="promptBuilder.format.hint">指定输出格式、长度和风格（可选）</div>
+            </div>
           </div>
 
           <div class="prompt-field optional">
             <label for="references-input">
-              <span class="label-text">[REFERENCES]</span>
-              <span class="label-optional" data-i18n="promptBuilder.optional">（可选）</span>
+              <span class="label-tag" data-i18n="promptBuilder.references.label">参考示例</span>
             </label>
-            <textarea
-              id="references-input"
-              data-i18n-placeholder="promptBuilder.references.placeholder"
-              placeholder="例如：参考风格：简洁大方，避免过于正式的措辞"
-              rows="3"
-            ></textarea>
-            <div class="field-hint" data-i18n="promptBuilder.references.hint">提供参考示例或期望的风格（可选）</div>
+            <div class="prompt-textarea">
+              <textarea id="references-input" data-i18n-placeholder="promptBuilder.references.placeholder"
+                placeholder="&#10;例如：参考风格：简洁大方，避免过于正式的措辞" rows="3"></textarea>
+              <div class="field-hint prompt-hint-inline" data-i18n="promptBuilder.references.hint">提供参考示例或期望的风格（可选）</div>
+            </div>
           </div>
 
           <div class="prompt-builder-actions">
-            <button type="button" id="clear-prompt-form" class="btn-secondary" data-i18n="promptBuilder.clear">清空</button>
-            <button type="button" id="send-prompt" class="btn-primary btn-send-prompt" data-i18n="promptBuilder.send">发送提问</button>
+            <button type="button" id="clear-prompt-form" class="btn-secondary"
+              data-i18n="promptBuilder.clear">清空</button>
+            <button type="button" id="send-prompt" class="btn-primary btn-send-prompt"
+              data-i18n="promptBuilder.send">发送提问</button>
           </div>
         </form>
       </div>
@@ -218,7 +235,7 @@
       </div>
       <button type="button" id="expand-prompt-btn" class="btn-expand-prompt">
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M5 15l7-7 7 7"/>
+          <path d="M5 15l7-7 7 7" />
         </svg>
       </button>
     </div>
@@ -231,17 +248,17 @@
           <h3 data-i18n="extension.modalTitle">申请更多提问次数</h3>
           <button type="button" id="close-extension-modal" class="btn-icon-small">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M18 6L6 18M6 6l12 12"/>
+              <path d="M18 6L6 18M6 6l12 12" />
             </svg>
           </button>
         </div>
         <div class="modal-body">
           <p class="extension-info" data-i18n="extension.limitReached">您已用完免费提问次数。请填写以下表单申请更多次数。</p>
-          
+
           <div id="extension-pending-notice" class="extension-notice" style="display: none;">
             <p data-i18n="extension.pendingNotice">您已有一个待处理的申请，请等待管理员审核。</p>
           </div>
-          
+
           <form id="extension-form" class="extension-form">
             <div class="form-field">
               <label for="extension-amount" data-i18n="extension.amountLabel">申请次数</label>
@@ -254,15 +271,8 @@
             </div>
             <div class="form-field">
               <label for="extension-reason" data-i18n="extension.reasonLabel">申请理由 *</label>
-              <textarea 
-                id="extension-reason" 
-                rows="3" 
-                data-i18n-placeholder="extension.reasonPlaceholder"
-                placeholder="请说明您申请更多次数的原因（至少10个字符）..."
-                required
-                minlength="10"
-                maxlength="500"
-              ></textarea>
+              <textarea id="extension-reason" rows="3" data-i18n-placeholder="extension.reasonPlaceholder"
+                placeholder="请说明您申请更多次数的原因（至少10个字符）..." required minlength="10" maxlength="500"></textarea>
               <div class="field-hint" data-i18n="extension.reasonHint">请简要说明您的使用目的和申请原因</div>
             </div>
             <div class="form-actions">
@@ -270,7 +280,7 @@
               <button type="submit" id="submit-extension" class="btn-primary" data-i18n="extension.submit">提交申请</button>
             </div>
           </form>
-          
+
           <div id="extension-status" class="extension-status" style="display: none;">
             <h4 data-i18n="extension.statusTitle">申请状态</h4>
             <div id="extension-status-content"></div>
@@ -313,7 +323,7 @@
           <h3 data-i18n="skills.modalTitle">技能管理</h3>
           <button type="button" id="close-skills-modal" class="btn-icon-small">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M18 6L6 18M6 6l12 12"/>
+              <path d="M18 6L6 18M6 6l12 12" />
             </svg>
           </button>
         </div>
@@ -324,10 +334,11 @@
             <!-- Search Bar -->
             <div class="skills-search">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <circle cx="11" cy="11" r="8"/>
-                <path d="M21 21l-4.35-4.35"/>
+                <circle cx="11" cy="11" r="8" />
+                <path d="M21 21l-4.35-4.35" />
               </svg>
-              <input type="text" id="skills-search-input" data-i18n-placeholder="skills.searchPlaceholder" placeholder="搜索技能...">
+              <input type="text" id="skills-search-input" data-i18n-placeholder="skills.searchPlaceholder"
+                placeholder="搜索技能...">
             </div>
 
             <!-- Filters -->
@@ -340,13 +351,16 @@
                 <label for="skills-tag-filter" data-i18n="skills.filters.tag">标签</label>
                 <select id="skills-tag-filter"></select>
               </div>
-              <button type="button" id="skills-clear-filters" class="btn-text-small" data-i18n="skills.filters.clear">清除筛选</button>
+              <button type="button" id="skills-clear-filters" class="btn-text-small"
+                data-i18n="skills.filters.clear">清除筛选</button>
             </div>
 
             <!-- Actions -->
             <div class="skills-actions">
-              <button type="button" id="skills-export-all" class="btn-secondary" data-i18n="skills.exportAll">导出全部技能</button>
-              <button type="button" id="skills-export-enabled" class="btn-secondary" data-i18n="skills.exportEnabled">导出已启用技能</button>
+              <button type="button" id="skills-export-all" class="btn-secondary"
+                data-i18n="skills.exportAll">导出全部技能</button>
+              <button type="button" id="skills-export-enabled" class="btn-secondary"
+                data-i18n="skills.exportEnabled">导出已启用技能</button>
             </div>
 
             <!-- Skills List from Server -->
@@ -362,9 +376,9 @@
             <!-- Token Warning -->
             <div id="skills-token-warning" class="skills-token-warning" style="display: none;">
               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
-                <line x1="12" y1="9" x2="12" y2="13"/>
-                <line x1="12" y1="17" x2="12.01" y2="17"/>
+                <path d="M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z" />
+                <line x1="12" y1="9" x2="12" y2="13" />
+                <line x1="12" y1="17" x2="12.01" y2="17" />
               </svg>
               <span data-i18n="skills.tokenWarning">选中的技能内容较长，可能影响响应质量</span>
             </div>
@@ -385,7 +399,7 @@
           <h3 data-i18n="skills.edit.title">编辑技能</h3>
           <button type="button" id="close-edit-skill-modal" class="btn-icon-small">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M18 6L6 18M6 6l12 12"/>
+              <path d="M18 6L6 18M6 6l12 12" />
             </svg>
           </button>
         </div>
@@ -430,7 +444,7 @@
           <h3 data-i18n="skills.generate.title">保存为技能</h3>
           <button type="button" id="close-generate-skill-modal" class="btn-icon-small">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <path d="M18 6L6 18M6 6l12 12"/>
+              <path d="M18 6L6 18M6 6l12 12" />
             </svg>
           </button>
         </div>
@@ -456,8 +470,9 @@
               <input type="text" id="generated-skill-category" maxlength="50" placeholder="例如：写作、编程、分析">
             </div>
             <div class="form-field">
-            <label for="generated-skill-tags" data-i18n="skills.generate.tags">标签（可选，用逗号分隔）</label>
-            <input type="text" id="generated-skill-tags" list="skills-tags-datalist" placeholder="例如：react, typescript, code-review">
+              <label for="generated-skill-tags" data-i18n="skills.generate.tags">标签（可选，用逗号分隔）</label>
+              <input type="text" id="generated-skill-tags" list="skills-tags-datalist"
+                placeholder="例如：react, typescript, code-review">
             </div>
             <div class="form-field">
               <label for="generated-skill-content" data-i18n="skills.generate.content">技能内容</label>
@@ -468,17 +483,19 @@
           <!-- Error State -->
           <div id="generate-skill-error" class="generate-skill-error" style="display: none;">
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <circle cx="12" cy="12" r="10"/>
-              <line x1="12" y1="8" x2="12" y2="12"/>
-              <line x1="12" y1="16" x2="12.01" y2="16"/>
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
             </svg>
             <p id="generate-skill-error-text" data-i18n="skills.generate.error">生成失败，请重试</p>
           </div>
         </div>
         <div class="modal-footer">
           <button type="button" id="cancel-generate-skill" class="btn-secondary" data-i18n="common.cancel">取消</button>
-          <button type="button" id="retry-generate-skill" class="btn-secondary" style="display: none;" data-i18n="skills.generate.retry">重试</button>
-          <button type="button" id="save-generated-skill" class="btn-primary" style="display: none;" data-i18n="skills.generate.save">保存技能</button>
+          <button type="button" id="retry-generate-skill" class="btn-secondary" style="display: none;"
+            data-i18n="skills.generate.retry">重试</button>
+          <button type="button" id="save-generated-skill" class="btn-primary" style="display: none;"
+            data-i18n="skills.generate.save">保存技能</button>
         </div>
       </div>
     </div>
@@ -489,7 +506,7 @@
   <!-- PDF.js for PDF text extraction (lazy loaded) -->
   <script>
     window.pdfjsLib = null;
-    window.loadPdfJs = async function() {
+    window.loadPdfJs = async function () {
       if (window.pdfjsLib) return window.pdfjsLib;
       return new Promise((resolve, reject) => {
         const script = document.createElement('script');
@@ -546,9 +563,11 @@
           return;
         }
         refreshing = true;
-        window.location.reload();
+        // Avoid forced reload (prevents visible flash on login).
+        // New assets will load on next navigation.
       });
     }
   </script>
 </body>
+
 </html>

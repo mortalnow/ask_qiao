@@ -9,5 +9,5 @@ export const config = {
   mongodbDbName: process.env.MONGODB_DB_NAME || 'ask_qiao',
   
   // Model configuration (ChatGPT-only)
-  openaiModel: process.env.OPENAI_MODEL || 'gpt-5.2',
+  openaiModel: process.env.OPENAI_MODEL || 'gpt-5',
 };

@@ -1,19 +1,20 @@
 # Task Plan (Current): Prompt Coaching + Skill Reuse
 
 Last updated: 2026-02-07
-Status: Implemented
+Status: Update planned (landing + prompt builder UX)
 
 ## Goal
 
-Keep Ask Qiao focused on two outcomes:
+Keep Ask Qiao focused on two outcomes, while improving first-impression UX:
 
 1. Help users write better prompts.
 2. Help users convert successful prompt + answer pairs into reusable skills.
+3. Landing experience should introduce the mission before revealing the prompt builder (prompt builder opens from an explicit CTA).
 
 ## Product Decisions
 
-- Model strategy: ChatGPT-only (`chatgpt`, default `gpt-5.2`)
-- Prompting UX: mandatory structured prompt builder
+- Model strategy: ChatGPT-only (`chatgpt`, default `gpt-5`)
+- Prompting UX: structured prompt builder opens after user clicks a CTA on landing
 - Skill workflow: generate from prompt + assistant answer, then edit/save
 - Skill ingestion: no user upload/import flow in current UI
 - Skill management: server-side CRUD + filters + export
@@ -29,8 +30,8 @@ Keep Ask Qiao focused on two outcomes:
 
 ## Frontend Scope
 
-- Main screen explains mission (prompt learning + skill reuse)
-- Prompt builder remains primary interaction
+- Main screen explains mission (prompt learning + skill reuse) with clear CTA to start prompting
+- Prompt builder remains primary interaction but is not shown immediately on page load
 - No model picker in active workflow
 - No skill upload/import tab in active workflow
 - Skill generation starts from completed assistant responses
