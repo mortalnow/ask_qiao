@@ -3,14 +3,14 @@
 /**
  * Test script for extension request workflow
  * Tests both user submission and admin approval/rejection
- * 
- * Usage: node scripts/test-extension-requests.js <admin-username> <admin-password> [invite-code]
+ *
+ * Usage: node scripts/test-extension-requests.js <admin-username> <admin-password>
  */
 
 import dotenv from 'dotenv';
 dotenv.config();
 
-const API_BASE = process.env.API_BASE || 'http://localhost:3001/api';
+const API_BASE = process.env.API_BASE || 'http://localhost:3002/api';
 
 // Colors for terminal output
 const colors = {
@@ -29,7 +29,7 @@ function log(message, color = 'reset') {
 
 async function loginAdmin(username, password) {
   log('\n🔐 Logging in as admin...', 'cyan');
-  
+
   try {
     const response = await fetch(`${API_BASE}/auth/login`, {
       method: 'POST',
@@ -57,18 +57,17 @@ async function loginAdmin(username, password) {
   }
 }
 
-async function registerTestUser(inviteCode) {
+async function registerTestUser() {
   const username = 'ext_test_' + Date.now();
   const password = 'test_password_123';
-  
+
   log(`\n📝 Registering test user: ${username}...`, 'cyan');
-  
+
   try {
-    const response = await fetch(`${API_BASE}/auth/verify`, {
+    const response = await fetch(`${API_BASE}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        code: inviteCode,
         username,
         password
       }),
@@ -109,7 +108,7 @@ async function submitExtensionRequest(token, reason, amount) {
   log(`\n📤 Submitting extension request...`, 'cyan');
   log(`   Reason: "${reason}"`, 'blue');
   log(`   Amount: ${amount || 'Unlimited'}`, 'blue');
-  
+
   try {
     const response = await fetch(`${API_BASE}/extension/request`, {
       method: 'POST',
@@ -141,7 +140,7 @@ async function submitExtensionRequest(token, reason, amount) {
 
 async function listExtensionRequests(adminToken, filter = 'pending') {
   log(`\n📋 Listing ${filter} extension requests...`, 'cyan');
-  
+
   try {
     const response = await fetch(`${API_BASE}/admin/extensions?status=${filter}`, {
       headers: { 'Authorization': `Bearer ${adminToken}` }
@@ -158,7 +157,7 @@ async function listExtensionRequests(adminToken, filter = 'pending') {
     data.requests.forEach((req, index) => {
       log(`   ${index + 1}. ${req.user.username} - ${req.requested_amount || 'Unlimited'} prompts`, 'blue');
     });
-    
+
     return data;
   } catch (err) {
     log(`❌ Error: ${err.message}`, 'red');
@@ -169,7 +168,7 @@ async function listExtensionRequests(adminToken, filter = 'pending') {
 async function approveRequest(adminToken, requestId, amount, isUnlimited) {
   log(`\n✅ Approving request ${requestId}...`, 'cyan');
   log(`   Granting: ${isUnlimited ? 'Unlimited' : amount + ' prompts'}`, 'blue');
-  
+
   try {
     const response = await fetch(`${API_BASE}/admin/extensions/${requestId}/approve`, {
       method: 'POST',
@@ -203,7 +202,7 @@ async function approveRequest(adminToken, requestId, amount, isUnlimited) {
 
 async function rejectRequest(adminToken, requestId, reason) {
   log(`\n❌ Rejecting request ${requestId}...`, 'cyan');
-  
+
   try {
     const response = await fetch(`${API_BASE}/admin/extensions/${requestId}/reject`, {
       method: 'POST',
@@ -235,19 +234,18 @@ async function main() {
   const args = process.argv.slice(2);
   const adminUsername = args[0];
   const adminPassword = args[1];
-  const inviteCode = args[2];
 
   log('\n🧪 Testing Extension Request Workflow\n', 'cyan');
-  
+
   if (!adminUsername || !adminPassword) {
     log('❌ Please provide admin credentials', 'red');
-    log('   Usage: node scripts/test-extension-requests.js <admin-username> <admin-password> [invite-code]', 'yellow');
+    log('   Usage: node scripts/test-extension-requests.js <admin-username> <admin-password>', 'yellow');
     process.exit(1);
   }
 
   // Check if server is running
   try {
-    await fetch(`${API_BASE}/auth/verify`, { method: 'POST' });
+    await fetch(`${API_BASE}/auth/register`, { method: 'POST' });
   } catch (err) {
     log('❌ Server is not running! Start it with: npm start', 'red');
     process.exit(1);
@@ -262,56 +260,47 @@ async function main() {
   // Step 2: List current pending requests
   const initialRequests = await listExtensionRequests(adminToken, 'pending');
 
-  // Step 3: Register a test user (if invite code provided)
-  let testUser = null;
-  if (inviteCode) {
-    testUser = await registerTestUser(inviteCode);
-    
-    if (testUser) {
-      // Step 4: Submit an extension request
-      const request = await submitExtensionRequest(
-        testUser.token,
-        'Test request - I need more prompts for testing the extension workflow.',
-        10
-      );
+  // Step 3: Register a test user (open registration)
+  const testUser = await registerTestUser();
 
-      if (request) {
-        // Step 5: Check user status (should show pending)
-        const statusBefore = await getUserUsageStatus(testUser.token);
-        log(`\n📊 User status before approval:`, 'cyan');
-        log(`   Usage: ${statusBefore.usage.count}/${statusBefore.usage.limit}`, 'blue');
-        log(`   Has pending: ${statusBefore.extension.has_pending}`, 'blue');
+  if (testUser) {
+    // Step 4: Submit an extension request
+    const request = await submitExtensionRequest(
+      testUser.token,
+      'Test request - I need more prompts for testing the extension workflow.',
+      10
+    );
 
-        // Step 6: List pending requests (should include new one)
-        await listExtensionRequests(adminToken, 'pending');
+    if (request) {
+      // Step 5: Check user status (should show pending)
+      const statusBefore = await getUserUsageStatus(testUser.token);
+      log(`\n📊 User status before approval:`, 'cyan');
+      log(`   Usage: ${statusBefore.usage.count}/${statusBefore.usage.limit}`, 'blue');
+      log(`   Has pending: ${statusBefore.extension.has_pending}`, 'blue');
 
-        // Step 7: Approve the request
-        const approved = await approveRequest(adminToken, request.id, 10, false);
+      // Step 6: List pending requests (should include new one)
+      await listExtensionRequests(adminToken, 'pending');
 
-        if (approved) {
-          // Step 8: Check user status after approval
-          const statusAfter = await getUserUsageStatus(testUser.token);
-          log(`\n📊 User status after approval:`, 'cyan');
-          log(`   Usage: ${statusAfter.usage.count}/${statusAfter.usage.limit}`, 'blue');
-          log(`   Has pending: ${statusAfter.extension.has_pending}`, 'blue');
+      // Step 7: Approve the request
+      const approved = await approveRequest(adminToken, request.id, 10, false);
 
-          // Verify the limit was increased
-          if (statusAfter.usage.limit > statusBefore.usage.limit) {
-            log(`\n✅ Usage limit successfully increased from ${statusBefore.usage.limit} to ${statusAfter.usage.limit}!`, 'green');
-          } else {
-            log(`\n⚠️  Usage limit was not increased as expected`, 'yellow');
-          }
+      if (approved) {
+        // Step 8: Check user status after approval
+        const statusAfter = await getUserUsageStatus(testUser.token);
+        log(`\n📊 User status after approval:`, 'cyan');
+        log(`   Usage: ${statusAfter.usage.count}/${statusAfter.usage.limit}`, 'blue');
+        log(`   Has pending: ${statusAfter.extension.has_pending}`, 'blue');
+
+        // Verify the limit was increased
+        if (statusAfter.usage.limit > statusBefore.usage.limit) {
+          log(`\n✅ Usage limit successfully increased from ${statusBefore.usage.limit} to ${statusAfter.usage.limit}!`, 'green');
+        } else {
+          log(`\n⚠️  Usage limit was not increased as expected`, 'yellow');
         }
       }
     }
-  } else {
-    log('\n⚠️  No invite code provided, skipping user registration test', 'yellow');
-    log('   Provide an invite code to test the full workflow', 'yellow');
-  }
 
-  // Step 9: Test rejection flow with another request (if possible)
-  if (testUser && inviteCode) {
-    // Submit another request to test rejection
+    // Step 9: Test rejection flow with another request
     const request2 = await submitExtensionRequest(
       testUser.token,
       'Another test request that will be rejected.',
@@ -320,7 +309,7 @@ async function main() {
 
     if (request2) {
       await rejectRequest(adminToken, request2.id, 'Test rejection - request denied');
-      
+
       // Check status after rejection
       const statusAfterReject = await getUserUsageStatus(testUser.token);
       log(`\n📊 Last request status: ${statusAfterReject.extension.last_request?.status}`, 'blue');

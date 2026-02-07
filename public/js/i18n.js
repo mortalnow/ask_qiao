@@ -60,7 +60,6 @@ const translations = {
 
     // Chat input
     'chat.placeholder': '输入您的消息...',
-    'chat.currentModel': '当前模型：',
 
     // Prompt Builder
     'promptBuilder.title': '问题构建器',
@@ -226,9 +225,6 @@ const translations = {
     'login.password': '密码',
     'login.password.placeholder': '••••••••',
     'login.submit': '登录',
-    'login.inviteCode': '邀请码',
-    'login.inviteCode.placeholder': 'ABC123-XYZ789',
-    'login.inviteCode.hint': '格式：XXXXXX-XXXXXX',
     'login.chooseUsername': '选择用户名',
     'login.password.hint': '至少 6 个字符',
     'login.createAccount': '创建账户',
@@ -298,7 +294,6 @@ const translations = {
 
     // Chat input
     'chat.placeholder': 'Type your message...',
-    'chat.currentModel': 'Current model: ',
 
     // Prompt Builder
     'promptBuilder.title': 'Prompt Builder',
@@ -464,9 +459,6 @@ const translations = {
     'login.password': 'Password',
     'login.password.placeholder': '••••••••',
     'login.submit': 'Login',
-    'login.inviteCode': 'Invite Code',
-    'login.inviteCode.placeholder': 'ABC123-XYZ789',
-    'login.inviteCode.hint': 'Format: XXXXXX-XXXXXX',
     'login.chooseUsername': 'Choose Username',
     'login.password.hint': 'At least 6 characters',
     'login.createAccount': 'Create Account',

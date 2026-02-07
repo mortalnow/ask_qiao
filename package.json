@@ -6,8 +6,7 @@
   "main": "server/index.js",
   "scripts": {
     "start": "node server/index.js",
-    "dev": "node --watch server/index.js",
-    "generate-invite": "node scripts/generate-invite.js"
+    "dev": "node --watch server/index.js"
   },
   "dependencies": {
     "bcrypt": "^6.0.0",

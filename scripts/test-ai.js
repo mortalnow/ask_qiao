@@ -8,9 +8,7 @@
 import dotenv from 'dotenv';
 dotenv.config();
 
-const API_BASE = process.env.API_BASE || 'http://localhost:3001/api';
-// Get invite code from command line or use default
-const TEST_INVITE_CODE = process.argv[2] || '7V4LV9-QGG6CZ';
+const API_BASE = process.env.API_BASE || 'http://localhost:3002/api';
 const TEST_USERNAME = 'test_user_' + Date.now();
 const TEST_PASSWORD = 'test_password_123';
 
@@ -30,15 +28,14 @@ function log(message, color = 'reset') {
   console.log(`${colors[color]}${message}${colors.reset}`);
 }
 
-async function verifyInviteCode() {
-  log('\n🔐 Step 1: Verifying invite code...', 'cyan');
-  
+async function registerUser() {
+  log('\n🔐 Step 1: Registering test user...', 'cyan');
+
   try {
-    const response = await fetch(`${API_BASE}/auth/verify`, {
+    const response = await fetch(`${API_BASE}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        code: TEST_INVITE_CODE,
         username: TEST_USERNAME,
         password: TEST_PASSWORD
       }),
@@ -62,7 +59,7 @@ async function verifyInviteCode() {
 
 async function getModels() {
   log('\n📋 Step 2: Fetching available models...', 'cyan');
-  
+
   try {
     const response = await fetch(`${API_BASE}/chat/models`, {
       headers: {
@@ -90,7 +87,7 @@ async function getModels() {
 
 async function checkUsageStatus() {
   log('\n📊 Step 3: Checking usage status...', 'cyan');
-  
+
   try {
     const response = await fetch(`${API_BASE}/extension/status`, {
       headers: {
@@ -110,7 +107,7 @@ async function checkUsageStatus() {
     log(`   - Used: ${usage.count}/${usage.limit} prompts`, 'blue');
     log(`   - Remaining: ${usage.remaining}`, 'blue');
     log(`   - Unlimited: ${usage.is_unlimited ? 'Yes' : 'No'}`, 'blue');
-    
+
     return usage;
   } catch (err) {
     log(`❌ Error: ${err.message}`, 'red');
@@ -120,7 +117,7 @@ async function checkUsageStatus() {
 
 async function testChatWithUsage(model, modelName) {
   log(`\n🤖 Testing ${modelName}...`, 'cyan');
-  
+
   const testMessage = `[PERSONA]\nYou are a helpful assistant.\n\n[TASK]\nSay "Hello from ${modelName}" in exactly 5 words.\n\n[CONTEXT]\nThis is a test message.`;
   log(`📤 Sending structured prompt to ${modelName}...`, 'yellow');
 
@@ -193,11 +190,11 @@ async function testChatWithUsage(model, modelName) {
     }
 
     process.stdout.write(colors.reset + '\n');
-    
+
     if (usageInfo) {
       log(`📊 Usage after request: ${usageInfo.count}/${usageInfo.limit}`, 'blue');
     }
-    
+
     log(`✅ ${modelName} test completed!`, 'green');
     return { success: true, limitExceeded: false, usage: usageInfo };
   } catch (err) {
@@ -209,21 +206,19 @@ async function testChatWithUsage(model, modelName) {
 async function main() {
   log('\n🧪 Testing AI Chat Wrapper Integrations\n', 'cyan');
   log('This test now includes usage tracking verification.\n', 'blue');
-  
+
   // Check if server is running
   try {
-    await fetch(`${API_BASE}/auth/verify`, { method: 'POST' });
+    await fetch(`${API_BASE}/auth/register`, { method: 'POST' });
   } catch (err) {
     log('❌ Server is not running! Start it with: npm start', 'red');
     process.exit(1);
   }
 
   // Step 1: Authenticate
-  const authSuccess = await verifyInviteCode();
+  const authSuccess = await registerUser();
   if (!authSuccess) {
     log('\n❌ Authentication failed. Cannot continue.', 'red');
-    log('💡 Make sure you have a valid unused invite code.', 'yellow');
-    log(`   Usage: node scripts/test-ai.js <INVITE_CODE>`, 'yellow');
     process.exit(1);
   }
 
@@ -245,7 +240,7 @@ async function main() {
   // Summary
   log('\n📊 Test Summary:', 'cyan');
   log(`   ChatGPT: ${chatGptResult.success ? '✅ PASSED' : (chatGptResult.limitExceeded ? '⚠️  LIMIT EXCEEDED' : '❌ FAILED')}`, chatGptResult.success ? 'green' : 'yellow');
-  
+
   if (finalUsage) {
     log(`\n📊 Usage Summary:`, 'cyan');
     log(`   Started at: ${initialUsage?.count || 0}/${initialUsage?.limit || 5}`, 'blue');

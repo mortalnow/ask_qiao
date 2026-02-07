@@ -6,7 +6,7 @@
  */
 
 import mongoose from '../server/db/init.js';
-import { User, InviteCode } from '../server/db/models.js';
+import { User } from '../server/db/models.js';
 
 async function testConnection() {
   console.log('\n🔍 Testing MongoDB Atlas Connection...\n');
@@ -50,10 +50,8 @@ async function testConnection() {
     console.log('📊 Testing database queries...\n');
     
     const userCount = await User.countDocuments();
-    const inviteCount = await InviteCode.countDocuments();
-    
-    console.log(`   Users in database: ${userCount}`);
-    console.log(`   Invite codes in database: ${inviteCount}\n`);
+
+    console.log(`   Users in database: ${userCount}\n`);
 
     if (userCount > 0) {
       console.log('👥 Users:');

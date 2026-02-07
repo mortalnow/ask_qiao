@@ -281,55 +281,6 @@ function logout() {
   window.location.href = '/login.html';
 }
 
-/**
- * Admin: Generate invite codes
- */
-async function generateInviteCodes(count) {
-  const response = await apiRequest('/admin/invites', {
-    method: 'POST',
-    body: JSON.stringify({ count }),
-  });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.error || 'Failed to generate invite codes');
-  }
-
-  return data;
-}
-
-/**
- * Admin: Get all invite codes
- */
-async function getInviteCodes() {
-  const response = await apiRequest('/admin/invites');
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.error || 'Failed to get invite codes');
-  }
-
-  return data;
-}
-
-/**
- * Admin: Delete invite code
- */
-async function deleteInviteCode(id) {
-  const response = await apiRequest(`/admin/invites/${id}`, {
-    method: 'DELETE',
-  });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.error || 'Failed to delete invite code');
-  }
-
-  return data;
-}
-
 // ============================================
 // Extension Request Functions
 // ============================================

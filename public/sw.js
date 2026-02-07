@@ -3,15 +3,17 @@
  * Handles caching for offline shell support
  */
 
-const CACHE_NAME = 'ask-qiao-v14';
+const CACHE_NAME = 'ask-qiao-v15';
 const STATIC_ASSETS = [
   '/',
   '/index.html',
   '/login.html',
+  '/admin.html',
   '/css/style.css',
   '/js/api.js',
   '/js/auth.js',
   '/js/app.js',
+  '/js/admin.js',
   '/js/i18n.js',
   '/manifest.json',
   '/icons/qiao.png'

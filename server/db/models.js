@@ -37,28 +37,6 @@ const userSchema = new mongoose.Schema({
   }
 });
 
-// InviteCode Schema
-const inviteCodeSchema = new mongoose.Schema({
-  code: {
-    type: String,
-    required: true,
-    unique: true
-  },
-  used_by: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    default: null
-  },
-  used_at: {
-    type: Date,
-    default: null
-  },
-  created_at: {
-    type: Date,
-    default: Date.now
-  }
-});
-
 // ExtensionRequest Schema - for users requesting more prompts
 const extensionRequestSchema = new mongoose.Schema({
   user: {
@@ -200,7 +178,6 @@ const categorySchema = new mongoose.Schema({
 categorySchema.index({ user: 1, name: 1 }, { unique: true });
 
 export const User = mongoose.model('User', userSchema);
-export const InviteCode = mongoose.model('InviteCode', inviteCodeSchema);
 export const ExtensionRequest = mongoose.model('ExtensionRequest', extensionRequestSchema);
 export const Skill = mongoose.model('Skill', skillSchema);
 export const Category = mongoose.model('Category', categorySchema);

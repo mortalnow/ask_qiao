@@ -17,7 +17,7 @@ This is a prompt-based AI instruction service designed to teach users how to com
 ```
 Client (Web/Mobile/PWA) → Express Server → AI Providers (OpenAI, Gemini)
                               ↓
-                      MongoDB Atlas (users, invite_codes)
+                      MongoDB Atlas (users, extension_requests, skills)
 ```
 
 ## Key Features
@@ -46,7 +46,7 @@ server/           # Express backend
   routes/         # API endpoints (auth, chat, admin, extension)
   middleware/     # JWT verification + usage limit checking
   services/       # AI provider integrations
-  db/             # MongoDB Atlas setup (User, InviteCode, ExtensionRequest models)
+  db/             # MongoDB Atlas setup (User, ExtensionRequest, Skill, Category models)
 public/           # Frontend PWA
   css/            # Styles
   js/             # Client-side logic (app, auth, admin, i18n, api)
@@ -88,9 +88,7 @@ npm install          # Install dependencies
 npm run dev          # Start dev server with hot reload
 npm start            # Start production server (local)
 
-# User & Invite Management
-node scripts/generate-invite.js   # Generate new invite code
-node scripts/list-invites.js      # List all invite codes with user info
+# User Management
 node scripts/check-admin.js       # Check/create admin account (gets unlimited)
 node scripts/check-user.js        # Check user credentials + usage stats
 node scripts/set-password.js      # Set password for existing user
@@ -100,9 +98,9 @@ node scripts/grant-usage.js <user> <amount|unlimited>  # Grant usage to user
 node scripts/list-extensions.js [pending|approved|rejected]  # List extension requests
 
 # Testing
-node scripts/test-ai.js <invite-code>           # Test AI integrations with usage tracking
-node scripts/test-usage-limits.js <invite-code> # Test usage limit enforcement
-node scripts/test-extension-requests.js <admin> <pass> [invite-code]  # Test extension workflow
+node scripts/test-ai.js                                    # Test AI integrations with usage tracking
+node scripts/test-usage-limits.js                           # Test usage limit enforcement
+node scripts/test-extension-requests.js <admin> <pass>      # Test extension workflow
 
 # Database & Config
 node scripts/init-mongodb.js      # Initialize MongoDB database
@@ -165,6 +163,38 @@ The project uses MongoDB Atlas for user and invite code storage. To initialize:
 ---
 
 ## Development Log
+
+### 2026-02-08: Codebase Cleanup - Remove Invite Code System & Dead Code
+
+**Goal**: Remove all remnants of the deprecated invite code system and clean up dead code across the codebase.
+
+**Deleted Files**:
+- `scripts/generate-invite.js`, `scripts/list-invites.js` — orphaned invite utilities
+- `server/utils/inviteCode.js` — dead helper (+ empty `server/utils/` dir)
+
+**Dead Code Removed**:
+- `server/routes/admin.js`: 3 invite routes (POST/GET/DELETE `/admin/invites`, ~100 lines)
+- `server/db/models.js`: `InviteCode` schema + export
+- `scripts/init-mongodb.js`, `reset-db.js`, `test-mongodb-connection.js`: InviteCode imports/queries
+- `public/js/api.js`: 3 unused invite API functions (~50 lines)
+- `public/js/i18n.js`: 8 dead i18n keys (invite code + unused `chat.currentModel`)
+- `public/js/app.js`: dead `currentModelLabel` variable
+- `public/css/style.css`: dead selectors `.model-selector`, `.current-model`, `.prompt-builder-toggle` (~39 lines)
+- `package.json`: removed `generate-invite` npm script
+
+**Fixed Broken Scripts** (were calling removed `/api/auth/verify` on wrong port 3001):
+- `scripts/test-ai.js` — now uses `/api/auth/register`, port 3002
+- `scripts/test-usage-limits.js` — same
+- `scripts/test-extension-requests.js` — same, removed invite code param
+- `scripts/check-user.js` — removed outdated invite code messaging
+
+**Docs Cleaned**:
+- Moved 7 legacy/completed docs to `docs/archive/`
+- Updated `scripts/README-admin.md` — removed legacy utilities section
+- Updated `CLAUDE.md` — fixed architecture diagram, project structure, dev commands
+- `public/sw.js` — added missing `admin.html` + `admin.js` to cache, bumped to v15
+
+**Net result**: -1,128 lines deleted, +112 lines changed.
 
 ### 2026-02-07: UX Polish - Eliminate Flash and Improve Modal Consistency
 

@@ -18,7 +18,6 @@ document.addEventListener('DOMContentLoaded', () => {
   // DOM Elements
   const messagesContainer = document.getElementById('chat-messages');
   const modelSelect = document.getElementById('model-select');
-  const currentModelLabel = document.getElementById('current-model-label');
   const logoutBtn = document.getElementById('logout-btn');
   const adminLink = document.getElementById('admin-link');
   const langToggleBtn = document.getElementById('lang-toggle');
@@ -2008,11 +2007,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function updateModelLabel() {
-    const model = 'chatgpt';
-    // Update label if element exists (removed from UI for cleaner look)
-    if (currentModelLabel) {
-      currentModelLabel.textContent = modelNames[model] || model;
-    }
+    // Model label element was removed from UI for cleaner look
   }
 
   // Main send function - builds prompt and sends

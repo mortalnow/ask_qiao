@@ -1,6 +1,6 @@
 # Admin & Testing Scripts Guide
 
-Last updated: 2026-02-07
+Last updated: 2026-02-08
 
 ## Overview
 
@@ -22,13 +22,6 @@ This directory contains operational scripts for Ask Qiao (user/admin checks, usa
 | `test-production-login.js` | Production login test |
 | `verify-mongodb-config.js` | Validate MongoDB env/config |
 | `test-mongodb-connection.js` | MongoDB connectivity check |
-
-## Legacy Utilities
-
-These scripts still exist but are not part of the core open-registration workflow:
-
-- `generate-invite.js`
-- `list-invites.js`
 
 ## Common Commands
 
@@ -70,14 +63,14 @@ node scripts/list-extensions.js rejected
 
 ### `test-ai.js`
 
-ChatGPT-only integration test via HTTP API.
+ChatGPT-only integration test via HTTP API. Uses open registration to create a test user.
 
 ```bash
 node scripts/test-ai.js
 ```
 
 Checks:
-- login/register path availability
+- register path availability
 - `/api/chat/models`
 - `/api/extension/status`
 - `/api/chat` streaming behavior

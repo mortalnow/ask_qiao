@@ -21,7 +21,7 @@
 
 import mongoose from 'mongoose';
 import bcrypt from 'bcrypt';
-import { User, InviteCode } from '../server/db/models.js';
+import { User } from '../server/db/models.js';
 
 // MongoDB connection details
 // You can override these with environment variables or command line argument
@@ -76,13 +76,6 @@ async function main() {
     await User.collection.createIndex({ username: 1 }, { unique: true });
     console.log('   ✅ Username index created (unique)');
 
-    // Create indexes for InviteCode collection
-    console.log('📋 Creating indexes for InviteCode collection...');
-    await InviteCode.collection.createIndex({ code: 1 }, { unique: true });
-    console.log('   ✅ Code index created (unique)');
-    await InviteCode.collection.createIndex({ used_by: 1 });
-    console.log('   ✅ Used_by index created\n');
-
     // Check if admin user already exists
     const adminUsername = 'mortalnow@gmail.com';
     const existingAdmin = await User.findOne({ username: adminUsername });
@@ -125,11 +118,9 @@ async function main() {
 
     // Display summary
     const userCount = await User.countDocuments();
-    const inviteCount = await InviteCode.countDocuments();
-    
+
     console.log('📊 Database Summary:');
-    console.log(`   Users: ${userCount}`);
-    console.log(`   Invite Codes: ${inviteCount}\n`);
+    console.log(`   Users: ${userCount}\n`);
 
     console.log('✅ MongoDB initialization completed successfully!\n');
     

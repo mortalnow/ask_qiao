@@ -3,15 +3,14 @@
 /**
  * Test script to verify usage limit enforcement
  * Creates a test user and verifies usage counting works correctly
- * 
- * Usage: node scripts/test-usage-limits.js [invite-code]
+ *
+ * Usage: node scripts/test-usage-limits.js
  */
 
 import dotenv from 'dotenv';
 dotenv.config();
 
-const API_BASE = process.env.API_BASE || 'http://localhost:3001/api';
-const TEST_INVITE_CODE = process.argv[2];
+const API_BASE = process.env.API_BASE || 'http://localhost:3002/api';
 const TEST_USERNAME = 'usage_test_' + Date.now();
 const TEST_PASSWORD = 'test_password_123';
 
@@ -34,19 +33,12 @@ function log(message, color = 'reset') {
 
 async function registerUser() {
   log('\n📝 Registering test user...', 'cyan');
-  
-  if (!TEST_INVITE_CODE) {
-    log('❌ Please provide an invite code as argument', 'red');
-    log('   Usage: node scripts/test-usage-limits.js <INVITE_CODE>', 'yellow');
-    return false;
-  }
-  
+
   try {
-    const response = await fetch(`${API_BASE}/auth/verify`, {
+    const response = await fetch(`${API_BASE}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        code: TEST_INVITE_CODE,
         username: TEST_USERNAME,
         password: TEST_PASSWORD
       }),
@@ -154,7 +146,7 @@ async function sendTestMessage(messageNum) {
 
 async function testExtensionRequest() {
   log('\n📝 Testing extension request submission...', 'cyan');
-  
+
   try {
     const response = await fetch(`${API_BASE}/extension/request`, {
       method: 'POST',
@@ -188,15 +180,15 @@ async function testExtensionRequest() {
 async function main() {
   log('\n🧪 Testing Usage Limit Enforcement\n', 'cyan');
   log('This test will:', 'blue');
-  log('  1. Register a new test user', 'blue');
+  log('  1. Register a new test user (open registration)', 'blue');
   log('  2. Send messages until hitting the limit', 'blue');
   log('  3. Verify usage counting is accurate', 'blue');
   log('  4. Test extension request submission', 'blue');
   log('');
-  
+
   // Check if server is running
   try {
-    await fetch(`${API_BASE}/auth/verify`, { method: 'POST' });
+    await fetch(`${API_BASE}/auth/register`, { method: 'POST' });
   } catch (err) {
     log('❌ Server is not running! Start it with: npm start', 'red');
     process.exit(1);
@@ -215,7 +207,7 @@ async function main() {
     log('❌ Could not get initial usage status', 'red');
     process.exit(1);
   }
-  
+
   log(`   Initial usage: ${initialUsage.count}/${initialUsage.limit}`, 'blue');
   log(`   Unlimited: ${initialUsage.is_unlimited ? 'Yes' : 'No'}`, 'blue');
 
@@ -230,13 +222,13 @@ async function main() {
 
   // Step 3: Send messages until limit is reached
   log(`\n📤 Sending messages until limit (${usageLimit}) is reached...`, 'cyan');
-  
+
   for (let i = 1; i <= usageLimit + 2; i++) {
     log(`\n   Message ${i}:`, 'magenta');
-    
+
     const result = await sendTestMessage(i);
     testResults.push(result);
-    
+
     if (result.limitExceeded) {
       log(`      ⛔ LIMIT EXCEEDED at message ${i}`, 'yellow');
       log(`      Usage: ${result.usage.usage_count}/${result.usage.usage_limit}`, 'blue');
@@ -247,7 +239,7 @@ async function main() {
     } else {
       log(`      ❌ Failed: ${result.error}`, 'red');
     }
-    
+
     // Small delay between requests
     await new Promise(resolve => setTimeout(resolve, 500));
   }
@@ -255,7 +247,7 @@ async function main() {
   // Step 4: Verify final usage
   log('\n📊 Verifying final usage...', 'cyan');
   const finalUsage = await getUsageStatus();
-  
+
   if (finalUsage) {
     log(`   Final usage: ${finalUsage.count}/${finalUsage.limit}`, 'blue');
     log(`   Remaining: ${finalUsage.remaining}`, 'blue');
@@ -270,14 +262,14 @@ async function main() {
   log('\n📊 Test Summary:', 'cyan');
   const successfulMessages = testResults.filter(r => r.success).length;
   const limitExceededAt = testResults.findIndex(r => r.limitExceeded) + 1;
-  
+
   log(`   Messages sent successfully: ${successfulMessages}`, 'blue');
   log(`   Expected limit: ${usageLimit}`, 'blue');
   log(`   Limit exceeded at message: ${limitExceededAt || 'N/A'}`, 'blue');
-  
+
   // Verification
   const limitWorksCorrectly = successfulMessages === usageLimit && limitExceededAt === usageLimit + 1;
-  
+
   if (limitWorksCorrectly) {
     log(`\n✅ Usage limit enforcement is working correctly!`, 'green');
   } else {

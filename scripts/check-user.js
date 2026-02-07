@@ -76,7 +76,7 @@ async function main() {
       console.log('💡 Possible issues:');
       console.log('   1. The username might be different (check list above)');
       console.log('   2. The user might not exist in the database');
-      console.log('   3. You might need to register with an invite code first\n');
+      console.log('   3. The user might need to register first\n');
       
       // Suggest similar usernames
       if (allUsers.length > 0) {
@@ -141,8 +141,7 @@ async function main() {
 
     if (!user.password_hash) {
       console.log(`\n❌ User account has no password set!`);
-      console.log(`   This account needs to be set up with an invite code.`);
-      console.log(`   Or you can set a password using: node scripts/set-password.js "${user.username}" "${password}"\n`);
+      console.log(`   You can set a password using: node scripts/set-password.js "${user.username}" "${password}"\n`);
       process.exit(1);
     }
 

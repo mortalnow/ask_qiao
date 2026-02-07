@@ -6,7 +6,7 @@
 
 import bcrypt from 'bcrypt';
 import mongoose from '../server/db/init.js';
-import { User, InviteCode } from '../server/db/models.js';
+import { User } from '../server/db/models.js';
 
 async function resetDB() {
   console.log('\n🗑️  Resetting MongoDB database...\n');
@@ -21,9 +21,8 @@ async function resetDB() {
 
     // Clear all data
     await User.deleteMany({});
-    await InviteCode.deleteMany({});
 
-    console.log('✅ Cleared all users and invite codes');
+    console.log('✅ Cleared all users');
 
     // Create admin user
     const adminUsername = 'mortalnow@gmail.com';
