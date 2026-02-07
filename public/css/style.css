@@ -92,6 +92,13 @@ body {
   max-width: 900px;
   margin: 0 auto;
   background: var(--bg-secondary);
+  /* Prevent flash on initial load - JS will add 'app-ready' class */
+  opacity: 0;
+  transition: opacity 0.15s ease-in;
+}
+
+.app-container.app-ready {
+  opacity: 1;
 }
 
 @media (min-width: 768px) {
@@ -2506,7 +2513,36 @@ body {
   color: var(--text-primary);
 }
 
-.extension-form select,
+.extension-form .select-wrapper {
+  position: relative;
+  width: 100%;
+}
+
+.extension-form .select-wrapper .select-arrow {
+  position: absolute;
+  right: var(--spacing-md);
+  top: 50%;
+  transform: translateY(-50%);
+  color: var(--text-secondary);
+  pointer-events: none;
+}
+
+.extension-form select {
+  width: 100%;
+  padding: var(--spacing-sm) 2.5rem var(--spacing-sm) var(--spacing-md);
+  background: var(--bg-tertiary);
+  border: 1px solid var(--bg-hover);
+  border-radius: var(--radius-md);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 0.9rem;
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  cursor: pointer;
+  text-align: left;
+}
+
 .extension-form textarea {
   width: 100%;
   padding: var(--spacing-sm) var(--spacing-md);

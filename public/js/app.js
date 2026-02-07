@@ -209,11 +209,28 @@ document.addEventListener('DOMContentLoaded', () => {
   // Track whether we should show welcome modal (check AFTER API call)
   const shouldShowWelcome = !sessionStorage.getItem('welcomeShown');
   let hasStartedPromptFlow = false;
+  let welcomeModalSource = null; // Track where welcome modal was opened from ('pill' or 'auto')
 
   // Initialize
   init();
 
   async function init() {
+    // IMPORTANT: Set correct initial state IMMEDIATELY to prevent flash
+    // Load sessions first (synchronous) to determine initial view state
+    loadSessions();
+    const savedSessionId = localStorage.getItem('current_session_id');
+    const hasChatHistory = savedSessionId && sessions[savedSessionId] && sessions[savedSessionId].messages?.length > 0;
+
+    // Set initial state before any async operations to prevent flash
+    if (hasChatHistory) {
+      // User has chat history - show minimized prompt builder immediately
+      if (appContainer) {
+        appContainer.classList.remove('landing-state');
+        appContainer.classList.add('prompt-minimized-state');
+      }
+    }
+    // If no history, keep the landing-state that's already in HTML
+
     // Check if user is admin FIRST (before showing any modals)
     try {
       const user = await window.API.getCurrentUser();
@@ -237,11 +254,7 @@ document.addEventListener('DOMContentLoaded', () => {
       sessionStorage.setItem('welcomeShown', 'true');
     }
 
-    // Load sessions from local storage
-    loadSessions();
-
     // Load current session or create new one
-    const savedSessionId = localStorage.getItem('current_session_id');
     if (savedSessionId && sessions[savedSessionId]) {
       currentSessionId = savedSessionId;
       chatHistory = sessions[savedSessionId].messages || [];
@@ -252,11 +265,9 @@ document.addEventListener('DOMContentLoaded', () => {
     renderChatHistory();
     renderHistoryList();
 
-    // Set initial view state based on chat history
-    if (chatHistory.length === 0) {
-      showLanding(); // Landing page when no messages
-    } else {
-      minimizePromptBuilder(); // Show chat with minimized bar when messages exist
+    // Update view state if needed (should already be correct from above)
+    if (chatHistory.length === 0 && !appContainer?.classList.contains('landing-state')) {
+      showLanding();
     }
 
     // Update model label
@@ -268,6 +279,11 @@ document.addEventListener('DOMContentLoaded', () => {
     // Keep skill badge/token status synced from server-managed skills
     refreshEnabledServerSkills();
     updateSkillsUI();
+
+    // Reveal app after initialization is complete (prevents flash)
+    if (appContainer) {
+      appContainer.classList.add('app-ready');
+    }
   }
 
   async function fetchUsageStatus() {
@@ -400,6 +416,15 @@ document.addEventListener('DOMContentLoaded', () => {
     return animateIconBetweenRects(iconEl, iconRect, targetRect, onDone);
   }
 
+  function animateIconToPill(iconEl, onDone) {
+    // Animate icon to the usage pill button
+    if (!iconEl || !welcomeUsagePill) return false;
+
+    const targetRect = welcomeUsagePill.getBoundingClientRect();
+    const iconRect = iconEl.getBoundingClientRect();
+    return animateIconBetweenRects(iconEl, iconRect, targetRect, onDone);
+  }
+
   function animateLandingIconToHeader() {
     const icon = messagesContainer?.querySelector('.welcome-icon');
     const didAnimate = animateIconToHeader(icon, () => {
@@ -427,7 +452,10 @@ document.addEventListener('DOMContentLoaded', () => {
     if (welcomeIcon && !welcomeIcon.dataset.bound) {
       welcomeIcon.dataset.bound = 'true';
       welcomeIcon.addEventListener('click', () => {
-        window.location.reload();
+        // Reset to initial state without page reload
+        chatHistory = [];
+        renderChatHistory();
+        showLanding();
       });
     }
 
@@ -522,7 +550,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     if (welcomeUsagePill) {
       welcomeUsagePill.addEventListener('click', () => {
-        showWelcomeModal();
+        showWelcomeModal('pill'); // Opened from usage pill button
       });
     }
 
@@ -2792,8 +2820,11 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  function showWelcomeModal() {
+  function showWelcomeModal(source = 'auto') {
     if (!welcomeModal) return;
+
+    // Track where modal was opened from
+    welcomeModalSource = source;
 
     // Update the usage count display
     if (welcomeUsageCount) {
@@ -2820,24 +2851,32 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Get positions for shrink animation
     const modalContent = welcomeModal.querySelector('.welcome-modal-content');
-
-    if (appContainer) {
-      appContainer.classList.add('header-logo-visible');
-    }
     const modalIcon = welcomeModal.querySelector('.welcome-modal-icon img');
-    const canAnimateIcon = !skipHighlight && modalIcon && headerLogo && modalContent;
+
+    // Determine animation target based on where modal was opened from
+    const animateToTarget = welcomeModalSource === 'pill' ? welcomeUsagePill : headerLogo;
+    const canAnimateIcon = !skipHighlight && modalIcon && animateToTarget && modalContent;
 
     if (canAnimateIcon) {
-      if (appContainer) {
+      if (appContainer && welcomeModalSource !== 'pill') {
         appContainer.classList.add('header-logo-visible');
       }
       welcomeModal.classList.add('fading-out');
 
-      const didAnimate = animateIconToHeader(modalIcon, () => {
+      // Choose animation function based on target
+      const animateFunc = welcomeModalSource === 'pill'
+        ? animateIconToPill
+        : animateIconToHeader;
+
+      const didAnimate = animateFunc(modalIcon, () => {
         welcomeModal.style.display = 'none';
         welcomeModal.classList.remove('fading-out');
         document.body.style.overflow = '';
-        updateWelcomeUsagePill(true);
+        if (welcomeModalSource === 'pill') {
+          updateWelcomeUsagePill(true);
+        } else {
+          updateWelcomeUsagePill(true);
+        }
       });
 
       if (didAnimate) return;

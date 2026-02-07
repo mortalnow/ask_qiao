@@ -269,8 +269,6 @@
           </button>
         </div>
         <div class="modal-body">
-          <p class="extension-info" data-i18n="extension.limitReached">您已用完免费提问次数。请填写以下表单申请更多次数。</p>
-
           <div id="extension-pending-notice" class="extension-notice" style="display: none;">
             <p data-i18n="extension.pendingNotice">您已有一个待处理的申请，请等待管理员审核。</p>
           </div>
@@ -278,12 +276,17 @@
           <form id="extension-form" class="extension-form">
             <div class="form-field">
               <label for="extension-amount" data-i18n="extension.amountLabel">申请次数</label>
-              <select id="extension-amount">
-                <option value="5" data-i18n="extension.amount5">5 次</option>
-                <option value="10" data-i18n="extension.amount10">10 次</option>
-                <option value="20" data-i18n="extension.amount20">20 次</option>
-                <option value="" data-i18n="extension.amountUnlimited">无限制</option>
-              </select>
+              <div class="select-wrapper">
+                <select id="extension-amount">
+                  <option value="5" data-i18n="extension.amount5">5 次</option>
+                  <option value="10" data-i18n="extension.amount10">10 次</option>
+                  <option value="20" data-i18n="extension.amount20">20 次</option>
+                  <option value="" data-i18n="extension.amountUnlimited">无限制</option>
+                </select>
+                <svg class="select-arrow" width="12" height="12" viewBox="0 0 12 12" fill="none">
+                  <path d="M2.5 4.5L6 8L9.5 4.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
             </div>
             <div class="form-field">
               <label for="extension-reason" data-i18n="extension.reasonLabel">申请理由 *</label>
