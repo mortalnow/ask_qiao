@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /**
- * Test script to verify ChatGPT and Gemini integrations
+ * Test script to verify ChatGPT integration
  * Now includes usage tracking verification
  */
 
@@ -238,22 +238,13 @@ async function main() {
 
   // Step 4: Test ChatGPT
   const chatGptResult = await testChatWithUsage('chatgpt', 'ChatGPT');
-  
-  // Step 5: Test Gemini (if we haven't hit the limit)
-  let geminiResult = { success: false, limitExceeded: false };
-  if (!chatGptResult.limitExceeded) {
-    geminiResult = await testChatWithUsage('gemini', 'Gemini');
-  } else {
-    log('\n⏭️  Skipping Gemini test (usage limit exceeded)', 'yellow');
-  }
 
-  // Step 6: Check final usage
+  // Step 5: Check final usage
   const finalUsage = await checkUsageStatus();
 
   // Summary
   log('\n📊 Test Summary:', 'cyan');
   log(`   ChatGPT: ${chatGptResult.success ? '✅ PASSED' : (chatGptResult.limitExceeded ? '⚠️  LIMIT EXCEEDED' : '❌ FAILED')}`, chatGptResult.success ? 'green' : 'yellow');
-  log(`   Gemini:  ${geminiResult.success ? '✅ PASSED' : (geminiResult.limitExceeded ? '⚠️  LIMIT EXCEEDED' : '❌ FAILED')}`, geminiResult.success ? 'green' : 'yellow');
   
   if (finalUsage) {
     log(`\n📊 Usage Summary:`, 'cyan');

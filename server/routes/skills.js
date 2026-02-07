@@ -9,95 +9,12 @@ const router = Router();
 // All skills routes require authentication
 router.use(authenticateToken);
 
-const MAX_IMPORT_FILES = 20;
-const MAX_SKILL_CONTENT_LENGTH = 50000;
-
 function sanitizeFilename(name) {
   return name
     .replace(/[^\w\s.-]+/g, '')
     .trim()
     .replace(/\s+/g, '_')
     .substring(0, 80) || 'skill';
-}
-
-function normalizeTags(rawTags) {
-  if (!rawTags) return [];
-  if (Array.isArray(rawTags)) {
-    return rawTags
-      .map(t => (typeof t === 'string' ? t.trim().toLowerCase() : ''))
-      .filter(Boolean)
-      .slice(0, 10);
-  }
-  if (typeof rawTags === 'string') {
-    const list = rawTags
-      .replace(/^\[|\]$/g, '')
-      .split(',')
-      .map(t => t.trim().toLowerCase())
-      .filter(Boolean);
-    return list.slice(0, 10);
-  }
-  return [];
-}
-
-function parseFrontmatter(content) {
-  const match = content.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
-  if (!match) {
-    return { frontmatter: null, body: content };
-  }
-
-  const frontmatter = match[1];
-  const body = match[2].trim();
-
-  const nameMatch = frontmatter.match(/^name:\s*(.+)$/m);
-  const descMatch = frontmatter.match(/^description:\s*(.+)$/m);
-  const categoryMatch = frontmatter.match(/^category:\s*(.+)$/m);
-  const tagsMatch = frontmatter.match(/^tags:\s*(.+)$/m);
-
-  const name = nameMatch ? nameMatch[1].trim().replace(/^["']|["']$/g, '') : null;
-  const description = descMatch ? descMatch[1].trim().replace(/^["']|["']$/g, '') : '';
-  const category = categoryMatch ? categoryMatch[1].trim().replace(/^["']|["']$/g, '') : null;
-  const tags = normalizeTags(tagsMatch ? tagsMatch[1] : null);
-
-  return {
-    frontmatter: { name, description, category, tags },
-    body
-  };
-}
-
-function deriveDescriptionFromContent(content) {
-  const paragraphMatch = content.match(/^(?!#)(.+)$/m);
-  if (!paragraphMatch) return '';
-  const trimmed = paragraphMatch[1].trim();
-  if (!trimmed) return '';
-  return trimmed.length > 150 ? `${trimmed.substring(0, 150)}...` : trimmed;
-}
-
-function parseSkillFile(content, filename) {
-  const parsed = parseFrontmatter(content);
-  let name = parsed.frontmatter?.name || filename.replace(/\.(md|markdown)$/, '');
-  let description = parsed.frontmatter?.description || '';
-  let category = parsed.frontmatter?.category || null;
-  let tags = parsed.frontmatter?.tags || [];
-  let bodyContent = parsed.body.trim();
-
-  if (!name) {
-    const h1Match = bodyContent.match(/^#\s+(.+)$/m);
-    if (h1Match) {
-      name = h1Match[1].trim();
-    }
-  }
-
-  if (!description) {
-    description = deriveDescriptionFromContent(bodyContent);
-  }
-
-  return {
-    name,
-    description,
-    category,
-    tags,
-    content: bodyContent
-  };
 }
 
 function buildSkillMarkdown(skill) {
@@ -114,39 +31,6 @@ function buildSkillMarkdown(skill) {
   }
 
   return `---\n${frontmatterLines.join('\n')}\n---\n\n${skill.content || ''}`.trim();
-}
-
-function splitBundleContent(content) {
-  // Try explicit separator first
-  const explicitSeparator = '<!-- skill separator -->';
-  if (content.includes(explicitSeparator)) {
-    return content
-      .split(explicitSeparator)
-      .map(chunk => chunk.trim())
-      .filter(Boolean);
-  }
-
-  // Try triple-dash separator (---\n---\n--- or similar)
-  const tripleDashPattern = /\n---\s*\n---\s*\n---\s*\n/;
-  if (tripleDashPattern.test(content)) {
-    return content
-      .split(tripleDashPattern)
-      .map(chunk => chunk.trim())
-      .filter(Boolean);
-  }
-
-  // Try detecting multiple YAML frontmatters (new skill starts with ---\nname:)
-  // Split on newline followed by --- and then name: on next line
-  const yamlBoundaryPattern = /\n(?=---\s*\nname:\s*)/;
-  if (yamlBoundaryPattern.test(content)) {
-    return content
-      .split(yamlBoundaryPattern)
-      .map(chunk => chunk.trim())
-      .filter(Boolean);
-  }
-
-  // No separator found, return as single skill
-  return [content];
 }
 
 // Rate limit for AI skill generation (per user)
@@ -167,10 +51,10 @@ const generateSkillLimiter = rateLimit({
  */
 router.post('/generate', generateSkillLimiter, async (req, res) => {
   try {
-    const { persona, task, context, format, references } = req.body;
+    const { persona, task, context, format, references, answer } = req.body;
 
     // Validate input
-    const validation = validatePromptForGeneration({ persona, task, context });
+    const validation = validatePromptForGeneration({ persona, task, context, answer });
     if (!validation.valid) {
       return res.status(400).json({
         error: 'Invalid prompt for skill generation',
@@ -184,7 +68,8 @@ router.post('/generate', generateSkillLimiter, async (req, res) => {
       task,
       context,
       format,
-      references
+      references,
+      answer
     });
 
     res.json({
@@ -197,7 +82,8 @@ router.post('/generate', generateSkillLimiter, async (req, res) => {
       source_prompt: {
         persona,
         task,
-        context: context || null
+        context: context || null,
+        answer: answer || null
       }
     });
   } catch (err) {
@@ -379,110 +265,6 @@ router.get('/export', async (req, res) => {
   } catch (err) {
     console.error('Export skills error:', err);
     res.status(500).json({ error: 'Failed to export skills' });
-  }
-});
-
-/**
- * POST /api/skills/import
- * Import skills from markdown files
- * Body: { files: [{ name, content }], overwrite?: boolean }
- */
-  router.post('/import', async (req, res) => {
-    try {
-      const { files, overwrite = false } = req.body || {};
-
-    if (!Array.isArray(files) || files.length === 0) {
-      return res.status(400).json({ error: 'No files provided' });
-    }
-
-    if (files.length > MAX_IMPORT_FILES) {
-      return res.status(400).json({ error: `Too many files (max ${MAX_IMPORT_FILES})` });
-    }
-
-    const results = {
-      created: 0,
-      updated: 0,
-      skipped: 0,
-      errors: []
-    };
-
-    for (const file of files) {
-      try {
-        const filename = typeof file.name === 'string' ? file.name : 'skill.md';
-        const content = typeof file.content === 'string' ? file.content : '';
-
-        if (!content.trim()) {
-          results.errors.push({ file: filename, error: 'Empty content' });
-          continue;
-        }
-
-        const chunks = splitBundleContent(content);
-
-        for (let i = 0; i < chunks.length; i += 1) {
-          const chunk = chunks[i];
-          const chunkFilename = chunks.length > 1
-            ? filename.replace(/\.(md|markdown)$/i, '') + `_part_${i + 1}.md`
-            : filename;
-          const displayName = chunks.length > 1 ? `${filename} (part ${i + 1})` : filename;
-
-          const parsed = parseSkillFile(chunk, chunkFilename);
-
-          if (!parsed.name || !parsed.content) {
-            results.errors.push({ file: displayName, error: 'Missing name or content' });
-            continue;
-          }
-
-          if (parsed.name.length > 100) {
-            results.errors.push({ file: displayName, error: 'Name too long' });
-            continue;
-          }
-
-          if (parsed.content.length > MAX_SKILL_CONTENT_LENGTH) {
-            results.errors.push({ file: displayName, error: 'Content too long' });
-            continue;
-          }
-
-          const existing = await Skill.findOne({ user: req.user.id, name: parsed.name });
-          if (existing) {
-            if (overwrite) {
-              existing.description = parsed.description || existing.description;
-              existing.content = parsed.content;
-              existing.category = parsed.category || existing.category;
-              existing.tags = parsed.tags?.length ? parsed.tags : existing.tags;
-              existing.updated_at = new Date();
-              await existing.save();
-              results.updated += 1;
-            } else {
-              results.skipped += 1;
-            }
-            continue;
-          }
-
-          await Skill.create({
-            user: req.user.id,
-            name: parsed.name.trim(),
-            description: parsed.description?.trim() || '',
-            content: parsed.content.trim(),
-            category: parsed.category?.trim() || null,
-            tags: normalizeTags(parsed.tags),
-            enabled: true
-          });
-
-          results.created += 1;
-        }
-      } catch (fileErr) {
-        console.error('Import file error:', fileErr);
-        results.errors.push({ file: file?.name || 'unknown', error: fileErr.message || 'Import failed' });
-      }
-    }
-
-    res.json({
-      success: true,
-      results
-    });
-  } catch (err) {
-    console.error('Import skills error:', err);
-    res.status(500).json({ error: 'Failed to import skills' });
   }
 });
 

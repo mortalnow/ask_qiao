@@ -1,113 +1,39 @@
-# Notes: File Upload Feature Research
+# File Upload Notes (Current)
 
-## Current Architecture
+Last updated: 2026-02-07
 
-### Frontend Flow
-1. Prompt Builder has 5 fields: PERSONA, TASK, CONTEXT, FORMAT, REFERENCES
-2. `sendPrompt()` in `app.js` builds text message from fields
-3. Calls `window.API.sendMessage(message, model, history, ...)`
-4. Messages are text-only strings
+## Purpose
 
-### Backend Flow
-1. `POST /api/chat` receives `{ message, model, history }`
-2. Validates and sanitizes text message (max 32KB)
-3. Passes to AI service's `streamChat(messages, onChunk, onDone, onError)`
-4. Services use provider SDKs to stream responses
+File uploads enrich `[CONTEXT]` so the assistant can answer with grounded input.
 
-### AI Service Message Format
-- **OpenAI**: `{ role: 'user', content: 'text' }`
-- **Gemini**: `{ role: 'user', parts: [{ text: 'text' }] }`
+## Supported Types
 
-## LLM File Format Support
+- Images: PNG, JPG/JPEG, GIF, WebP
+- Documents: PDF, TXT, MD, DOCX
 
-### OpenAI (GPT-4 Vision / GPT-5)
-**Supported Image Formats:**
-- PNG, JPEG, GIF (static), WebP
-- Max file size: 20MB per image
-- Max dimensions: 2048x2048 (larger images are resized)
+## Current Data Flow
 
-**Message Format with Images:**
-```javascript
-{
-  role: 'user',
-  content: [
-    { type: 'text', text: 'What is in this image?' },
-    { type: 'image_url', image_url: { url: 'data:image/png;base64,...' } }
-  ]
-}
-```
+### Frontend
 
-### Gemini
-**Supported Formats:**
-- Images: PNG, JPEG, WebP, HEIC, HEIF, GIF
-- Documents: PDF (up to 3600 pages)
-- Audio: MP3, WAV, AIFF, AAC, OGG, FLAC
-- Video: MP4, MPEG, MOV, AVI, MKV, WEBM, etc.
+1. User adds files via click, drag/drop, or image paste.
+2. Images are optionally compressed and converted to base64.
+3. Documents are parsed client-side into plain text (`extractedText`).
+4. Payload is sent with structured prompt and history.
 
-**Max Sizes:**
-- Images: 20MB inline, larger via File API
-- PDF: 30MB inline
-- Audio/Video: Various limits
+### Backend
 
-**Message Format with Files:**
-```javascript
-{
-  role: 'user',
-  parts: [
-    { text: 'What is in this image?' },
-    { inlineData: { mimeType: 'image/png', data: 'base64...' } }
-  ]
-}
-```
+1. `/api/chat` validates file count/type/size.
+2. Documents keep `extractedText` (truncated to configured length).
+3. Images keep base64 data.
+4. OpenAI service injects document text into user context and sends images as data URLs.
 
-## Implementation Strategy
+## Limits
 
-### Ephemeral File Handling (No Server Storage)
-1. **Frontend**: Convert files to base64 using FileReader
-2. **API**: Send base64 data in JSON body (larger payload)
-3. **Backend**: Process in memory, pass to AI, never write to disk
-4. **Response**: Stream back, file data garbage collected
+- Max files per request: 5
+- Max file size: 20MB each
+- Max extracted document text: 50,000 chars (truncated)
 
-### Supported Formats (Common between providers)
-**Images (both support):**
-- PNG, JPEG, GIF, WebP
+## Notes
 
-**Gemini-only extras:**
-- HEIC, HEIF (images)
-- PDF (documents)
-- Audio/Video files
-
-### UI Design for Context Section
-Add file upload area to Context field:
-- Drag & drop zone
-- Click to select files
-- Preview thumbnails for images
-- File name/size for documents
-- Remove button per file
-- Max 5 files limit
-- Visual indicator for model compatibility
-
-### Size Considerations
-- Base64 encoding increases size by ~33%
-- 20MB image → ~27MB base64
-- JSON body limit may need adjustment
-- Consider compression for large images
-
-## Key Implementation Files
-
-### Frontend Changes
-- `public/index.html` - Add file upload UI
-- `public/js/app.js` - Handle file selection, base64 conversion
-- `public/js/api.js` - Modify sendMessage to include files
-- `public/css/style.css` - File upload styles
-
-### Backend Changes
-- `server/routes/chat.js` - Accept files array, pass to services
-- `server/services/openai.js` - Format multimodal messages
-- `server/services/gemini.js` - Format multimodal messages
-
-## Decisions Made
-- NO server-side file storage (ephemeral)
-- Base64 encoding for file transfer
-- Frontend handles file conversion
-- Backend passes through to AI without saving
+- Files are not persisted as server-side artifacts.
+- This flow is ChatGPT-only in the current product.

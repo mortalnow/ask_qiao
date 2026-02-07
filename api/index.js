@@ -14,6 +14,7 @@ import authRoutes from '../server/routes/auth.js';
 import chatRoutes from '../server/routes/chat.js';
 import adminRoutes from '../server/routes/admin.js';
 import extensionRoutes from '../server/routes/extension.js';
+import skillsRoutes from '../server/routes/skills.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -70,6 +71,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/chat', chatRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/extension', extensionRoutes);
+app.use('/api/skills', skillsRoutes);
 
 // Serve static files from public directory
 const publicPath = join(__dirname, '..', 'public');
@@ -93,4 +95,3 @@ app.use((err, req, res, next) => {
 // Export for Vercel serverless function
 // Vercel automatically handles Express apps when exported directly
 export default app;
-

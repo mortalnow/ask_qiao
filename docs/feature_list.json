@@ -1,1499 +1,1015 @@
 {
   "project": "Ask Qiao",
   "version": "2.0.0",
-  "lastUpdated": "2026-01-17",
+  "lastUpdated": "2026-02-07",
   "features": [
     {
       "id": "AUTH-001",
       "category": "authentication",
-      "description": "User login with username and password",
+      "description": "User login with username/password on login page",
       "steps": [
-        "Navigate to login page (/login.html)",
-        "Click on 'Login' tab if not already selected",
-        "Enter valid username (2-30 characters)",
-        "Enter valid password (minimum 6 characters)",
-        "Click 'Login' button",
-        "Verify redirect to main chat interface",
-        "Verify JWT token is stored in localStorage"
+        "Open `/login.html` and keep the default Login tab selected.",
+        "Enter a valid username and password.",
+        "Click the login submit button.",
+        "Verify redirect to `/` after successful authentication.",
+        "Verify auth token and user info are stored in local storage."
       ],
       "passes": false
     },
     {
       "id": "AUTH-002",
       "category": "authentication",
-      "description": "User registration with invite code",
+      "description": "Login error handling for invalid credentials",
       "steps": [
-        "Navigate to login page (/login.html)",
-        "Click on 'Register' tab",
-        "Enter valid invite code (format: XXXXXX-XXXXXX)",
-        "Enter desired username (2-30 characters)",
-        "Enter password (minimum 6 characters)",
-        "Click 'Create Account' button",
-        "Verify account creation success",
-        "Verify redirect to main chat interface",
-        "Verify invite code is marked as used in database"
+        "Open `/login.html` and stay on Login tab.",
+        "Enter an invalid password for an existing username.",
+        "Submit the form.",
+        "Verify an error message is displayed and no redirect occurs.",
+        "Verify no valid token is stored."
       ],
       "passes": false
     },
     {
       "id": "AUTH-003",
       "category": "authentication",
-      "description": "Invite code auto-formatting on input",
+      "description": "Open registration flow with username/password creation",
       "steps": [
-        "Navigate to login page (/login.html)",
-        "Click on 'Register' tab",
-        "Type lowercase letters in invite code field",
-        "Verify letters are converted to uppercase",
-        "Continue typing past 6 characters",
-        "Verify hyphen is automatically inserted after 6th character",
-        "Verify non-alphanumeric characters are stripped"
+        "Open `/login.html` and switch to Register tab.",
+        "Enter a valid username (2-30 chars) and password (>=6 chars).",
+        "Submit registration.",
+        "Verify API returns success and user is redirected to `/`.",
+        "Verify token is stored and session starts immediately."
       ],
       "passes": false
     },
     {
       "id": "AUTH-004",
       "category": "authentication",
-      "description": "User logout functionality",
+      "description": "Client-side registration validation for username and password length",
       "steps": [
-        "Login with valid credentials",
-        "Navigate to main chat interface",
-        "Click the logout button in header",
-        "Confirm logout in confirmation dialog",
-        "Verify redirect to login page",
-        "Verify auth token is cleared from localStorage",
-        "Verify cannot access main interface without re-login"
+        "Open Register tab on `/login.html`.",
+        "Enter username shorter than 2 chars or longer than 30 chars.",
+        "Enter password shorter than 6 chars.",
+        "Submit the form.",
+        "Verify form blocks submission and shows validation feedback."
       ],
       "passes": false
     },
     {
       "id": "AUTH-005",
       "category": "authentication",
-      "description": "Authentication redirect for unauthenticated users",
+      "description": "Auth guard redirects unauthenticated users to login page",
       "steps": [
-        "Clear localStorage and cookies",
-        "Navigate directly to main chat interface (/)",
-        "Verify automatic redirect to login page",
-        "Navigate directly to admin panel (/admin.html)",
-        "Verify automatic redirect to login page"
+        "Clear auth token from local storage.",
+        "Navigate to `/`.",
+        "Verify redirect to `/login.html`.",
+        "Repeat on `/admin.html` and verify same redirect behavior."
       ],
       "passes": false
     },
     {
       "id": "AUTH-006",
       "category": "authentication",
-      "description": "JWT token expiration handling (7-day expiry)",
+      "description": "Authenticated user profile retrieval from `/api/auth/me`",
       "steps": [
-        "Login with valid credentials",
-        "Verify JWT token is stored",
-        "Wait for token expiration (or simulate with expired token)",
-        "Attempt to make an API request",
-        "Verify 401/403 response is handled",
-        "Verify automatic redirect to login page"
+        "Login successfully and capture the Bearer token.",
+        "Call `GET /api/auth/me` with Authorization header.",
+        "Verify 200 response with user id, username, and admin flag.",
+        "Verify created_at field is present."
       ],
       "passes": false
     },
     {
-      "id": "CHAT-001",
+      "id": "AUTH-007",
+      "category": "authentication",
+      "description": "Logout clears local session and returns user to login page",
+      "steps": [
+        "Login and enter the main app.",
+        "Click the logout icon in the header.",
+        "Confirm logout in the prompt.",
+        "Verify token/user/session keys are removed from storage.",
+        "Verify redirect to `/login.html`."
+      ],
+      "passes": false
+    },
+    {
+      "id": "FUNC-001",
       "category": "functional",
-      "description": "Send message and receive AI response",
+      "description": "Mandatory prompt builder requires PERSONA, TASK, CONTEXT",
       "steps": [
-        "Login and navigate to main chat interface",
-        "Type a message in the input textarea",
-        "Verify character count updates",
-        "Verify send button becomes enabled",
-        "Click send button or press Enter",
-        "Verify message appears in chat area with user avatar",
-        "Verify typing indicator shows while AI is responding",
-        "Verify AI response streams in real-time",
-        "Verify response appears with model icon and timestamp"
+        "Open `/` after login.",
+        "Leave one required field empty and click Send.",
+        "Verify validation alert appears.",
+        "Fill all required fields and click Send again.",
+        "Verify request proceeds."
       ],
       "passes": false
     },
     {
-      "id": "CHAT-002",
+      "id": "FUNC-002",
       "category": "functional",
-      "description": "Send message with Enter key (Shift+Enter for new line)",
+      "description": "Structured prompt construction with optional FORMAT and REFERENCES sections",
       "steps": [
-        "Navigate to main chat interface",
-        "Type a message in input textarea",
-        "Press Enter key",
-        "Verify message is sent",
-        "Type another message",
-        "Press Shift+Enter",
-        "Verify new line is inserted instead of sending"
+        "Fill required fields plus optional FORMAT and REFERENCES fields.",
+        "Click Send.",
+        "Inspect the user message bubble content.",
+        "Verify sections appear in `[PERSONA]/[TASK]/[CONTEXT]/[FORMAT]/[REFERENCES]` format."
       ],
       "passes": false
     },
     {
-      "id": "CHAT-003",
+      "id": "FUNC-003",
       "category": "functional",
-      "description": "Switch between AI models (GPT-5.2 and Gemini 3 Flash)",
+      "description": "Typing indicator transitions to streamed assistant output",
       "steps": [
-        "Navigate to main chat interface",
-        "Verify default model is displayed in header",
-        "Open model selector dropdown",
-        "Select 'Gemini 3 Flash'",
-        "Verify model label updates in header and footer",
-        "Send a message",
-        "Verify response shows Gemini model badge",
-        "Switch back to 'GPT-5.2'",
-        "Send another message",
-        "Verify response shows OpenAI model badge"
+        "Submit a valid prompt.",
+        "Verify assistant placeholder shows typing indicator immediately.",
+        "Wait for streamed content chunks.",
+        "Verify indicator is replaced by formatted assistant text."
       ],
       "passes": false
     },
     {
-      "id": "CHAT-004",
+      "id": "FUNC-004",
       "category": "functional",
-      "description": "Model selection via welcome screen model cards",
+      "description": "Prompt form clear action resets fields and uploaded files",
       "steps": [
-        "Navigate to main chat interface with empty history",
-        "Verify welcome message with model cards is displayed as full page",
-        "Click on GPT-5.2 model card",
-        "Verify prompt builder slides up and takes full page",
-        "Verify model selector updates to GPT-5.2",
-        "Verify PERSONA input is focused",
-        "Click 'Change Model' button to return to landing",
-        "Click on Gemini 3 Flash model card",
-        "Verify model selector updates to Gemini"
+        "Fill prompt fields and upload at least one file.",
+        "Click Clear.",
+        "Confirm the clear prompt.",
+        "Verify all textareas are empty and file previews are removed."
       ],
       "passes": false
     },
     {
-      "id": "CHAT-005",
+      "id": "FUNC-005",
       "category": "functional",
-      "description": "Streaming response display with real-time updates",
+      "description": "New Chat creates a fresh local session and clears prompt form",
       "steps": [
-        "Navigate to main chat interface",
-        "Send a message that requires a longer response",
-        "Verify typing indicator appears initially",
-        "Verify text streams in character by character",
-        "Verify markdown formatting is applied in real-time",
-        "Verify auto-scroll to bottom as content arrives"
+        "Send at least one message in current session.",
+        "Click New Chat in header.",
+        "Verify messages area resets to landing state for new session.",
+        "Verify prompt fields are cleared and builder is expanded."
       ],
       "passes": false
     },
     {
-      "id": "CHAT-006",
+      "id": "FUNC-006",
       "category": "functional",
-      "description": "Markdown formatting in messages (code blocks, bold, italic)",
+      "description": "Conversation history is persisted locally and grouped by date",
       "steps": [
-        "Navigate to main chat interface",
-        "Ask AI to respond with code examples",
-        "Verify code blocks are rendered with proper styling",
-        "Verify inline code has distinct formatting",
-        "Verify **bold** text is rendered as bold",
-        "Verify *italic* text is rendered as italic",
-        "Verify line breaks are properly rendered"
+        "Create multiple sessions by sending prompts on separate chats.",
+        "Open history sidebar.",
+        "Verify sessions are listed under Today/Yesterday/Earlier group headers.",
+        "Refresh page and verify sessions remain."
       ],
       "passes": false
     },
     {
-      "id": "CHAT-007",
+      "id": "FUNC-007",
       "category": "functional",
-      "description": "Character count display and 32000 character limit",
+      "description": "Session switching restores previous message timeline",
       "steps": [
-        "Navigate to main chat interface",
-        "Verify initial character count shows '0 / 32000'",
-        "Type text in input field",
-        "Verify character count updates in real-time",
-        "Attempt to paste text exceeding 32000 characters",
-        "Verify input is limited to 32000 characters"
+        "Create two sessions with distinct message content.",
+        "Open history sidebar and click the older session.",
+        "Verify messages panel renders that session history.",
+        "Switch back and verify second session remains intact."
       ],
       "passes": false
     },
     {
-      "id": "CHAT-008",
+      "id": "FUNC-008",
       "category": "functional",
-      "description": "Auto-resize textarea based on content",
+      "description": "Session deletion removes entry and updates active chat safely",
       "steps": [
-        "Navigate to main chat interface",
-        "Verify textarea starts at minimum height",
-        "Type multiple lines of text",
-        "Verify textarea height expands to fit content",
-        "Verify textarea has maximum height limit (150px)",
-        "Delete text",
-        "Verify textarea shrinks back to minimum height"
+        "Open history sidebar with multiple sessions.",
+        "Delete a non-active session and confirm.",
+        "Verify it disappears from list.",
+        "Delete active session and verify app starts a fresh new session."
       ],
       "passes": false
     },
     {
-      "id": "CHAT-009",
+      "id": "FUNC-009",
       "category": "functional",
-      "description": "Cancel streaming and combine with new message",
+      "description": "File upload supports click, drag-drop, and paste image workflows",
       "steps": [
-        "Navigate to main chat interface",
-        "Send a message that will have a long response",
-        "While AI is streaming, type a new message",
-        "Press Enter or click send",
-        "Verify current stream is cancelled",
-        "Verify new message is combined with previous user message",
-        "Verify AI processes the combined message"
+        "Click upload zone and select a valid image file.",
+        "Drag-drop a second valid file into zone.",
+        "Paste an image from clipboard while prompt builder is focused.",
+        "Verify all files appear in preview list with count updated."
       ],
       "passes": false
     },
     {
-      "id": "CHAT-010",
+      "id": "FUNC-010",
       "category": "functional",
-      "description": "Error handling for failed AI requests",
+      "description": "Document extraction supports PDF, TXT, MD, DOCX before send",
       "steps": [
-        "Disable network connection or simulate API failure",
-        "Send a message",
-        "Verify error message is displayed in red",
-        "Verify failed message is removed from history",
-        "Verify input is re-enabled for retry"
+        "Upload one file of each supported document type.",
+        "Wait for extraction progress to finish.",
+        "Verify document preview includes excerpt and character count.",
+        "Send prompt and verify request completes without type errors."
       ],
       "passes": false
     },
     {
-      "id": "SESSION-001",
+      "id": "FUNC-011",
       "category": "functional",
-      "description": "New chat button creates a fresh conversation",
+      "description": "File constraints enforce max count, size, and supported MIME list",
       "steps": [
-        "Navigate to main chat interface",
-        "Send several messages to create a conversation",
-        "Click the 'New Chat' (+) button in header",
-        "Verify chat area clears and shows welcome message",
-        "Verify new session ID is generated",
-        "Verify previous conversation appears in history sidebar"
+        "Attempt to upload more than 5 files.",
+        "Verify max-file warning and extra files are rejected.",
+        "Attempt to upload unsupported type (e.g., `.zip`).",
+        "Verify unsupported-type warning.",
+        "Attempt >20MB file and verify size warning."
       ],
       "passes": false
     },
     {
-      "id": "SESSION-002",
+      "id": "FUNC-012",
       "category": "functional",
-      "description": "Conversation history persistence in localStorage",
+      "description": "Prompt builder minimizes after successful send and expands on tap",
       "steps": [
-        "Navigate to main chat interface",
-        "Send several messages",
-        "Refresh the page",
-        "Verify conversation history is restored",
-        "Verify messages display correctly with proper formatting",
-        "Verify model badges are preserved"
+        "Send a successful prompt.",
+        "Verify bottom minimized prompt bar appears and form area hides.",
+        "Tap minimized bar or expand button.",
+        "Verify full prompt builder returns with focusable fields."
       ],
       "passes": false
     },
     {
-      "id": "SESSION-003",
+      "id": "FUNC-013",
       "category": "functional",
-      "description": "History sidebar displays past conversations",
+      "description": "Usage counter updates and hides for unlimited/admin users",
       "steps": [
-        "Create multiple conversations with different first messages",
-        "Click the history button (clock icon) in header",
-        "Verify sidebar slides in from left",
-        "Verify conversations are listed with truncated titles",
-        "Verify conversations are grouped by date (Today, Yesterday, Earlier)",
-        "Verify active conversation is highlighted"
+        "Login as limited user and call `GET /api/extension/status` via UI load.",
+        "Verify header shows used/limit counter.",
+        "Login as admin or unlimited user.",
+        "Verify usage counter area is hidden."
       ],
       "passes": false
     },
     {
-      "id": "SESSION-004",
+      "id": "FUNC-014",
       "category": "functional",
-      "description": "Switch between conversations via history sidebar",
+      "description": "Extension request modal supports pending-state and submission rules",
       "steps": [
-        "Create at least two different conversations",
-        "Open history sidebar",
-        "Click on a different conversation",
-        "Verify sidebar closes",
-        "Verify selected conversation loads in chat area",
-        "Verify messages are displayed correctly"
+        "For limited user, open extension modal from usage area.",
+        "Submit reason shorter than 10 chars and verify validation error.",
+        "Submit valid reason and amount.",
+        "Re-open modal with pending request and verify pending notice state."
       ],
       "passes": false
     },
     {
-      "id": "SESSION-005",
+      "id": "FUNC-015",
       "category": "functional",
-      "description": "Delete conversation from history",
+      "description": "Skills manager supports search and category/tag filtering",
       "steps": [
-        "Create a conversation with messages",
-        "Open history sidebar",
-        "Click delete button on a conversation",
-        "Confirm deletion in dialog",
-        "Verify conversation is removed from list",
-        "Verify new session is started if deleted conversation was active"
+        "Open Skills modal.",
+        "Enter keyword in search input.",
+        "Select category and/or tag filters.",
+        "Verify server list updates to matching skills only.",
+        "Clear filters and verify full list returns."
       ],
       "passes": false
     },
     {
-      "id": "SESSION-006",
+      "id": "FUNC-016",
       "category": "functional",
-      "description": "Session title derived from first user message",
+      "description": "Skills can be enabled/disabled and token warning reacts to total content",
       "steps": [
-        "Start a new conversation",
-        "Send a message with a specific first line",
-        "Open history sidebar",
-        "Verify conversation title matches first 50 characters of message",
-        "Verify long messages are truncated with ellipsis"
+        "Open Skills modal and toggle several skills on.",
+        "Verify badge count updates on Skills button.",
+        "Enable enough long skills to exceed warning threshold.",
+        "Verify token warning section appears.",
+        "Disable skills and verify warning hides."
       ],
       "passes": false
     },
     {
-      "id": "SESSION-007",
+      "id": "FUNC-017",
       "category": "functional",
-      "description": "History overlay closes sidebar on click",
+      "description": "AI skill generation starts from assistant response context",
       "steps": [
-        "Open history sidebar",
-        "Click on the dark overlay area",
-        "Verify sidebar closes",
-        "Verify main interface is accessible again"
+        "Send a prompt and wait for assistant response.",
+        "Click \"Build Skill from this Prompt\" on assistant message.",
+        "Verify generation modal opens with loading state.",
+        "Verify preview fields are populated after generation."
       ],
       "passes": false
     },
     {
-      "id": "PROMPT-001",
+      "id": "FUNC-018",
       "category": "functional",
-      "description": "Prompt Builder toggle opens/closes form",
+      "description": "Generated skill save persists metadata and content to server",
       "steps": [
-        "Navigate to main chat interface",
-        "Locate 'Prompt Builder' button above input area",
-        "Click the button",
-        "Verify prompt builder form slides open",
-        "Verify PERSONA field is focused",
-        "Click close button (X) or toggle button again",
-        "Verify form closes"
+        "Generate a skill from an assistant response.",
+        "Edit name/description/category/tags/content in modal.",
+        "Click Save Skill.",
+        "Verify success message and modal close.",
+        "Re-open Skills modal and verify new skill appears."
       ],
       "passes": false
     },
     {
-      "id": "PROMPT-002",
+      "id": "FUNC-019",
       "category": "functional",
-      "description": "Generate prompt with required fields (PERSONA, TASK, CONTEXT)",
+      "description": "Skill edit and delete flows update list immediately",
       "steps": [
-        "Open Prompt Builder",
-        "Fill in PERSONA field",
-        "Fill in TASK field",
-        "Fill in CONTEXT field",
-        "Click 'Generate Prompt' button",
-        "Verify structured prompt appears in main input",
-        "Verify prompt builder closes",
-        "Verify input is focused"
+        "Open Skills modal and click edit on an existing skill.",
+        "Change fields and save.",
+        "Verify updated values in list.",
+        "Re-open edit modal and delete skill with confirmation.",
+        "Verify item is removed from list."
       ],
       "passes": false
     },
     {
-      "id": "PROMPT-003",
+      "id": "FUNC-020",
       "category": "functional",
-      "description": "Prompt Builder validation for required fields",
+      "description": "Skill export supports all skills and enabled-only bundle",
       "steps": [
-        "Open Prompt Builder",
-        "Leave one or more required fields empty",
-        "Click 'Generate Prompt' button",
-        "Verify validation error alert appears",
-        "Verify prompt is not generated until all required fields are filled"
-      ],
-      "passes": false
-    },
-    {
-      "id": "PROMPT-004",
-      "category": "functional",
-      "description": "Prompt Builder optional fields (FORMAT, REFERENCES)",
-      "steps": [
-        "Open Prompt Builder",
-        "Fill in all required fields",
-        "Add content to FORMAT field",
-        "Add content to REFERENCES field",
-        "Generate prompt",
-        "Verify optional fields are included in generated prompt",
-        "Repeat without optional fields",
-        "Verify optional fields are omitted when empty"
-      ],
-      "passes": false
-    },
-    {
-      "id": "PROMPT-005",
-      "category": "functional",
-      "description": "Clear Prompt Builder form with confirmation",
-      "steps": [
-        "Open Prompt Builder",
-        "Fill in multiple fields",
-        "Click 'Clear' button",
-        "Verify confirmation dialog appears",
-        "Confirm clear action",
-        "Verify all fields are emptied",
-        "Verify PERSONA field is focused"
-      ],
-      "passes": false
-    },
-    {
-      "id": "I18N-001",
-      "category": "i18n",
-      "description": "Language toggle between Chinese and English",
-      "steps": [
-        "Navigate to main chat interface",
-        "Note current language (Chinese is default for zh browsers)",
-        "Click language toggle button in header",
-        "Verify all UI text switches language",
-        "Verify button text changes (EN ↔ 中)",
-        "Refresh page",
-        "Verify language preference is persisted"
-      ],
-      "passes": false
-    },
-    {
-      "id": "I18N-002",
-      "category": "i18n",
-      "description": "Language toggle on login page",
-      "steps": [
-        "Navigate to login page",
-        "Click language toggle button",
-        "Verify all labels, placeholders, and buttons change language",
-        "Verify footer text changes",
-        "Verify page title changes"
-      ],
-      "passes": false
-    },
-    {
-      "id": "I18N-003",
-      "category": "i18n",
-      "description": "Browser language auto-detection",
-      "steps": [
-        "Clear localStorage language preference",
-        "Set browser language to Chinese",
-        "Navigate to app",
-        "Verify Chinese is auto-selected",
-        "Clear localStorage and set browser to English",
-        "Navigate to app",
-        "Verify English is auto-selected"
-      ],
-      "passes": false
-    },
-    {
-      "id": "I18N-004",
-      "category": "i18n",
-      "description": "Localized confirmation dialogs",
-      "steps": [
-        "Set language to English",
-        "Click logout button",
-        "Verify confirmation dialog is in English",
-        "Set language to Chinese",
-        "Click logout button",
-        "Verify confirmation dialog is in Chinese"
-      ],
-      "passes": false
-    },
-    {
-      "id": "ADMIN-001",
-      "category": "admin",
-      "description": "Admin panel access control (admin users only)",
-      "steps": [
-        "Login as regular (non-admin) user",
-        "Navigate to /admin.html",
-        "Verify access denied alert appears",
-        "Verify redirect to main chat interface",
-        "Login as admin user",
-        "Navigate to /admin.html",
-        "Verify admin panel loads successfully"
-      ],
-      "passes": false
-    },
-    {
-      "id": "ADMIN-002",
-      "category": "admin",
-      "description": "Admin link visibility in header for admin users",
-      "steps": [
-        "Login as regular user",
-        "Verify admin link is not visible in header",
-        "Logout and login as admin user",
-        "Verify admin link appears in header",
-        "Click admin link",
-        "Verify navigation to admin panel"
-      ],
-      "passes": false
-    },
-    {
-      "id": "ADMIN-003",
-      "category": "admin",
-      "description": "Generate invite codes",
-      "steps": [
-        "Login as admin and navigate to admin panel",
-        "Enter number of codes to generate (1-50)",
-        "Click 'Generate' button",
-        "Verify loading state on button",
-        "Verify success alert shows number of codes generated",
-        "Verify new codes appear in invite list",
-        "Verify codes are marked as 'Available'"
-      ],
-      "passes": false
-    },
-    {
-      "id": "ADMIN-004",
-      "category": "admin",
-      "description": "View invite code statistics",
-      "steps": [
-        "Navigate to admin panel",
-        "Verify statistics cards are displayed",
-        "Verify 'Total Codes' count is correct",
-        "Verify 'Unused' count matches available codes",
-        "Verify 'Used' count matches codes with users"
-      ],
-      "passes": false
-    },
-    {
-      "id": "ADMIN-005",
-      "category": "admin",
-      "description": "View invite code list with details",
-      "steps": [
-        "Navigate to admin panel",
-        "Verify invite codes are listed",
-        "Verify each code shows creation date",
-        "For unused codes, verify 'Available' status",
-        "For used codes, verify user and usage date",
-        "Verify used codes appear faded/grayed out"
-      ],
-      "passes": false
-    },
-    {
-      "id": "ADMIN-006",
-      "category": "admin",
-      "description": "Delete unused invite codes",
-      "steps": [
-        "Navigate to admin panel with at least one unused code",
-        "Click 'Delete' button on an unused code",
-        "Confirm deletion in dialog",
-        "Verify code is removed from list",
-        "Verify statistics update accordingly"
-      ],
-      "passes": false
-    },
-    {
-      "id": "ADMIN-007",
-      "category": "admin",
-      "description": "Cannot delete used invite codes",
-      "steps": [
-        "Navigate to admin panel with a used code",
-        "Verify used codes do not have delete button",
-        "Attempt to delete via API directly",
-        "Verify server returns error"
-      ],
-      "passes": false
-    },
-    {
-      "id": "PWA-001",
-      "category": "pwa",
-      "description": "Service Worker registration",
-      "steps": [
-        "Open browser developer tools",
-        "Navigate to main chat interface",
-        "Check Application > Service Workers",
-        "Verify service worker is registered and active",
-        "Verify cache name is 'ask-qiao-vXX'"
-      ],
-      "passes": false
-    },
-    {
-      "id": "PWA-002",
-      "category": "pwa",
-      "description": "Static assets caching for offline shell",
-      "steps": [
-        "Navigate to main chat interface",
-        "Open developer tools > Application > Cache Storage",
-        "Verify static assets are cached (HTML, CSS, JS, icons)",
-        "Enable offline mode in developer tools",
-        "Refresh page",
-        "Verify app shell loads from cache"
-      ],
-      "passes": false
-    },
-    {
-      "id": "PWA-003",
-      "category": "pwa",
-      "description": "PWA installability (Add to Home Screen)",
-      "steps": [
-        "Open app in Chrome/Safari on mobile",
-        "Verify install prompt appears or is available",
-        "On iOS: tap Share > Add to Home Screen",
-        "On Android: tap menu > Add to Home Screen",
-        "Verify app icon is added to home screen",
-        "Open app from home screen",
-        "Verify app runs in standalone mode (no browser chrome)"
-      ],
-      "passes": false
-    },
-    {
-      "id": "PWA-004",
-      "category": "pwa",
-      "description": "PWA manifest configuration",
-      "steps": [
-        "Open developer tools > Application > Manifest",
-        "Verify name is 'Ask Qiao'",
-        "Verify display mode is 'standalone'",
-        "Verify theme color is set",
-        "Verify icons are configured",
-        "Verify start URL is '/'"
-      ],
-      "passes": false
-    },
-    {
-      "id": "PWA-005",
-      "category": "pwa",
-      "description": "Cache update on new version deployment",
-      "steps": [
-        "Load app to populate cache",
-        "Deploy new version with updated cache name",
-        "Reload the page",
-        "Verify new service worker is installed",
-        "Verify old cache is deleted",
-        "Verify new assets are served"
-      ],
-      "passes": false
-    },
-    {
-      "id": "SECURITY-001",
-      "category": "security",
-      "description": "API rate limiting (60 requests/minute)",
-      "steps": [
-        "Login and obtain valid token",
-        "Make 60 API requests in under 1 minute",
-        "Attempt 61st request",
-        "Verify 429 Too Many Requests response",
-        "Wait 1 minute",
-        "Verify requests are allowed again"
-      ],
-      "passes": false
-    },
-    {
-      "id": "SECURITY-002",
-      "category": "security",
-      "description": "Chat endpoint rate limiting (20 requests/minute)",
-      "steps": [
-        "Login and navigate to chat interface",
-        "Send 20 chat messages rapidly",
-        "Attempt 21st message",
-        "Verify rate limit error is displayed",
-        "Wait 1 minute",
-        "Verify messages can be sent again"
-      ],
-      "passes": false
-    },
-    {
-      "id": "SECURITY-003",
-      "category": "security",
-      "description": "JWT token required for protected endpoints",
-      "steps": [
-        "Clear authentication token",
-        "Attempt to access /api/chat endpoint",
-        "Verify 401 Unauthorized response",
-        "Attempt to access /api/auth/me endpoint",
-        "Verify 401 Unauthorized response",
-        "Attempt to access /api/admin endpoints",
-        "Verify 401 Unauthorized response"
-      ],
-      "passes": false
-    },
-    {
-      "id": "SECURITY-004",
-      "category": "security",
-      "description": "Single-use invite code enforcement",
-      "steps": [
-        "Generate a new invite code",
-        "Use code to register an account",
-        "Attempt to register another account with same code",
-        "Verify error: 'Invite code has already been used'"
-      ],
-      "passes": false
-    },
-    {
-      "id": "SECURITY-005",
-      "category": "security",
-      "description": "Password hashing with bcrypt",
-      "steps": [
-        "Register a new account",
-        "Check database for user record",
-        "Verify password_hash field contains bcrypt hash (starts with $2b$)",
-        "Verify plain text password is not stored"
-      ],
-      "passes": false
-    },
-    {
-      "id": "SECURITY-006",
-      "category": "security",
-      "description": "Input sanitization for chat messages",
-      "steps": [
-        "Send message containing HTML tags",
-        "Verify tags are escaped in display",
-        "Send message containing script tags",
-        "Verify no script execution occurs",
-        "Verify message length is limited to 32000 characters"
-      ],
-      "passes": false
-    },
-    {
-      "id": "SECURITY-007",
-      "category": "security",
-      "description": "Admin endpoint protection",
-      "steps": [
-        "Login as regular (non-admin) user",
-        "Attempt POST to /api/admin/invites",
-        "Verify 403 Forbidden response",
-        "Attempt GET to /api/admin/invites",
-        "Verify 403 Forbidden response"
+        "Open Skills modal.",
+        "Click Export All Skills and verify markdown download starts.",
+        "Enable subset of skills and click Export Enabled Skills.",
+        "Verify downloaded content includes only enabled skills."
       ],
       "passes": false
     },
     {
       "id": "UI-001",
       "category": "ui",
-      "description": "Responsive layout for mobile devices",
+      "description": "Landing mission state appears when chat history is empty",
       "steps": [
-        "Open app on mobile device or use responsive mode",
-        "Verify header elements are properly sized",
-        "Verify chat messages fill available width",
-        "Verify input area is fixed at bottom",
-        "Verify model selector is accessible",
-        "Verify history sidebar covers full screen on mobile"
+        "Open a brand new session with no messages.",
+        "Verify mission title and two descriptive lines appear.",
+        "Verify no model-choice cards are displayed."
       ],
       "passes": false
     },
     {
       "id": "UI-002",
       "category": "ui",
-      "description": "Welcome screen with model selection cards",
+      "description": "Header action layout remains usable on mobile widths",
       "steps": [
-        "Navigate to main interface with no chat history",
-        "Verify welcome message displays",
-        "Verify app icon/logo is shown",
-        "Verify GPT-5.2 and Gemini 3 Flash cards are displayed",
-        "Verify cards show provider badges and descriptions",
-        "Click a card to select model"
+        "Resize viewport to <=480px.",
+        "Verify history/new chat/language/logout icons remain visible and clickable.",
+        "Verify tap targets remain usable without overlap."
       ],
       "passes": false
     },
     {
       "id": "UI-003",
       "category": "ui",
-      "description": "Chat message bubbles with proper styling",
+      "description": "Message bubble alignment and avatars distinguish user vs assistant",
       "steps": [
-        "Send a message",
-        "Verify user messages appear on right side with user avatar",
-        "Verify AI responses appear on left with model avatar",
-        "Verify timestamps are displayed",
-        "Verify model name badge shows on AI responses",
-        "Verify proper spacing between messages"
+        "Send one prompt and receive one assistant response.",
+        "Verify user bubbles align right with user avatar.",
+        "Verify assistant bubbles align left with assistant avatar."
       ],
       "passes": false
     },
     {
       "id": "UI-004",
       "category": "ui",
-      "description": "Typing indicator during AI response",
+      "description": "Markdown formatting renders code blocks, inline code, bold, and italics",
       "steps": [
-        "Send a message",
-        "Verify animated typing dots appear",
-        "Verify dots have pulsing animation",
-        "Verify typing indicator is replaced by actual response"
+        "Submit a prompt that returns markdown syntax.",
+        "Verify triple-backtick blocks render as `<pre><code>`.",
+        "Verify inline code, bold, and italic text render correctly."
       ],
       "passes": false
     },
     {
       "id": "UI-005",
       "category": "ui",
-      "description": "Auto-scroll to bottom for new messages",
+      "description": "Mobile prompt action buttons stack/full-width appropriately",
       "steps": [
-        "Create a conversation long enough to require scrolling",
-        "Send a new message",
-        "Verify view auto-scrolls to bottom",
-        "Verify scroll happens smoothly as streaming content arrives"
+        "Resize to <=480px and open prompt builder.",
+        "Verify clear/send actions are easy to tap and fit width constraints.",
+        "Verify no horizontal overflow in form actions area."
       ],
       "passes": false
     },
     {
       "id": "UI-006",
       "category": "ui",
-      "description": "Send button state management",
+      "description": "Mobile textareas keep 16px input size to avoid iOS zoom",
       "steps": [
-        "Verify send button is disabled when input is empty",
-        "Type a message",
-        "Verify send button becomes enabled",
-        "Send the message",
-        "Verify send button is disabled during streaming",
-        "Verify button re-enables after response completes"
+        "Open app on iOS Safari or emulated mobile viewport.",
+        "Focus each prompt textarea.",
+        "Verify viewport does not auto-zoom during typing."
       ],
       "passes": false
     },
     {
       "id": "UI-007",
       "category": "ui",
-      "description": "Login page tab switching",
+      "description": "Modal layout respects safe areas and viewport height on mobile",
       "steps": [
-        "Navigate to login page",
-        "Verify 'Login' tab is active by default",
-        "Click 'Register' tab",
-        "Verify registration form appears",
-        "Verify login form is hidden",
-        "Click 'Login' tab",
-        "Verify login form appears again"
+        "Open extension and skills modals on <=480px viewport.",
+        "Verify modal body scrolls when content is long.",
+        "Verify modal does not render off-screen behind browser UI bars."
       ],
       "passes": false
     },
     {
       "id": "UI-008",
       "category": "ui",
-      "description": "Error message display on forms",
+      "description": "History overlay closes sidebar when tapping outside",
       "steps": [
-        "Navigate to login page",
-        "Submit empty login form",
-        "Verify error message appears below form",
-        "Enter invalid credentials",
-        "Submit form",
-        "Verify specific error message is shown",
-        "Verify error clears when typing new input"
-      ],
-      "passes": false
-    },
-    {
-      "id": "UI-009",
-      "category": "ui",
-      "description": "Loading states on form submission",
-      "steps": [
-        "Navigate to login page",
-        "Enter valid credentials",
-        "Click submit button",
-        "Verify button shows loading state",
-        "Verify button is disabled during loading",
-        "Verify form inputs are disabled during loading"
+        "Open history sidebar.",
+        "Tap/click overlay outside sidebar panel.",
+        "Verify sidebar closes and overlay disappears."
       ],
       "passes": false
     },
     {
       "id": "API-001",
       "category": "api",
-      "description": "GET /api/auth/me returns current user info",
+      "description": "POST /api/auth/register creates account and returns JWT",
       "steps": [
-        "Login and obtain valid token",
-        "Make GET request to /api/auth/me with token",
-        "Verify response contains user id, username",
-        "Verify response contains isAdmin flag",
-        "Verify response contains created_at timestamp"
+        "Send POST request to `/api/auth/register` with valid username/password.",
+        "Verify 201 response includes `token` and `user` payload.",
+        "Verify `isAdmin` defaults to false for normal users."
       ],
       "passes": false
     },
     {
       "id": "API-002",
       "category": "api",
-      "description": "GET /api/chat/models returns available models",
+      "description": "POST /api/auth/login authenticates existing account",
       "steps": [
-        "Login and obtain valid token",
-        "Make GET request to /api/chat/models with token",
-        "Verify response contains array of models",
-        "Verify each model has id, name, provider, description",
-        "Verify both chatgpt and gemini models are listed"
+        "Send POST `/api/auth/login` with valid credentials.",
+        "Verify 200 response with token and user object.",
+        "Send invalid password and verify error response."
       ],
       "passes": false
     },
     {
       "id": "API-003",
       "category": "api",
-      "description": "POST /api/chat sends message with streaming response",
+      "description": "GET /api/auth/me returns authenticated user profile",
       "steps": [
-        "Login and obtain valid token",
-        "Make POST request to /api/chat with message and model",
-        "Verify response headers include text/event-stream",
-        "Verify SSE events are received with chunk type",
-        "Verify done event is received at end",
-        "Verify complete response is assembled from chunks"
+        "Call `/api/auth/me` with valid Bearer token.",
+        "Verify 200 and user fields: id, username, isAdmin, created_at.",
+        "Call without token and verify unauthorized response."
       ],
       "passes": false
     },
     {
       "id": "API-004",
       "category": "api",
-      "description": "POST /api/auth/login authenticates user",
+      "description": "GET /api/chat/models returns ChatGPT-only model metadata",
       "steps": [
-        "Make POST request with valid credentials",
-        "Verify success response with token",
-        "Verify response includes user object",
-        "Make POST request with invalid credentials",
-        "Verify 401 error response"
+        "Call `/api/chat/models` with valid token.",
+        "Verify models array is returned.",
+        "Verify entry id is `chatgpt` and model resolves to `gpt-5.2` default."
       ],
       "passes": false
     },
     {
       "id": "API-005",
       "category": "api",
-      "description": "POST /api/auth/verify registers new user with invite code",
+      "description": "POST /api/chat streams SSE chunk/done/error events",
       "steps": [
-        "Generate a valid invite code",
-        "Make POST request with code, username, password",
-        "Verify success response with token",
-        "Verify user object is returned",
-        "Verify invite code is marked as used"
+        "Send valid structured prompt to `/api/chat` with token.",
+        "Verify response content-type is `text/event-stream`.",
+        "Verify one or more `chunk` events are received.",
+        "Verify terminal `done` event includes usage object."
       ],
       "passes": false
     },
     {
-      "id": "DEPLOY-001",
+      "id": "API-006",
+      "category": "api",
+      "description": "GET /api/extension/status returns usage + request metadata",
+      "steps": [
+        "Call `/api/extension/status` with valid token.",
+        "Verify response contains usage counters and unlimited flag.",
+        "Verify pending request info is included when applicable."
+      ],
+      "passes": false
+    },
+    {
+      "id": "API-007",
+      "category": "api",
+      "description": "POST /api/extension/request submits extension request",
+      "steps": [
+        "Send reason and requested amount to `/api/extension/request`.",
+        "Verify success response and pending request creation.",
+        "Send invalid reason length and verify validation error."
+      ],
+      "passes": false
+    },
+    {
+      "id": "API-008",
+      "category": "api",
+      "description": "POST /api/skills/generate returns AI-generated skill preview",
+      "steps": [
+        "Send persona/task/context/answer payload to `/api/skills/generate`.",
+        "Verify success response with `skill` name/description/content.",
+        "Verify invalid payload returns validation details."
+      ],
+      "passes": false
+    },
+    {
+      "id": "API-009",
+      "category": "api",
+      "description": "GET /api/skills supports list filters and pagination",
+      "steps": [
+        "Call `/api/skills` with search, category, tag, enabled, page, and limit params.",
+        "Verify pagination metadata and filtered skill list are returned."
+      ],
+      "passes": false
+    },
+    {
+      "id": "API-010",
+      "category": "api",
+      "description": "POST /api/skills creates persisted skill records",
+      "steps": [
+        "Send valid skill payload to `/api/skills`.",
+        "Verify 201 response with saved skill metadata.",
+        "Verify invalid empty name/content is rejected."
+      ],
+      "passes": false
+    },
+    {
+      "id": "API-011",
+      "category": "api",
+      "description": "GET /api/skills/:id returns full skill including content",
+      "steps": [
+        "Create a skill and capture its id.",
+        "Call `/api/skills/:id`.",
+        "Verify content/source_prompt fields are present."
+      ],
+      "passes": false
+    },
+    {
+      "id": "API-012",
+      "category": "api",
+      "description": "PUT /api/skills/:id updates editable skill fields",
+      "steps": [
+        "Send update payload to `/api/skills/:id`.",
+        "Verify updated values are returned and persisted.",
+        "Verify invalid size constraints are rejected."
+      ],
+      "passes": false
+    },
+    {
+      "id": "API-013",
+      "category": "api",
+      "description": "DELETE /api/skills/:id removes skill",
+      "steps": [
+        "Delete an existing skill via `/api/skills/:id`.",
+        "Verify success response.",
+        "Verify subsequent fetch returns not found."
+      ],
+      "passes": false
+    },
+    {
+      "id": "API-014",
+      "category": "api",
+      "description": "PATCH /api/skills/:id/toggle flips enabled state",
+      "steps": [
+        "Call `/api/skills/:id/toggle` on existing skill.",
+        "Verify `enabled` boolean changes in response and list view."
+      ],
+      "passes": false
+    },
+    {
+      "id": "API-015",
+      "category": "api",
+      "description": "GET /api/skills/export supports bundled and enabled-only exports",
+      "steps": [
+        "Call `/api/skills/export?bundle=true` and verify single markdown blob response.",
+        "Call `/api/skills/export?enabled=true&bundle=true` and verify only enabled skills are included."
+      ],
+      "passes": false
+    },
+    {
+      "id": "API-016",
+      "category": "api",
+      "description": "Category and tag endpoints power skill filters",
+      "steps": [
+        "Call `/api/skills/categories/list`, `/api/skills/categories`, `/api/skills/categories/:id`, and `/api/skills/tags/list`.",
+        "Verify category creation/deletion and tag aggregation behavior."
+      ],
+      "passes": false
+    },
+    {
+      "id": "API-017",
+      "category": "api",
+      "description": "GET /api/skills/enabled/list returns enabled skills for prompt prefixing",
+      "steps": [
+        "Call `/api/skills/enabled/list` with token.",
+        "Verify only enabled skills are returned with full content."
+      ],
+      "passes": false
+    },
+    {
+      "id": "API-018",
+      "category": "api",
+      "description": "Admin extension endpoints list/review requests",
+      "steps": [
+        "As admin, call `/api/admin/extensions` with optional status filter.",
+        "Approve one request via `/api/admin/extensions/:id/approve`.",
+        "Reject another via `/api/admin/extensions/:id/reject`.",
+        "Verify request state transitions and audit fields."
+      ],
+      "passes": false
+    },
+    {
+      "id": "API-019",
+      "category": "api",
+      "description": "Admin users endpoint returns usage overview",
+      "steps": [
+        "As admin, call `GET /api/admin/users`.",
+        "Verify each user row includes usage counts/limits and account metadata."
+      ],
+      "passes": false
+    },
+    {
+      "id": "API-020",
+      "category": "api",
+      "description": "Admin invite endpoints support create/list/delete",
+      "steps": [
+        "As admin, call `POST /api/admin/invites` with count 1-50.",
+        "Call `GET /api/admin/invites` and verify created codes appear.",
+        "Delete an unused code via `DELETE /api/admin/invites/:id` and verify success."
+      ],
+      "passes": false
+    },
+    {
+      "id": "SEC-001",
+      "category": "security",
+      "description": "JWT authentication blocks missing token on protected routes",
+      "steps": [
+        "Call protected endpoint without Authorization header.",
+        "Verify unauthorized response and no protected data leakage."
+      ],
+      "passes": false
+    },
+    {
+      "id": "SEC-002",
+      "category": "security",
+      "description": "JWT verification blocks invalid/expired tokens",
+      "steps": [
+        "Call protected endpoint with malformed or expired token.",
+        "Verify 403 response with invalid token error."
+      ],
+      "passes": false
+    },
+    {
+      "id": "SEC-003",
+      "category": "security",
+      "description": "Admin authorization blocks non-admin access to admin routes",
+      "steps": [
+        "Call `/api/admin/*` routes with a non-admin token.",
+        "Verify forbidden response for admin endpoints."
+      ],
+      "passes": false
+    },
+    {
+      "id": "SEC-004",
+      "category": "security",
+      "description": "Usage-limit middleware blocks chat when quota is exhausted",
+      "steps": [
+        "Use a limited user at quota boundary.",
+        "Call `POST /api/chat` after limit is reached.",
+        "Verify 403 `usage_limit_exceeded` payload with usage counts."
+      ],
+      "passes": false
+    },
+    {
+      "id": "SEC-005",
+      "category": "security",
+      "description": "Rate limiting protects API and chat endpoints",
+      "steps": [
+        "Burst requests beyond configured thresholds (60/min API, 20/min chat).",
+        "Verify rate-limit error responses appear once thresholds are exceeded."
+      ],
+      "passes": false
+    },
+    {
+      "id": "SEC-006",
+      "category": "security",
+      "description": "Chat file validation enforces mime, size, and structure constraints",
+      "steps": [
+        "Submit file payload with invalid MIME types and oversized base64 payload.",
+        "Verify invalid files are ignored/rejected by backend sanitization.",
+        "Verify only allowed types are forwarded to AI service."
+      ],
+      "passes": false
+    },
+    {
+      "id": "SEC-007",
+      "category": "security",
+      "description": "Skill generation endpoint has per-user limiter",
+      "steps": [
+        "Call `/api/skills/generate` repeatedly with same user.",
+        "Verify limiter response after 10 requests/hour for non-admin users."
+      ],
+      "passes": false
+    },
+    {
+      "id": "SEC-008",
+      "category": "security",
+      "description": "Input length limits protect prompt and skill persistence",
+      "steps": [
+        "Submit oversized chat message/history and oversized skill fields.",
+        "Verify message/history are truncated safely and skill validations reject over-limit values."
+      ],
+      "passes": false
+    },
+    {
+      "id": "ADM-001",
+      "category": "admin",
+      "description": "Admin panel fetches extension stats and request list",
+      "steps": [
+        "Login as admin and open `/admin.html`.",
+        "Verify stats cards and request list load from `/api/admin/extensions`."
+      ],
+      "passes": false
+    },
+    {
+      "id": "ADM-002",
+      "category": "admin",
+      "description": "Admin can filter extension requests by status tabs",
+      "steps": [
+        "Open admin page and switch between pending/approved/rejected/all filters.",
+        "Verify list updates according to selected status filter."
+      ],
+      "passes": false
+    },
+    {
+      "id": "ADM-003",
+      "category": "admin",
+      "description": "Admin approve flow grants finite prompt amount",
+      "steps": [
+        "Open a pending request in admin panel.",
+        "Approve with numeric grant amount.",
+        "Verify requester usage_limit/remaining is updated accordingly."
+      ],
+      "passes": false
+    },
+    {
+      "id": "ADM-004",
+      "category": "admin",
+      "description": "Admin approve flow grants unlimited access",
+      "steps": [
+        "Approve a pending request as unlimited.",
+        "Verify requester `is_unlimited` becomes true and limit checks are bypassed."
+      ],
+      "passes": false
+    },
+    {
+      "id": "ADM-005",
+      "category": "admin",
+      "description": "Admin reject flow stores response message",
+      "steps": [
+        "Reject a pending extension request with optional admin response.",
+        "Verify status changes to rejected and response text is stored/displayed."
+      ],
+      "passes": false
+    },
+    {
+      "id": "ADM-006",
+      "category": "admin",
+      "description": "Admin can view user usage overview list",
+      "steps": [
+        "Load admin users view/data.",
+        "Verify each row includes username, usage_count, usage_limit, and unlimited/admin flags."
+      ],
+      "passes": false
+    },
+    {
+      "id": "PWA-001",
+      "category": "pwa",
+      "description": "Manifest enables installable standalone app shell",
+      "steps": [
+        "Open `manifest.json` and verify name, short_name, start_url, display, and icon entries.",
+        "Trigger browser install flow and verify app can be added to home screen."
+      ],
+      "passes": false
+    },
+    {
+      "id": "PWA-002",
+      "category": "pwa",
+      "description": "Service worker registers on app load",
+      "steps": [
+        "Open `/` in supported browser with devtools Application tab.",
+        "Verify `sw.js` is registered and active for site scope."
+      ],
+      "passes": false
+    },
+    {
+      "id": "PWA-003",
+      "category": "pwa",
+      "description": "Service worker cache warm-up stores app shell assets",
+      "steps": [
+        "Install/open app online once.",
+        "Inspect cache storage for app shell entries (HTML/CSS/JS/icons)."
+      ],
+      "passes": false
+    },
+    {
+      "id": "PWA-004",
+      "category": "pwa",
+      "description": "Service worker bypasses API caching and uses network-first for core assets",
+      "steps": [
+        "Call `/api/*` endpoints while observing service worker fetch handling.",
+        "Verify API responses are not cached.",
+        "Verify HTML/CSS/JS requests prefer network and update cache on success."
+      ],
+      "passes": false
+    },
+    {
+      "id": "PWA-005",
+      "category": "pwa",
+      "description": "Service worker update flow triggers skip-waiting and controlled reload",
+      "steps": [
+        "Deploy an updated `sw.js` version.",
+        "Verify waiting worker receives `SKIP_WAITING` message.",
+        "Verify page reloads after `controllerchange` once new worker activates."
+      ],
+      "passes": false
+    },
+    {
+      "id": "I18N-001",
+      "category": "i18n",
+      "description": "Language detection initializes zh-CN or en-US and persists choice",
+      "steps": [
+        "Clear `language` in local storage.",
+        "Load page with zh browser locale and verify Chinese default.",
+        "Switch language and reload page.",
+        "Verify selected language persists."
+      ],
+      "passes": false
+    },
+    {
+      "id": "I18N-002",
+      "category": "i18n",
+      "description": "Language toggle updates visible labels and placeholders in real time",
+      "steps": [
+        "Click language toggle on main app.",
+        "Verify header labels, button texts, placeholders, and mission copy update without reload."
+      ],
+      "passes": false
+    },
+    {
+      "id": "I18N-003",
+      "category": "i18n",
+      "description": "Template interpolation supports parameterized translated strings",
+      "steps": [
+        "Trigger UI that uses variable placeholders (e.g., file count / import/export messages).",
+        "Verify translated strings interpolate dynamic values correctly."
+      ],
+      "passes": false
+    },
+    {
+      "id": "I18N-004",
+      "category": "i18n",
+      "description": "Localized page titles update through i18n binding",
+      "steps": [
+        "Switch language on login and app pages.",
+        "Verify document title updates according to `data-i18n` title keys."
+      ],
+      "passes": false
+    },
+    {
+      "id": "DEP-001",
       "category": "deployment",
-      "description": "Vercel serverless function deployment",
+      "description": "Local server serves static assets and SPA fallback for non-API paths",
       "steps": [
-        "Push code to GitHub repository",
-        "Verify Vercel auto-deployment triggers",
-        "Verify all environment variables are configured",
-        "Verify API routes are accessible at /api/*",
-        "Verify static files are served correctly",
-        "Verify SPA routing works for client-side routes"
+        "Start `server/index.js` locally.",
+        "Request `/`, `/login.html`, and unknown non-API path.",
+        "Verify static assets are served and SPA fallback returns index for non-API routes."
       ],
       "passes": false
     },
     {
-      "id": "DEPLOY-002",
+      "id": "DEP-002",
       "category": "deployment",
-      "description": "MongoDB Atlas connection in production",
+      "description": "Vercel serverless entry mounts same route set as local server",
       "steps": [
-        "Verify MONGODB_* environment variables are set",
-        "Deploy to Vercel",
-        "Test login functionality",
-        "Verify database connection is established",
-        "Verify user data is persisted",
-        "Verify invite codes are managed correctly"
+        "Inspect `api/index.js` routing table.",
+        "Verify auth/chat/admin/extension/skills routes are mounted consistently."
       ],
       "passes": false
     },
     {
-      "id": "MODEL-001",
+      "id": "DEP-003",
+      "category": "deployment",
+      "description": "MongoDB connection initializes once and is reused in serverless handler",
+      "steps": [
+        "Inspect `ensureDBConnection` flow in `api/index.js`.",
+        "Verify connection guard avoids repeated initialization on warm invocations."
+      ],
+      "passes": false
+    },
+    {
+      "id": "DEP-004",
+      "category": "deployment",
+      "description": "Environment defaults enforce ChatGPT-only model configuration",
+      "steps": [
+        "Inspect `env.example` and `server/config.js`.",
+        "Verify only `OPENAI_API_KEY` and `OPENAI_MODEL` are required for AI runtime."
+      ],
+      "passes": false
+    },
+    {
+      "id": "AI-001",
       "category": "ai",
-      "description": "OpenAI model auto-selection (latest GPT)",
+      "description": "ChatGPT-only runtime selection with default `gpt-5.2` model",
       "steps": [
-        "Configure OPENAI_MODEL as 'latest'",
-        "Start server",
-        "Send a chat message using GPT",
-        "Check server logs for auto-selected model name",
-        "Verify model caching works (1 hour TTL)"
+        "Call `/api/chat/models`.",
+        "Verify only `chatgpt` provider/model is exposed.",
+        "Verify default model value resolves to `gpt-5.2` unless overridden."
       ],
       "passes": false
     },
     {
-      "id": "MODEL-002",
+      "id": "AI-002",
       "category": "ai",
-      "description": "Gemini model auto-selection (latest Flash)",
+      "description": "OpenAI chat streaming handles text, extracted documents, and image attachments",
       "steps": [
-        "Configure GEMINI_MODEL as 'latest'",
-        "Start server",
-        "Send a chat message using Gemini",
-        "Check server logs for auto-selected model name",
-        "Verify model caching works (1 hour TTL)"
+        "Send chat with document extractedText and image base64 payload.",
+        "Verify backend formats final user message with document context and image_url entries.",
+        "Verify stream returns completion chunks."
       ],
       "passes": false
     },
     {
-      "id": "MODEL-003",
+      "id": "AI-003",
       "category": "ai",
-      "description": "Conversation history passed to AI for context",
+      "description": "Skill generation uses prompt + model answer context",
       "steps": [
-        "Start a new conversation",
-        "Send initial message and receive response",
-        "Send follow-up question referencing previous context",
-        "Verify AI response demonstrates context awareness",
-        "Verify history is properly formatted for each provider"
+        "Call `/api/skills/generate` with persona/task/context/answer.",
+        "Verify generated markdown includes name/description and reusable skill instructions."
       ],
       "passes": false
     },
     {
-      "id": "FILE-001",
-      "category": "fileUpload",
-      "description": "File upload via click to select",
+      "id": "AI-004",
+      "category": "ai",
+      "description": "Enabled skills are prepended as `[SKILLS]` prefix before prompt send",
       "steps": [
-        "Navigate to prompt builder (click model card)",
-        "Locate file upload area in CONTEXT section",
-        "Click on the upload zone",
-        "Verify file picker dialog opens",
-        "Select an image file (PNG, JPG, GIF, WebP)",
-        "Verify file appears in preview list",
-        "Verify file count updates (e.g., 1/5)"
+        "Enable multiple skills in Skills modal.",
+        "Send prompt and inspect user message payload locally.",
+        "Verify `[SKILLS]` section appears before structured prompt blocks."
       ],
       "passes": false
     },
     {
-      "id": "FILE-002",
-      "category": "fileUpload",
-      "description": "File upload via drag and drop",
+      "id": "AI-005",
+      "category": "ai",
+      "description": "Generated skill save stores source_prompt metadata for traceability",
       "steps": [
-        "Navigate to prompt builder",
-        "Drag an image file over the upload zone",
-        "Verify zone highlights with border color change",
-        "Drop the file",
-        "Verify file appears in preview list",
-        "Verify drag-over styling is removed"
+        "Generate a skill from assistant response and save it.",
+        "Fetch saved skill via `/api/skills/:id`.",
+        "Verify `source_prompt` metadata is present."
       ],
       "passes": false
     },
     {
-      "id": "FILE-003",
-      "category": "fileUpload",
-      "description": "File upload via clipboard paste",
+      "id": "AI-006",
+      "category": "ai",
+      "description": "Skill generation validation requires meaningful persona/task/answer content",
       "steps": [
-        "Navigate to prompt builder",
-        "Copy an image to clipboard (screenshot or copy image)",
-        "Focus on the context textarea or upload area",
-        "Press Ctrl+V / Cmd+V",
-        "Verify pasted image appears in preview list",
-        "Verify auto-generated filename (pasted-image-timestamp.ext)"
-      ],
-      "passes": false
-    },
-    {
-      "id": "FILE-004",
-      "category": "fileUpload",
-      "description": "File type validation by model",
-      "steps": [
-        "Select GPT-5.2 model",
-        "Attempt to upload a PDF file",
-        "Verify error: PDF only supported by Gemini",
-        "Switch to Gemini model",
-        "Upload the same PDF file",
-        "Verify PDF is accepted and shows in preview"
-      ],
-      "passes": false
-    },
-    {
-      "id": "FILE-005",
-      "category": "fileUpload",
-      "description": "Supported file formats (PNG, JPG, GIF, WebP, HEIC, PDF)",
-      "steps": [
-        "Select Gemini model (supports all formats)",
-        "Upload PNG image - verify accepted",
-        "Upload JPG image - verify accepted",
-        "Upload GIF image - verify accepted",
-        "Upload WebP image - verify accepted",
-        "Upload PDF document - verify accepted",
-        "Attempt to upload unsupported format (e.g., .doc)",
-        "Verify error message for unsupported type"
-      ],
-      "passes": false
-    },
-    {
-      "id": "FILE-006",
-      "category": "fileUpload",
-      "description": "File size limit enforcement (20MB max)",
-      "steps": [
-        "Attempt to upload a file larger than 20MB",
-        "Verify error message: file too large",
-        "Upload a file under 20MB",
-        "Verify file is accepted"
-      ],
-      "passes": false
-    },
-    {
-      "id": "FILE-007",
-      "category": "fileUpload",
-      "description": "Maximum file count limit (5 files)",
-      "steps": [
-        "Upload 5 files one by one",
-        "Verify count shows 5/5",
-        "Verify count indicator turns red/warning color",
-        "Attempt to upload a 6th file",
-        "Verify error: maximum 5 files allowed",
-        "Remove one file",
-        "Verify 6th file can now be uploaded"
-      ],
-      "passes": false
-    },
-    {
-      "id": "FILE-008",
-      "category": "fileUpload",
-      "description": "File preview with thumbnails for images",
-      "steps": [
-        "Upload an image file",
-        "Verify thumbnail preview is displayed",
-        "Verify filename is shown (truncated if long)",
-        "Hover over preview item",
-        "Verify remove button (X) appears",
-        "Verify full filename in title tooltip"
-      ],
-      "passes": false
-    },
-    {
-      "id": "FILE-009",
-      "category": "fileUpload",
-      "description": "File preview for documents (PDF)",
-      "steps": [
-        "Upload a PDF file (using Gemini)",
-        "Verify document icon is displayed (not thumbnail)",
-        "Verify filename and file size are shown",
-        "Verify remove button functionality"
-      ],
-      "passes": false
-    },
-    {
-      "id": "FILE-010",
-      "category": "fileUpload",
-      "description": "Remove file from upload list",
-      "steps": [
-        "Upload multiple files",
-        "Click remove button (X) on one file",
-        "Verify file is removed from preview list",
-        "Verify file count decreases",
-        "Verify other files remain"
-      ],
-      "passes": false
-    },
-    {
-      "id": "FILE-011",
-      "category": "fileUpload",
-      "description": "File compatibility warning when switching models",
-      "steps": [
-        "Select Gemini model",
-        "Upload a PDF file",
-        "Switch to GPT-5.2 model",
-        "Verify warning alert about incompatible files",
-        "Verify PDF preview shows incompatible indicator",
-        "Send message - verify PDF is excluded for GPT"
-      ],
-      "passes": false
-    },
-    {
-      "id": "FILE-012",
-      "category": "fileUpload",
-      "description": "Large image compression (>2MB auto-compressed)",
-      "steps": [
-        "Upload an image larger than 2MB",
-        "Verify compression happens (check console log)",
-        "Verify compressed size is smaller",
-        "Verify image quality is acceptable",
-        "Verify max dimension is 2048px"
-      ],
-      "passes": false
-    },
-    {
-      "id": "FILE-013",
-      "category": "fileUpload",
-      "description": "Files cleared when clearing prompt form",
-      "steps": [
-        "Upload some files",
-        "Fill in prompt builder fields",
-        "Click 'Clear' button",
-        "Confirm clear action",
-        "Verify all files are removed",
-        "Verify file count resets to 0/5"
-      ],
-      "passes": false
-    },
-    {
-      "id": "FILE-014",
-      "category": "fileUpload",
-      "description": "File attachment indicator in chat messages",
-      "steps": [
-        "Upload files and send a message",
-        "Verify user message shows file attachment indicator",
-        "Verify indicator shows file count (e.g., '2 files')",
-        "Verify paperclip icon is displayed"
-      ],
-      "passes": false
-    },
-    {
-      "id": "FILE-015",
-      "category": "fileUpload",
-      "description": "Files sent to AI model with message",
-      "steps": [
-        "Upload an image file",
-        "Fill in prompt builder",
-        "Send the prompt",
-        "Verify AI response references the image content",
-        "Verify files are cleared after successful send"
-      ],
-      "passes": false
-    },
-    {
-      "id": "FILE-016",
-      "category": "fileUpload",
-      "description": "Upload progress indicator",
-      "steps": [
-        "Upload a larger file",
-        "Verify loading state on upload zone",
-        "Verify progress bar appears",
-        "Verify progress percentage updates",
-        "Verify zone returns to normal after upload"
-      ],
-      "passes": false
-    },
-    {
-      "id": "FILE-017",
-      "category": "fileUpload",
-      "description": "Keyboard accessibility for file upload",
-      "steps": [
-        "Tab to file upload zone",
-        "Verify zone receives focus with visible outline",
-        "Press Enter or Space",
-        "Verify file picker dialog opens"
-      ],
-      "passes": false
-    },
-    {
-      "id": "USAGE-001",
-      "category": "usage",
-      "description": "Usage counter display for limited users",
-      "steps": [
-        "Login as a regular (non-admin) user",
-        "Verify usage counter appears in header (e.g., 0/5)",
-        "Send a prompt successfully",
-        "Verify counter increments (e.g., 1/5)",
-        "Verify counter has warning style when near limit"
-      ],
-      "passes": false
-    },
-    {
-      "id": "USAGE-002",
-      "category": "usage",
-      "description": "Usage counter hidden for admin/unlimited users",
-      "steps": [
-        "Login as admin user",
-        "Verify usage counter is NOT displayed",
-        "Login as user with unlimited access",
-        "Verify usage counter is NOT displayed"
-      ],
-      "passes": false
-    },
-    {
-      "id": "USAGE-003",
-      "category": "usage",
-      "description": "Usage limit enforcement (5 free prompts)",
-      "steps": [
-        "Login as new user with 0 usage",
-        "Send 5 prompts successfully",
-        "Attempt to send 6th prompt",
-        "Verify extension request modal appears",
-        "Verify cannot send more prompts until approved"
-      ],
-      "passes": false
-    },
-    {
-      "id": "USAGE-004",
-      "category": "usage",
-      "description": "Apply for Unlimited button functionality",
-      "steps": [
-        "Login as limited user",
-        "Click the + button next to usage counter",
-        "Verify extension request modal opens",
-        "Verify 'Unlimited' option is pre-selected"
-      ],
-      "passes": false
-    },
-    {
-      "id": "EXT-001",
-      "category": "extension",
-      "description": "Submit extension request for more prompts",
-      "steps": [
-        "Login as limited user who has reached limit",
-        "Click 'Apply for Unlimited' or trigger limit modal",
-        "Select amount (5, 10, 20, or Unlimited)",
-        "Enter reason (minimum 10 characters)",
-        "Submit request",
-        "Verify success message",
-        "Verify pending status is shown"
-      ],
-      "passes": false
-    },
-    {
-      "id": "EXT-002",
-      "category": "extension",
-      "description": "Extension request form validation",
-      "steps": [
-        "Open extension request modal",
-        "Try to submit with empty reason",
-        "Verify error: reason required",
-        "Enter less than 10 characters",
-        "Try to submit",
-        "Verify error: minimum 10 characters"
-      ],
-      "passes": false
-    },
-    {
-      "id": "EXT-003",
-      "category": "extension",
-      "description": "Pending extension request status display",
-      "steps": [
-        "Submit an extension request",
-        "Open extension modal again",
-        "Verify pending status is displayed",
-        "Verify form is hidden while request is pending"
-      ],
-      "passes": false
-    },
-    {
-      "id": "EXT-004",
-      "category": "extension",
-      "description": "Admin approve extension request",
-      "steps": [
-        "Login as admin",
-        "Navigate to admin panel",
-        "View pending extension requests",
-        "Click 'Approve' on a request",
-        "Verify request status changes to approved",
-        "Login as the requesting user",
-        "Verify usage limit is increased"
-      ],
-      "passes": false
-    },
-    {
-      "id": "EXT-005",
-      "category": "extension",
-      "description": "Admin reject extension request",
-      "steps": [
-        "Login as admin",
-        "Navigate to admin panel",
-        "View pending extension requests",
-        "Click 'Reject' on a request",
-        "Verify request status changes to rejected",
-        "Login as the requesting user",
-        "Verify usage limit unchanged"
-      ],
-      "passes": false
-    },
-    {
-      "id": "EXT-006",
-      "category": "extension",
-      "description": "Admin extension request filtering",
-      "steps": [
-        "Navigate to admin panel",
-        "Click 'Pending' tab - verify only pending requests shown",
-        "Click 'Approved' tab - verify only approved shown",
-        "Click 'Rejected' tab - verify only rejected shown",
-        "Click 'All' tab - verify all requests shown"
-      ],
-      "passes": false
-    },
-    {
-      "id": "LAYOUT-001",
-      "category": "layout",
-      "description": "Model selection as full-page landing",
-      "steps": [
-        "Login and navigate to main interface",
-        "Verify model selection cards take full page",
-        "Verify prompt builder is NOT visible initially",
-        "Verify welcome message with Qiao icon is centered"
-      ],
-      "passes": false
-    },
-    {
-      "id": "LAYOUT-002",
-      "category": "layout",
-      "description": "Prompt builder slides up after model selection",
-      "steps": [
-        "On landing page, click a model card (GPT or Gemini)",
-        "Verify prompt builder slides up from bottom",
-        "Verify smooth animation (0.5s ease)",
-        "Verify prompt builder takes full page below header",
-        "Verify first input (PERSONA) is focused"
-      ],
-      "passes": false
-    },
-    {
-      "id": "LAYOUT-003",
-      "category": "layout",
-      "description": "Change Model button returns to landing",
-      "steps": [
-        "Select a model and enter prompt builder",
-        "Click 'Change Model' button in header",
-        "Verify prompt builder slides down",
-        "Verify landing page with model cards appears",
-        "Verify smooth animation"
-      ],
-      "passes": false
-    },
-    {
-      "id": "LAYOUT-004",
-      "category": "layout",
-      "description": "New Chat button returns to model selection",
-      "steps": [
-        "Have an active conversation in prompt builder",
-        "Click 'New Chat' (+) button",
-        "Verify prompt builder closes",
-        "Verify landing page appears",
-        "Verify prompt form fields are cleared"
-      ],
-      "passes": false
-    },
-    {
-      "id": "LAYOUT-005",
-      "category": "layout",
-      "description": "Responsive layout on mobile devices",
-      "steps": [
-        "Open app on mobile device or responsive mode",
-        "Verify model cards stack vertically on small screens",
-        "Select a model",
-        "Verify prompt builder fills screen properly",
-        "Verify action buttons are full-width on mobile",
-        "Verify safe-area-insets for notched phones"
-      ],
-      "passes": false
-    },
-    {
-      "id": "WELCOME-001",
-      "category": "welcome",
-      "description": "Welcome modal for new limited users",
-      "steps": [
-        "Login as a new user (first time)",
-        "Verify welcome modal appears immediately",
-        "Verify modal shows remaining prompt count",
-        "Verify 'Apply for Unlimited' option is available",
-        "Click 'Got it' button",
-        "Verify modal shrinks and animates to usage counter"
-      ],
-      "passes": false
-    },
-    {
-      "id": "WELCOME-002",
-      "category": "welcome",
-      "description": "Welcome modal NOT shown for admin/unlimited users",
-      "steps": [
-        "Login as admin user",
-        "Verify welcome modal does NOT appear",
-        "Login as user with unlimited access",
-        "Verify welcome modal does NOT appear"
-      ],
-      "passes": false
-    },
-    {
-      "id": "WELCOME-003",
-      "category": "welcome",
-      "description": "Welcome modal only shown once per session",
-      "steps": [
-        "Login as new limited user",
-        "Dismiss welcome modal",
-        "Refresh the page",
-        "Verify welcome modal does NOT appear again",
-        "Clear sessionStorage",
-        "Refresh page",
-        "Verify modal appears again"
+        "Send `/api/skills/generate` request with short persona/task/answer values (<10 chars).",
+        "Verify validation errors specify missing/insufficient fields."
       ],
       "passes": false
     }
   ],
   "categories": {
-    "authentication": "User authentication and authorization features",
-    "functional": "Core application functionality",
-    "i18n": "Internationalization and localization",
-    "admin": "Administrative panel features",
-    "pwa": "Progressive Web App capabilities",
-    "security": "Security measures and protections",
-    "ui": "User interface and visual elements",
-    "api": "Backend API endpoints",
-    "deployment": "Deployment and infrastructure",
-    "ai": "AI model integration features",
-    "fileUpload": "File upload and attachment features",
-    "usage": "Usage tracking and limits",
-    "extension": "Extension request system for more prompts",
-    "layout": "Page layout and navigation flow",
-    "welcome": "Welcome modal and onboarding"
+    "authentication": "User authentication and session features",
+    "functional": "Core user workflows and business logic",
+    "ui": "Interface behavior and responsive interactions",
+    "api": "Backend API endpoints and contracts",
+    "security": "Authorization, rate limiting, and validation controls",
+    "admin": "Administrative panel and review workflows",
+    "pwa": "Progressive Web App install/offline/update behavior",
+    "i18n": "Localization and language switching",
+    "deployment": "Runtime wiring, environment, and hosting setup",
+    "ai": "AI model and skill-generation integrations"
   },
   "summary": {
-    "total": 105,
+    "total": 88,
     "byCategory": {
-      "authentication": 6,
-      "functional": 18,
-      "i18n": 4,
-      "admin": 7,
+      "authentication": 7,
+      "functional": 20,
+      "ui": 8,
+      "api": 20,
+      "security": 8,
+      "admin": 6,
       "pwa": 5,
-      "security": 7,
-      "ui": 9,
-      "api": 5,
-      "deployment": 2,
-      "ai": 3,
-      "fileUpload": 17,
-      "usage": 4,
-      "extension": 6,
-      "layout": 5,
-      "welcome": 3
+      "i18n": 4,
+      "deployment": 4,
+      "ai": 6
     }
   }
 }

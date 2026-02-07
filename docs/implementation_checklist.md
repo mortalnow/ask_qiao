@@ -1,4 +1,7 @@
-# Implementation Checklist: Prompt-Based AI Service
+# Implementation Checklist: Prompt-Based AI Service (Archived)
+
+> Status: historical checklist from an earlier migration phase.
+> It remains as implementation history and may not reflect the latest architecture decisions.
 
 ## Phase 2: Database Schema Changes
 

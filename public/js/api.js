@@ -165,7 +165,7 @@ async function getModels() {
 /**
  * Send chat message with streaming response
  * @param {string} message - User message
- * @param {string} model - Model ID (chatgpt or gemini)
+ * @param {string} model - Model ID (chatgpt)
  * @param {Array} history - Conversation history
  * @param {Array|null} files - Optional array of file objects { name, mimeType, data (base64) }
  * @param {AbortSignal|null} signal - Optional abort signal to cancel the request
@@ -567,7 +567,7 @@ async function toggleSkill(id) {
 
 /**
  * Generate a skill from a structured prompt using AI
- * @param {Object} prompt - { persona, task, context, format, references }
+ * @param {Object} prompt - { persona, task, context, format, references, answer }
  * @returns {Object} - { success, skill: { name, description, content }, source_prompt }
  */
 async function generateSkill(prompt) {
@@ -684,26 +684,6 @@ async function exportSkills(options = {}) {
   return data;
 }
 
-/**
- * Import skills from markdown files
- * @param {Array} files - [{ name, content }]
- * @param {boolean} overwrite
- */
-async function importSkills(files, overwrite = false) {
-  const response = await apiRequest('/skills/import', {
-    method: 'POST',
-    body: JSON.stringify({ files, overwrite }),
-  });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.error || 'Failed to import skills');
-  }
-
-  return data;
-}
-
 // Export for use in other scripts
 window.API = {
   getToken,
@@ -738,5 +718,4 @@ window.API = {
   deleteCategory,
   getTags,
   exportSkills,
-  importSkills,
 };

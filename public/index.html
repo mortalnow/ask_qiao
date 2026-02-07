@@ -57,13 +57,9 @@
             <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
           </svg>
         </a>
-        <div class="model-selector">
-          <select id="model-select">
-            <option value="chatgpt">GPT-5.2</option>
-            <option value="gemini">Gemini 3 Flash</option>
-          </select>
-          <span class="select-arrow">▾</span>
-        </div>
+        <select id="model-select" class="model-select-hidden" aria-hidden="true" tabindex="-1">
+          <option value="chatgpt">ChatGPT 5.2</option>
+        </select>
         <button id="new-chat-btn" class="btn-icon" data-i18n-title="header.newChat" title="新对话">
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M12 5v14M5 12h14"/>
@@ -82,22 +78,11 @@
 
     <!-- Chat Messages -->
     <main class="chat-messages" id="chat-messages">
-      <div class="welcome-message">
+      <div class="welcome-message mission-message">
         <img class="welcome-icon" src="/icons/qiao.png" alt="Qiao">
-        <h2 data-i18n="welcome.title">欢迎使用问Qiao</h2>
-        <p data-i18n="welcome.subtitle">选择一个模型开始对话，您可以随时切换模型。</p>
-        <div class="model-cards">
-          <div class="model-card" data-model="chatgpt">
-            <span class="model-badge openai">OpenAI</span>
-            <h3>GPT-5.2</h3>
-            <p data-i18n="welcome.gpt.desc">最强大的推理和编码能力</p>
-          </div>
-          <div class="model-card" data-model="gemini">
-            <span class="model-badge google">Google</span>
-            <h3>Gemini 3 Flash</h3>
-            <p data-i18n="welcome.gemini.desc">快速高效的多模态响应</p>
-          </div>
-        </div>
+        <h2 data-i18n="home.mission.title">学会更好地提问，得到更好的答案</h2>
+        <p data-i18n="home.mission.line1">这里是一个提示词训练场，帮助您用结构化方式向大模型提问。</p>
+        <p data-i18n="home.mission.line2">先发送提示词，再用 AI 把本次提示词和回答沉淀成可复用的 Markdown 技能。</p>
       </div>
     </main>
 
@@ -119,12 +104,6 @@
               </svg>
               <span data-i18n="skills.button">技能</span>
               <span class="skills-badge" id="skills-count">0</span>
-            </button>
-            <button type="button" id="back-to-models" class="btn-back-to-models" data-i18n="promptBuilder.backToModels">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <path d="M19 12H5M12 19l-7-7 7-7"/>
-              </svg>
-              <span data-i18n="promptBuilder.changeModel">切换模型</span>
             </button>
           </div>
         </div>
@@ -173,7 +152,7 @@
             <!-- File Upload Area -->
             <div class="file-upload-area" id="file-upload-area">
               <div class="file-upload-zone" id="file-upload-zone" tabindex="0" role="button" aria-label="Drop files here, or click to select">
-                <input type="file" id="file-input" multiple accept="image/png,image/jpeg,image/gif,image/webp,image/heic,image/heif,application/pdf,text/plain,.txt,text/markdown,.md,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx" hidden>
+                <input type="file" id="file-input" multiple accept="image/png,image/jpeg,image/gif,image/webp,application/pdf,text/plain,.txt,text/markdown,.md,application/vnd.openxmlformats-officedocument.wordprocessingml.document,.docx" hidden>
                 <div class="file-upload-prompt">
                   <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                     <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
@@ -339,15 +318,8 @@
           </button>
         </div>
 
-        <!-- Tabs -->
-        <div class="skills-tabs">
-          <button type="button" class="skills-tab active" data-tab="my-skills" data-i18n="skills.tabs.mySkills">我的技能</button>
-          <button type="button" class="skills-tab" data-tab="import" data-i18n="skills.tabs.import">导入</button>
-        </div>
-
         <div class="modal-body">
           <div id="skills-status" class="skills-status" style="display: none;"></div>
-          <!-- My Skills Tab -->
           <div id="skills-tab-my-skills" class="skills-tab-content active">
             <!-- Search Bar -->
             <div class="skills-search">
@@ -395,44 +367,6 @@
                 <line x1="12" y1="17" x2="12.01" y2="17"/>
               </svg>
               <span data-i18n="skills.tokenWarning">选中的技能内容较长，可能影响响应质量</span>
-            </div>
-          </div>
-
-          <!-- Import Tab -->
-          <div id="skills-tab-import" class="skills-tab-content" style="display: none;">
-            <p class="skills-info" data-i18n="skills.info">
-              上传 Claude 技能文件 (.md)，选择的技能将作为系统指令添加到您的提示词中。
-            </p>
-
-            <!-- Skills Upload Zone -->
-            <div class="skills-upload-zone" id="skills-upload-zone" tabindex="0" role="button">
-              <input type="file" id="skills-file-input" multiple accept=".md,.markdown,text/markdown" hidden>
-              <div class="skills-upload-prompt">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                  <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4M17 8l-5-5-5 5M12 3v12"/>
-                </svg>
-                <span data-i18n="skills.uploadPrompt">拖拽技能文件到此处，或点击选择</span>
-                <span class="skills-upload-hint" data-i18n="skills.uploadHint">支持 .md 文件（来自 ~/.claude/skills 文件夹）</span>
-              </div>
-            </div>
-
-            <!-- Import to Server -->
-            <div class="skills-import-server">
-              <input type="file" id="skills-server-file-input" multiple accept=".md,.markdown,text/markdown" hidden>
-              <button type="button" id="skills-import-server-btn" class="btn-secondary" data-i18n="skills.importToServer">导入到云端</button>
-            </div>
-
-            <!-- Local Skills List (legacy) -->
-            <div class="skills-list-container">
-              <div class="skills-list-header">
-                <span data-i18n="skills.localSkills">本地技能（未同步）</span>
-                <button type="button" id="clear-all-skills" class="btn-text-small" data-i18n="skills.clearAll">
-                  清空全部
-                </button>
-              </div>
-              <div id="skills-list" class="skills-list">
-                <div class="skills-empty" data-i18n="skills.empty">暂无上传的技能</div>
-              </div>
             </div>
           </div>
         </div>

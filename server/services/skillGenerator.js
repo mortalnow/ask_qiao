@@ -28,8 +28,7 @@ function getSkillGenerationModel() {
   if (config.openaiModel && config.openaiModel !== 'latest') {
     return config.openaiModel;
   }
-  // Use gpt-4o-mini for faster skill generation (still high quality)
-  return 'gpt-4o-mini';
+  return 'gpt-5.2';
 }
 
 /**
@@ -37,11 +36,11 @@ function getSkillGenerationModel() {
  */
 const SKILL_GENERATION_PROMPT = `You are an expert at creating reusable "skills" for AI assistants. A skill is a portable set of instructions that can be prepended to any prompt to give the AI a specific capability or persona.
 
-Given a structured prompt with [PERSONA], [TASK], and [CONTEXT] sections, your job is to:
-1. Identify the core capability, expertise, or role being used
-2. Generalize it into a reusable skill that can apply to similar tasks
-3. Remove specific context details while keeping the useful patterns and instructions
-4. Create clear, actionable guidelines the AI should follow
+Given a user's structured prompt and the model's completed answer, your job is to:
+1. Identify the reusable capability, expertise, and workflow patterns demonstrated
+2. Generalize them into a reusable skill for similar tasks
+3. Keep what made the answer effective while removing one-off specifics
+4. Produce clear, actionable instructions the AI can consistently follow
 
 Output format (use exactly this structure):
 ---
@@ -59,11 +58,11 @@ Important:
 - Keep the skill content focused and under 2000 characters
 - Make it general enough to be useful across similar tasks
 - Use clear headings and bullet points
-- Don't include specific examples from the original context`;
+- Prefer reusable patterns over copying literal response text`;
 
 /**
  * Generate a skill from a user prompt
- * @param {Object} prompt - The structured prompt { persona, task, context, format, references }
+ * @param {Object} prompt - The structured prompt { persona, task, context, format, references, answer }
  * @returns {Object} - { name, description, content } or throws error
  */
 export async function generateSkillFromPrompt(prompt) {
@@ -85,7 +84,10 @@ ${prompt.task || 'Not specified'}
 [CONTEXT]
 ${prompt.context || 'Not specified'}
 ${prompt.format ? `\n[FORMAT]\n${prompt.format}` : ''}
-${prompt.references ? `\n[REFERENCES]\n${prompt.references}` : ''}`;
+${prompt.references ? `\n[REFERENCES]\n${prompt.references}` : ''}
+
+[MODEL_ANSWER]
+${prompt.answer || 'Not specified'}`;
 
   try {
     // Create abort controller for request timeout
@@ -186,6 +188,10 @@ export function validatePromptForGeneration(prompt) {
 
   if (!prompt.task || prompt.task.trim().length < 10) {
     errors.push('TASK must be at least 10 characters');
+  }
+
+  if (!prompt.answer || prompt.answer.trim().length < 10) {
+    errors.push('MODEL_ANSWER must be at least 10 characters');
   }
 
   // Context is optional for skill generation

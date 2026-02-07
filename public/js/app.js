@@ -81,11 +81,7 @@ document.addEventListener('DOMContentLoaded', () => {
   const skillsModal = document.getElementById('skills-modal');
   const closeSkillsModalBtn = document.getElementById('close-skills-modal');
   const closeSkillsBtn = document.getElementById('close-skills-btn');
-  const skillsUploadZone = document.getElementById('skills-upload-zone');
-  const skillsFileInput = document.getElementById('skills-file-input');
-  const skillsList = document.getElementById('skills-list');
   const skillsCount = document.getElementById('skills-count');
-  const clearAllSkillsBtn = document.getElementById('clear-all-skills');
   const skillsTokenWarning = document.getElementById('skills-token-warning');
 
   // State
@@ -101,10 +97,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const MAX_FILE_SIZE = 20 * 1024 * 1024; // 20MB
 
   // Skills State and Configuration
-  let skills = []; // Array of { id, name, description, content, enabled, addedAt }
-  const SKILLS_STORAGE_KEY = 'ask_qiao_skills';
-  const SKILLS_MIGRATED_KEY = 'ask_qiao_skills_migrated';
-  const SKILLS_MIGRATION_ERROR_KEY = 'ask_qiao_skills_migration_error';
   const SKILLS_TOKEN_WARNING_THRESHOLD = 2000; // characters
   let skillsStatusTimeout = null;
 
@@ -124,13 +116,11 @@ document.addEventListener('DOMContentLoaded', () => {
   const generatedSkillTags = document.getElementById('generated-skill-tags');
   const generatedSkillContent = document.getElementById('generated-skill-content');
 
-  // Last sent prompt (for skill generation)
-  let lastSentPrompt = null;
+  // Current generation source (prompt + assistant answer)
+  let currentSkillGenerationSource = null;
 
   // Skills Tab Elements
-  const skillsTabs = document.querySelectorAll('.skills-tab');
   const skillsTabMySkills = document.getElementById('skills-tab-my-skills');
-  const skillsTabImport = document.getElementById('skills-tab-import');
   const skillsServerList = document.getElementById('skills-server-list');
   const skillsSearchInput = document.getElementById('skills-search-input');
   const skillsCategoryFilter = document.getElementById('skills-category-filter');
@@ -139,8 +129,6 @@ document.addEventListener('DOMContentLoaded', () => {
   const skillsTagsDatalist = document.getElementById('skills-tags-datalist');
   const exportAllSkillsBtn = document.getElementById('skills-export-all');
   const exportEnabledSkillsBtn = document.getElementById('skills-export-enabled');
-  const importServerSkillsBtn = document.getElementById('skills-import-server-btn');
-  const skillsServerFileInput = document.getElementById('skills-server-file-input');
   const skillsStatus = document.getElementById('skills-status');
 
   // Edit Skill Modal Elements
@@ -165,14 +153,10 @@ document.addEventListener('DOMContentLoaded', () => {
   let skillsTags = [];
   let skillsFiltersLoaded = false;
 
-  // Supported file types by model
+  // Supported file types
   const SUPPORTED_TYPES = {
-    // Common to both OpenAI and Gemini (images)
-    common: ['image/png', 'image/jpeg', 'image/gif', 'image/webp'],
-    // Gemini-only image formats
-    gemini: ['image/heic', 'image/heif'],
-    // All supported types (images + documents)
-    all: ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'image/heic', 'image/heif', 'application/pdf', 'text/plain', 'text/markdown', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
+    images: ['image/png', 'image/jpeg', 'image/gif', 'image/webp'],
+    all: ['image/png', 'image/jpeg', 'image/gif', 'image/webp', 'application/pdf', 'text/plain', 'text/markdown', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
   };
 
   // Document types that need text extraction (work with all models)
@@ -202,14 +186,12 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Model display names
   const modelNames = {
-    chatgpt: 'GPT-5.2',
-    gemini: 'Gemini 3 Flash'
+    chatgpt: 'ChatGPT 5.2'
   };
 
   // Model icons
   const modelIcons = {
-    chatgpt: '<img src="/icons/qiao.png" alt="Qiao" class="avatar-img">',
-    gemini: '<img src="/icons/qiao.png" alt="Qiao" class="avatar-img">'
+    chatgpt: '<img src="/icons/qiao.png" alt="Qiao" class="avatar-img">'
   };
   const defaultAssistantIcon = '<img src="/icons/qiao.png" alt="Qiao" class="avatar-img">';
 
@@ -272,15 +254,9 @@ document.addEventListener('DOMContentLoaded', () => {
     // Set up event listeners
     setupEventListeners();
 
-    // If there's chat history, show prompt builder immediately
-    if (chatHistory.length > 0) {
-      showPromptBuilder();
-    }
-
-    // Initialize skills from localStorage
-    loadSkills();
+    // Keep skill badge/token status synced from server-managed skills
+    refreshEnabledServerSkills();
     updateSkillsUI();
-    migrateLocalSkillsToServer();
   }
   
   async function fetchUsageStatus() {
@@ -331,9 +307,8 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // App container for adding/removing prompt-active class
+  // App container for managing minimized prompt state
   const appContainer = document.getElementById('app');
-  const backToModelsBtn = document.getElementById('back-to-models');
   
   // Minimized prompt bar elements
   const promptMinimized = document.getElementById('prompt-minimized');
@@ -341,27 +316,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
   function setupEventListeners() {
     // Model selection
-    modelSelect.addEventListener('change', () => {
+    modelSelect?.addEventListener('change', () => {
       updateModelLabel();
       checkFileCompatibility();
     });
-
-    // Model card clicks (welcome screen) - show prompt builder full page
-    document.querySelectorAll('.model-card').forEach(card => {
-      card.addEventListener('click', () => {
-        const model = card.dataset.model;
-        if (model) {
-          modelSelect.value = model;
-          updateModelLabel();
-          showPromptBuilder();
-        }
-      });
-    });
-
-    // Back to models button
-    if (backToModelsBtn) {
-      backToModelsBtn.addEventListener('click', hidePromptBuilder);
-    }
     
     // Minimized prompt bar - expand on click
     if (promptMinimized) {
@@ -411,7 +369,7 @@ document.addEventListener('DOMContentLoaded', () => {
         renderChatHistory();
         renderHistoryList();
         clearPromptFormFields();
-        hidePromptBuilder();
+        expandPromptBuilder();
       });
     }
     
@@ -564,11 +522,8 @@ document.addEventListener('DOMContentLoaded', () => {
       fileUploadZone.classList.add('loading');
     }
 
-    const currentModel = modelSelect.value;
-    // Documents work with all models, images have model-specific support
-    const supportedImageTypes = currentModel === 'gemini'
-      ? [...SUPPORTED_TYPES.common, ...SUPPORTED_TYPES.gemini]
-      : SUPPORTED_TYPES.common;
+    // Documents work with all models; image support is ChatGPT-only formats
+    const supportedImageTypes = SUPPORTED_TYPES.images;
     const supportedTypes = [...supportedImageTypes, ...Object.values(DOCUMENT_TYPES)];
 
     for (const file of files) {
@@ -591,18 +546,9 @@ document.addEventListener('DOMContentLoaded', () => {
 
       // Validate file type
       if (!supportedTypes.includes(mimeType)) {
-        // Check if it's a Gemini-only image format
-        const isGeminiOnly = SUPPORTED_TYPES.gemini.includes(mimeType);
-        let msg;
-        if (isGeminiOnly && currentModel !== 'gemini') {
-          msg = window.i18n
-            ? window.i18n.t('fileUpload.geminiOnlyFormat', { type: mimeType })
-            : `${mimeType} 格式仅 Gemini 模型支持。请切换到 Gemini 或选择其他文件。`;
-        } else {
-          msg = window.i18n
-            ? window.i18n.t('fileUpload.unsupportedType', { type: mimeType })
-            : `不支持的文件类型: ${mimeType}`;
-        }
+        const msg = window.i18n
+          ? window.i18n.t('fileUpload.unsupportedType', { type: mimeType })
+          : `不支持的文件类型: ${mimeType}`;
         alert(msg);
         continue;
       }
@@ -1032,40 +978,10 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function checkFileCompatibility() {
-    // Check if any uploaded files are Gemini-only image formats when OpenAI is selected
-    // Note: Documents (PDF, TXT, MD, DOCX) work with all models via text extraction
-    const currentModel = modelSelect.value;
-
-    // First, clear all incompatible markers
+    // Single-model setup: keep compatibility marker cleanup only.
     if (filePreviewList) {
       Array.from(filePreviewList.children).forEach(item => {
         item.classList.remove('incompatible');
-      });
-    }
-
-    // If using Gemini or no files, nothing more to check
-    if (currentModel === 'gemini' || uploadedFiles.length === 0) return;
-
-    // Only check for Gemini-only IMAGE formats (HEIC, HEIF)
-    // Documents are NOT incompatible since we extract text
-    const incompatibleFiles = uploadedFiles.filter(f =>
-      SUPPORTED_TYPES.gemini.includes(f.mimeType) && !f.isDocument
-    );
-
-    if (incompatibleFiles.length > 0) {
-      const fileNames = incompatibleFiles.map(f => f.name).join(', ');
-      const msg = window.i18n
-        ? window.i18n.t('fileUpload.incompatibleWarning', { files: fileNames })
-        : `注意：${fileNames} 仅 Gemini 支持，使用 GPT 时将被忽略。`;
-      alert(msg);
-
-      // Mark incompatible files in the UI
-      incompatibleFiles.forEach(f => {
-        const index = uploadedFiles.indexOf(f);
-        const previewItem = filePreviewList?.children[index];
-        if (previewItem) {
-          previewItem.classList.add('incompatible');
-        }
       });
     }
   }
@@ -1136,58 +1052,6 @@ document.addEventListener('DOMContentLoaded', () => {
     if (skillsModal) {
       skillsModal.querySelector('.modal-overlay')?.addEventListener('click', hideSkillsModal);
     }
-
-    // Skills file upload
-    if (skillsUploadZone && skillsFileInput) {
-      skillsUploadZone.addEventListener('click', () => {
-        skillsFileInput.click();
-      });
-
-      skillsFileInput.addEventListener('change', (e) => {
-        handleSkillsFileSelection(e.target.files);
-        skillsFileInput.value = '';
-      });
-
-      // Drag and drop
-      skillsUploadZone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        skillsUploadZone.classList.add('drag-over');
-      });
-
-      skillsUploadZone.addEventListener('dragleave', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        skillsUploadZone.classList.remove('drag-over');
-      });
-
-      skillsUploadZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        e.stopPropagation();
-        skillsUploadZone.classList.remove('drag-over');
-        handleSkillsFileSelection(e.dataTransfer.files);
-      });
-
-      // Keyboard accessibility
-      skillsUploadZone.addEventListener('keydown', (e) => {
-        if (e.key === 'Enter' || e.key === ' ') {
-          e.preventDefault();
-          skillsFileInput.click();
-        }
-      });
-    }
-
-    // Clear all skills
-    if (clearAllSkillsBtn) {
-      clearAllSkillsBtn.addEventListener('click', () => {
-        const msg = window.i18n ? window.i18n.t('skills.clearConfirm') : '确定要删除所有技能吗？';
-        if (confirm(msg)) {
-          skills = [];
-          saveSkills();
-          updateSkillsUI();
-        }
-      });
-    }
   }
 
   function showSkillsModal() {
@@ -1209,11 +1073,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     refreshEnabledServerSkills();
-
-    // Also render local skills for import tab
-    renderSkillsList();
-
-    showMigrationStatusIfNeeded();
   }
 
   function hideSkillsModal() {
@@ -1223,13 +1082,6 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Tab switching
   function setupSkillsTabListeners() {
-    skillsTabs.forEach(tab => {
-      tab.addEventListener('click', () => {
-        const tabName = tab.dataset.tab;
-        switchSkillsTab(tabName);
-      });
-    });
-
     // Search input
     if (skillsSearchInput) {
       skillsSearchInput.addEventListener('input', debounce(() => {
@@ -1277,18 +1129,6 @@ document.addEventListener('DOMContentLoaded', () => {
         exportSkills(true);
       });
     }
-
-    if (importServerSkillsBtn && skillsServerFileInput) {
-      importServerSkillsBtn.addEventListener('click', () => {
-        skillsServerFileInput.click();
-      });
-
-      skillsServerFileInput.addEventListener('change', async (e) => {
-        const files = e.target.files;
-        await importSkillsFromFiles(files);
-        skillsServerFileInput.value = '';
-      });
-    }
   }
 
   async function exportSkills(enabledOnly) {
@@ -1311,57 +1151,6 @@ document.addEventListener('DOMContentLoaded', () => {
     } finally {
       if (exportAllSkillsBtn) exportAllSkillsBtn.disabled = false;
       if (exportEnabledSkillsBtn) exportEnabledSkillsBtn.disabled = false;
-    }
-  }
-
-  async function importSkillsFromFiles(fileList) {
-    if (!fileList || fileList.length === 0) {
-      showSkillsStatus(window.i18n ? window.i18n.t('skills.importEmpty') : 'Select files to import', 'error');
-      return;
-    }
-
-    const files = Array.from(fileList);
-    const invalid = files.find(file => !file.name.endsWith('.md') && !file.name.endsWith('.markdown'));
-    if (invalid) {
-      const msg = window.i18n ? window.i18n.t('skills.invalidType') : 'Only Markdown files are supported';
-      showSkillsStatus(msg, 'error');
-      return;
-    }
-
-    try {
-      if (importServerSkillsBtn) {
-        importServerSkillsBtn.disabled = true;
-        importServerSkillsBtn.textContent = window.i18n ? window.i18n.t('skills.importing') : 'Importing...';
-      }
-
-      const payload = [];
-      for (const file of files) {
-        const content = await readFileAsText(file);
-        payload.push({ name: file.name, content });
-      }
-
-      const data = await window.API.importSkills(payload);
-      const results = data.results || {};
-      const msg = window.i18n
-        ? window.i18n.t('skills.importSuccess', {
-            created: results.created || 0,
-            updated: results.updated || 0,
-            skipped: results.skipped || 0
-          })
-        : `Import complete: ${results.created || 0} created, ${results.updated || 0} updated, ${results.skipped || 0} skipped`;
-      showSkillsStatus(msg, 'success');
-
-      serverSkillsLoaded = false;
-      skillsFiltersLoaded = false;
-      await loadServerSkills();
-    } catch (err) {
-      console.error('Import skills error:', err);
-      showSkillsStatus(err.message || (window.i18n ? window.i18n.t('skills.importError') : 'Import failed'), 'error');
-    } finally {
-      if (importServerSkillsBtn) {
-        importServerSkillsBtn.disabled = false;
-        importServerSkillsBtn.textContent = window.i18n ? window.i18n.t('skills.importToServer') : 'Import to Server';
-      }
     }
   }
 
@@ -1415,20 +1204,6 @@ document.addEventListener('DOMContentLoaded', () => {
     }, 5000);
   }
 
-  function showMigrationStatusIfNeeded() {
-    if (!skillsStatus) return;
-    try {
-      const raw = localStorage.getItem(SKILLS_MIGRATION_ERROR_KEY);
-      if (!raw) return;
-      const info = JSON.parse(raw);
-      if (!info?.message) return;
-      showSkillsStatus(info.message, 'error');
-      localStorage.removeItem(SKILLS_MIGRATION_ERROR_KEY);
-    } catch (err) {
-      console.error('Failed to read migration status:', err);
-    }
-  }
-
   function renderSkillsFilters() {
     if (skillsCategoryFilter) {
       const selectedCategory = skillsCategoryFilter.value;
@@ -1462,23 +1237,6 @@ document.addEventListener('DOMContentLoaded', () => {
     skillsTagsDatalist.innerHTML = skillsTags
       .map(tag => `<option value="${escapeHtml(tag)}"></option>`)
       .join('');
-  }
-
-  function switchSkillsTab(tabName) {
-    // Update tab buttons
-    skillsTabs.forEach(tab => {
-      tab.classList.toggle('active', tab.dataset.tab === tabName);
-    });
-
-    // Update tab content
-    if (skillsTabMySkills) {
-      skillsTabMySkills.style.display = tabName === 'my-skills' ? 'block' : 'none';
-      skillsTabMySkills.classList.toggle('active', tabName === 'my-skills');
-    }
-    if (skillsTabImport) {
-      skillsTabImport.style.display = tabName === 'import' ? 'block' : 'none';
-      skillsTabImport.classList.toggle('active', tabName === 'import');
-    }
   }
 
   // Load skills from server
@@ -1775,6 +1533,7 @@ document.addEventListener('DOMContentLoaded', () => {
       const data = await window.API.getEnabledSkills();
       enabledServerSkills = data.skills || [];
       enabledServerSkillsLoaded = true;
+      updateSkillsUI();
       updateSkillsTokenWarning();
     } catch (err) {
       console.error('Failed to fetch enabled skills:', err);
@@ -1785,14 +1544,13 @@ document.addEventListener('DOMContentLoaded', () => {
   function updateSkillsTokenWarning() {
     if (!skillsTokenWarning) return;
 
-    const enabledLocalSkills = skills.filter(s => s.enabled);
-    let totalLength = enabledLocalSkills.reduce((sum, s) => sum + (s.content?.length || 0), 0);
+    let totalLength = 0;
 
     if (enabledServerSkillsLoaded) {
       totalLength += enabledServerSkills.reduce((sum, s) => sum + (s.content?.length || 0), 0);
     } else if (serverSkills.some(s => s.enabled)) {
       // Fallback if server content isn't loaded yet
-      const totalEnabled = enabledLocalSkills.length + serverSkills.filter(s => s.enabled).length;
+      const totalEnabled = serverSkills.filter(s => s.enabled).length;
       if (totalEnabled > 3) {
         skillsTokenWarning.style.display = 'flex';
         return;
@@ -1819,243 +1577,11 @@ document.addEventListener('DOMContentLoaded', () => {
     };
   }
 
-  async function handleSkillsFileSelection(files) {
-    if (!files || files.length === 0) return;
-
-    for (const file of files) {
-      // Validate file type
-      if (!file.name.endsWith('.md') && !file.name.endsWith('.markdown')) {
-        const msg = window.i18n 
-          ? window.i18n.t('skills.invalidType') 
-          : '只支持 Markdown 文件 (.md)';
-        alert(msg);
-        continue;
-      }
-
-      // Check for duplicates
-      const existingSkill = skills.find(s => s.name === file.name.replace(/\.(md|markdown)$/, ''));
-      if (existingSkill) {
-        const msg = window.i18n 
-          ? window.i18n.t('skills.duplicate', { name: existingSkill.name }) 
-          : `技能 "${existingSkill.name}" 已存在`;
-        alert(msg);
-        continue;
-      }
-
-      try {
-        const content = await readFileAsText(file);
-        const parsedSkill = parseSkillFile(content, file.name);
-        
-        skills.push({
-          id: generateSkillId(),
-          name: parsedSkill.name,
-          description: parsedSkill.description,
-          content: parsedSkill.content,
-          enabled: true,
-          addedAt: Date.now()
-        });
-      } catch (err) {
-        console.error('Failed to read skill file:', err);
-        const msg = window.i18n 
-          ? window.i18n.t('skills.readError', { name: file.name }) 
-          : `读取文件失败: ${file.name}`;
-        alert(msg);
-      }
-    }
-
-    saveSkills();
-    updateSkillsUI();
-    renderSkillsList();
-  }
-
-  function readFileAsText(file) {
-    return new Promise((resolve, reject) => {
-      const reader = new FileReader();
-      reader.onload = () => resolve(reader.result);
-      reader.onerror = reject;
-      reader.readAsText(file);
-    });
-  }
-
-  function buildMarkdownFromLocalSkill(skill) {
-    const name = skill.name || 'Skill';
-    const description = skill.description || '';
-    return `---\nname: ${name}\ndescription: ${description}\n---\n\n${skill.content || ''}`.trim();
-  }
-
-  function computeSkillsFingerprint(skillsList) {
-    const normalized = skillsList
-      .map(skill => ({
-        name: skill.name || '',
-        description: skill.description || '',
-        content: skill.content || ''
-      }))
-      .sort((a, b) => {
-        const nameCompare = a.name.localeCompare(b.name);
-        if (nameCompare !== 0) return nameCompare;
-        const descCompare = a.description.localeCompare(b.description);
-        if (descCompare !== 0) return descCompare;
-        return a.content.localeCompare(b.content);
-      });
-
-    const json = JSON.stringify(normalized);
-    let hash = 5381;
-    for (let i = 0; i < json.length; i += 1) {
-      hash = ((hash << 5) + hash) + json.charCodeAt(i);
-      hash >>>= 0;
-    }
-    return `${json.length}-${hash}`;
-  }
-
-  function getSkillsMigrationInfo() {
-    try {
-      const raw = localStorage.getItem(SKILLS_MIGRATED_KEY);
-      if (!raw) return null;
-      return JSON.parse(raw);
-    } catch (err) {
-      console.error('Failed to read migration info:', err);
-      return null;
-    }
-  }
-
-  function setSkillsMigrationInfo(info) {
-    try {
-      localStorage.setItem(SKILLS_MIGRATED_KEY, JSON.stringify(info));
-    } catch (err) {
-      console.error('Failed to store migration info:', err);
-    }
-  }
-
-  async function migrateLocalSkillsToServer() {
-    if (!skills.length) return;
-
-    const fingerprint = computeSkillsFingerprint(skills);
-    const migrationInfo = getSkillsMigrationInfo();
-    if (migrationInfo?.fingerprint === fingerprint) {
-      return;
-    }
-
-    try {
-      const payload = skills.map(skill => ({
-        name: `${skill.name || 'skill'}.md`,
-        content: buildMarkdownFromLocalSkill(skill)
-      }));
-
-      await window.API.importSkills(payload, false);
-      serverSkillsLoaded = false;
-      skillsFiltersLoaded = false;
-      setSkillsMigrationInfo({ count: skills.length, fingerprint, migrated_at: Date.now() });
-    } catch (err) {
-      console.error('Failed to migrate local skills:', err);
-      try {
-        const message = window.i18n
-          ? window.i18n.t('skills.migrationError')
-          : 'Local skills sync failed';
-        localStorage.setItem(SKILLS_MIGRATION_ERROR_KEY, JSON.stringify({ message, at: Date.now() }));
-      } catch (storageErr) {
-        console.error('Failed to store migration error:', storageErr);
-      }
-    }
-  }
-
-  /**
-   * Parse a skill markdown file to extract name, description, and content
-   * Supports YAML frontmatter and fallbacks to filename/first heading
-   */
-  function parseSkillFile(content, filename) {
-    let name = filename.replace(/\.(md|markdown)$/, '');
-    let description = '';
-    let skillContent = content;
-
-    // Try to parse YAML frontmatter
-    const frontmatterMatch = content.match(/^---\n([\s\S]*?)\n---\n?([\s\S]*)$/);
-    if (frontmatterMatch) {
-      const frontmatter = frontmatterMatch[1];
-      skillContent = frontmatterMatch[2].trim();
-
-      // Extract name from frontmatter
-      const nameMatch = frontmatter.match(/^name:\s*(.+)$/m);
-      if (nameMatch) {
-        name = nameMatch[1].trim().replace(/^["']|["']$/g, '');
-      }
-
-      // Extract description from frontmatter
-      const descMatch = frontmatter.match(/^description:\s*(.+)$/m);
-      if (descMatch) {
-        description = descMatch[1].trim().replace(/^["']|["']$/g, '');
-      }
-    }
-
-    // If no frontmatter name, try first H1 heading
-    if (name === filename.replace(/\.(md|markdown)$/, '')) {
-      const h1Match = skillContent.match(/^#\s+(.+)$/m);
-      if (h1Match) {
-        name = h1Match[1].trim();
-      }
-    }
-
-    // If no description, use first non-heading paragraph
-    if (!description) {
-      const paragraphMatch = skillContent.match(/^(?!#)(.+)$/m);
-      if (paragraphMatch) {
-        description = paragraphMatch[1].trim().substring(0, 150);
-        if (paragraphMatch[1].length > 150) {
-          description += '...';
-        }
-      }
-    }
-
-    return { name, description, content: skillContent };
-  }
-
-  function generateSkillId() {
-    return 'skill_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
-  }
-
-  function loadSkills() {
-    try {
-      const savedSkills = localStorage.getItem(SKILLS_STORAGE_KEY);
-      if (savedSkills) {
-        skills = JSON.parse(savedSkills);
-      }
-    } catch (err) {
-      console.error('Failed to load skills:', err);
-      skills = [];
-    }
-  }
-
-  function saveSkills() {
-    try {
-      localStorage.setItem(SKILLS_STORAGE_KEY, JSON.stringify(skills));
-    } catch (err) {
-      console.error('Failed to save skills:', err);
-    }
-  }
-
-  function toggleSkill(skillId) {
-    const skill = skills.find(s => s.id === skillId);
-    if (skill) {
-      skill.enabled = !skill.enabled;
-      saveSkills();
-      updateSkillsUI();
-      renderSkillsList();
-    }
-  }
-
-  function deleteSkill(skillId) {
-    const index = skills.findIndex(s => s.id === skillId);
-    if (index !== -1) {
-      skills.splice(index, 1);
-      saveSkills();
-      updateSkillsUI();
-      renderSkillsList();
-    }
-  }
-
   function updateSkillsUI() {
-    const enabledLocalCount = skills.filter(s => s.enabled).length;
-    const enabledServerCount = serverSkills.filter(s => s.enabled).length;
-    const enabledCount = enabledLocalCount + enabledServerCount;
+    const enabledServerCount = serverSkillsLoaded
+      ? serverSkills.filter(s => s.enabled).length
+      : enabledServerSkills.length;
+    const enabledCount = enabledServerCount;
     
     // Update badge count
     if (skillsCount) {
@@ -2075,66 +1601,11 @@ document.addEventListener('DOMContentLoaded', () => {
     updateSkillsTokenWarning();
   }
 
-  function renderSkillsList() {
-    if (!skillsList) return;
-
-    if (skills.length === 0) {
-      const emptyText = window.i18n ? window.i18n.t('skills.empty') : '暂无上传的技能';
-      skillsList.innerHTML = `<div class="skills-empty">${emptyText}</div>`;
-      return;
-    }
-
-    skillsList.innerHTML = skills.map(skill => `
-      <div class="skill-item ${skill.enabled ? 'enabled' : ''}" data-skill-id="${skill.id}">
-        <label class="skill-toggle">
-          <input type="checkbox" ${skill.enabled ? 'checked' : ''}>
-          <span class="skill-toggle-slider"></span>
-        </label>
-        <div class="skill-content">
-          <div class="skill-name">${escapeHtml(skill.name)}</div>
-          <div class="skill-description">${escapeHtml(skill.description || '')}</div>
-        </div>
-        <button type="button" class="skill-delete" title="${window.i18n ? window.i18n.t('skills.delete') : '删除'}">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M3 6h18M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2m3 0v14a2 2 0 01-2 2H7a2 2 0 01-2-2V6h14z"/>
-          </svg>
-        </button>
-      </div>
-    `).join('');
-
-    // Add event listeners
-    skillsList.querySelectorAll('.skill-item').forEach(item => {
-      const skillId = item.dataset.skillId;
-      
-      // Toggle checkbox
-      const checkbox = item.querySelector('input[type="checkbox"]');
-      if (checkbox) {
-        checkbox.addEventListener('change', () => toggleSkill(skillId));
-      }
-
-      // Delete button
-      const deleteBtn = item.querySelector('.skill-delete');
-      if (deleteBtn) {
-        deleteBtn.addEventListener('click', (e) => {
-          e.stopPropagation();
-          const msg = window.i18n ? window.i18n.t('skills.deleteConfirm') : '确定要删除这个技能吗？';
-          if (confirm(msg)) {
-            deleteSkill(skillId);
-          }
-        });
-      }
-    });
-
-    updateSkillsTokenWarning();
-  }
-
   /**
    * Build the skills prefix to prepend to prompts
    * Returns empty string if no skills are enabled
    */
   async function buildSkillsPrefix() {
-    // Combine localStorage skills and server skills
-    const enabledLocalSkills = skills.filter(s => s.enabled);
     let enabledServerSkillsForPrompt = [];
 
     try {
@@ -2147,10 +1618,10 @@ document.addEventListener('DOMContentLoaded', () => {
       console.error('Failed to load enabled skills:', err);
     }
 
-    const allEnabledSkills = [
-      ...enabledServerSkillsForPrompt.map(s => ({ name: s.name, content: s.content })),
-      ...enabledLocalSkills.map(s => ({ name: s.name, content: s.content }))
-    ];
+    const allEnabledSkills = enabledServerSkillsForPrompt.map(s => ({
+      name: s.name,
+      content: s.content
+    }));
 
     if (allEnabledSkills.length === 0) return '';
 
@@ -2166,7 +1637,7 @@ document.addEventListener('DOMContentLoaded', () => {
   // Generate Skill Functions
   // ============================================
 
-  function addSaveAsSkillButton(messageTextElement) {
+  function addSaveAsSkillButton(messageTextElement, source) {
     // Find the message-bubble parent
     const messageBubble = messageTextElement?.closest('.message-bubble');
     if (!messageBubble) return;
@@ -2184,18 +1655,19 @@ document.addEventListener('DOMContentLoaded', () => {
         <path d="M2 17l10 5 10-5"/>
         <path d="M2 12l10 5 10-5"/>
       </svg>
-      <span>${window.i18n ? window.i18n.t('skills.saveAsSkill') : '保存为技能'}</span>
+      <span>${window.i18n ? window.i18n.t('skills.buildFromPrompt') : '从本次提示词创建技能'}</span>
     `;
 
     btn.addEventListener('click', () => {
-      openGenerateSkillModal();
+      openGenerateSkillModal(source);
     });
 
     messageBubble.appendChild(btn);
   }
 
-  function openGenerateSkillModal() {
-    if (!generateSkillModal || !lastSentPrompt) return;
+  function openGenerateSkillModal(source) {
+    if (!generateSkillModal || !source) return;
+    currentSkillGenerationSource = source;
 
     // Reset modal state
     generateSkillLoading.style.display = 'flex';
@@ -2214,16 +1686,17 @@ document.addEventListener('DOMContentLoaded', () => {
   function closeGenerateSkillModal() {
     if (!generateSkillModal) return;
     generateSkillModal.style.display = 'none';
+    currentSkillGenerationSource = null;
   }
 
   async function generateSkillFromCurrentPrompt() {
-    if (!lastSentPrompt) {
+    if (!currentSkillGenerationSource) {
       showGenerateSkillError(window.i18n ? window.i18n.t('skills.generate.noPrompt') : '没有可用的提示词');
       return;
     }
 
     try {
-      const result = await window.API.generateSkill(lastSentPrompt);
+      const result = await window.API.generateSkill(currentSkillGenerationSource);
 
       if (result.success && result.skill) {
         // Show preview
@@ -2282,7 +1755,7 @@ document.addEventListener('DOMContentLoaded', () => {
         category,
         tags,
         enabled: true,
-        source_prompt: JSON.stringify(lastSentPrompt)
+        source_prompt: JSON.stringify(currentSkillGenerationSource)
       });
 
       // Success
@@ -2292,9 +1765,6 @@ document.addEventListener('DOMContentLoaded', () => {
       // Refresh server skills list and filters
       serverSkillsLoaded = false;
       await loadServerSkills();
-
-      // Clear lastSentPrompt
-      lastSentPrompt = null;
     } catch (err) {
       console.error('Save skill error:', err);
       alert(err.message || 'Failed to save skill');
@@ -2328,7 +1798,7 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   function updateModelLabel() {
-    const model = modelSelect.value;
+    const model = 'chatgpt';
     // Update label if element exists (removed from UI for cleaner look)
     if (currentModelLabel) {
       currentModelLabel.textContent = modelNames[model] || model;
@@ -2361,8 +1831,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const format = formatInput?.value.trim() || '';
     const references = referencesInput?.value.trim() || '';
 
-    // Store prompt for potential skill generation
-    lastSentPrompt = { persona, task, context, format, references };
+    const promptContext = { persona, task, context, format, references };
 
     // Build structured prompt with skills prefix
     const skillsPrefix = await buildSkillsPrefix();
@@ -2375,7 +1844,7 @@ document.addEventListener('DOMContentLoaded', () => {
       message += `\n\n[REFERENCES]\n${references}`;
     }
 
-    const model = modelSelect.value;
+    const model = 'chatgpt';
 
     // Hide welcome message
     const welcomeMessage = messagesContainer.querySelector('.welcome-message');
@@ -2465,9 +1934,13 @@ document.addEventListener('DOMContentLoaded', () => {
           }
           saveChatHistory();
 
-          // Add "Save as Skill" button after the response
-          if (lastSentPrompt) {
-            addSaveAsSkillButton(currentStreamingMessage);
+          // Add "Build Skill from this Prompt" button after the response
+          if (currentStreamFullResponse.trim().length >= 10) {
+            const skillSource = {
+              ...promptContext,
+              answer: currentStreamFullResponse
+            };
+            addSaveAsSkillButton(currentStreamingMessage, skillSource);
           }
 
           // Clear prompt builder after successful send and minimize it
@@ -2559,7 +2032,7 @@ document.addEventListener('DOMContentLoaded', () => {
     const message = document.createElement('div');
     message.className = `message ${role}`;
 
-    const avatarClass = model ? (model === 'chatgpt' ? 'openai' : 'google') : '';
+    const avatarClass = model === 'chatgpt' ? 'openai' : '';
     const avatarIcon = role === 'user' ? '👤' : modelIcons[model] || defaultAssistantIcon;
     const modelLabel = model ? modelNames[model] : '';
 
@@ -2611,42 +2084,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     if (chatHistory.length === 0) {
       const t = window.i18n ? window.i18n.t.bind(window.i18n) : (k) => k;
-      const welcomeTitle = t('welcome.title');
-      const welcomeSubtitle = t('welcome.subtitle');
-      const gptDesc = t('welcome.gpt.desc');
-      const geminiDesc = t('welcome.gemini.desc');
+      const missionTitle = t('home.mission.title');
+      const missionLine1 = t('home.mission.line1');
+      const missionLine2 = t('home.mission.line2');
       
       messagesContainer.innerHTML = `
-        <div class="welcome-message">
+        <div class="welcome-message mission-message">
           <img class="welcome-icon" src="/icons/qiao.png" alt="Qiao">
-          <h2>${welcomeTitle}</h2>
-          <p>${welcomeSubtitle}</p>
-          <div class="model-cards">
-            <div class="model-card" data-model="chatgpt">
-              <span class="model-badge openai">OpenAI</span>
-              <h3>GPT-5.2</h3>
-              <p>${gptDesc}</p>
-            </div>
-            <div class="model-card" data-model="gemini">
-              <span class="model-badge google">Google</span>
-              <h3>Gemini 3 Flash</h3>
-              <p>${geminiDesc}</p>
-            </div>
-          </div>
+          <h2>${missionTitle}</h2>
+          <p>${missionLine1}</p>
+          <p>${missionLine2}</p>
         </div>
       `;
-      
-      // Re-attach model card listeners
-      document.querySelectorAll('.model-card').forEach(card => {
-        card.addEventListener('click', () => {
-          const model = card.dataset.model;
-          if (model) {
-            modelSelect.value = model;
-            updateModelLabel();
-            showPromptBuilder();
-          }
-        });
-      });
       return;
     }
 
@@ -2656,7 +2105,7 @@ document.addEventListener('DOMContentLoaded', () => {
       message.className = `message ${msg.role}`;
 
       const model = msg.model;
-      const avatarClass = model ? (model === 'chatgpt' ? 'openai' : 'google') : '';
+      const avatarClass = model === 'chatgpt' ? 'openai' : '';
       const avatarIcon = msg.role === 'user' ? '👤' : modelIcons[model] || defaultAssistantIcon;
       const modelLabel = model ? modelNames[model] : '';
 
@@ -2804,12 +2253,7 @@ document.addEventListener('DOMContentLoaded', () => {
     renderChatHistory();
     toggleHistorySidebar();
     
-    // Show prompt builder if session has messages
-    if (chatHistory.length > 0) {
-      showPromptBuilder();
-    } else {
-      hidePromptBuilder();
-    }
+    expandPromptBuilder();
   }
   
   function deleteSession(sessionId, event) {
@@ -2950,37 +2394,26 @@ document.addEventListener('DOMContentLoaded', () => {
     }
   }
 
-  // Show/Hide Full Page Prompt Builder
+  // Prompt builder visibility controls
   function showPromptBuilder() {
     if (!appContainer) return;
-    appContainer.classList.remove('prompt-closing');
-    appContainer.classList.add('prompt-active');
-    // Focus first input after animation
-    setTimeout(() => {
-      personaInput?.focus();
-    }, 500);
+    appContainer.classList.remove('prompt-minimized-state');
+    personaInput?.focus();
   }
 
   function hidePromptBuilder() {
     if (!appContainer) return;
-    // Add closing class for slide-down animation
-    appContainer.classList.add('prompt-closing');
-    // After animation, remove both classes
-    setTimeout(() => {
-      appContainer.classList.remove('prompt-active', 'prompt-closing');
-    }, 400);
+    appContainer.classList.add('prompt-minimized-state');
   }
   
   function minimizePromptBuilder() {
     if (!appContainer) return;
-    appContainer.classList.remove('prompt-active', 'prompt-closing');
     appContainer.classList.add('prompt-minimized-state');
     scrollToBottom();
   }
   
   function expandPromptBuilder() {
     if (!appContainer) return;
-    appContainer.classList.remove('prompt-minimized-state');
     showPromptBuilder();
   }
   

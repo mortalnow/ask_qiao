@@ -1,4 +1,8 @@
-# AI Chat Wrapper Development Plan
+# AI Chat Wrapper Development Plan (Archived)
+
+> Status: Historical snapshot from early v1 planning.
+> This file intentionally preserves old assumptions (multi-model, invite-code-first flow, SQLite-era notes) and is **not** the current implementation spec.
+> For current behavior, use `README.md`, `docs/task_plan.md`, and `docs/feature_list.json`.
 
 ## Overview
 
@@ -208,4 +212,3 @@ GOOGLE_AI_API_KEY=AI...
   - Required fields: PERSONA, TASK, CONTEXT
   - Optional fields: FORMAT, REFERENCES
   - Template based on `prompt.md`
-

@@ -29,9 +29,13 @@ const translations = {
     
     // Welcome message
     'welcome.title': '欢迎使用问Qiao',
-    'welcome.subtitle': '选择一个模型开始对话，您可以随时切换模型。',
+    'welcome.subtitle': '通过结构化提示词练习，获取更高质量回答。',
     'welcome.gpt.desc': '最强大的推理和编码能力',
-    'welcome.gemini.desc': '快速高效的多模态响应',
+
+    // Home mission copy
+    'home.mission.title': '学会更好地提问，得到更好的答案',
+    'home.mission.line1': '这里是一个提示词训练场，帮助您用结构化方式向大模型提问。',
+    'home.mission.line2': '先发送提示词，再用 AI 把本次提示词和回答沉淀成可复用的 Markdown 技能。',
     
     // Welcome modal
     'welcome.modal.title': '欢迎使用问Qiao',
@@ -105,8 +109,7 @@ const translations = {
     'fileUpload.unsupportedType': '不支持的文件类型: {type}',
     'fileUpload.fileTooLarge': '文件过大: {name} (最大 20MB)',
     'fileUpload.processingError': '处理文件失败: {name}',
-    'fileUpload.geminiOnlyFormat': '{type} 格式仅 Gemini 模型支持。请切换到 Gemini 或选择其他文件。',
-    'fileUpload.incompatibleWarning': '注意：{files} 仅 Gemini 支持，使用 GPT 时将被忽略。',
+    'fileUpload.incompatibleWarning': '注意：部分文件将被忽略。',
     'fileUpload.attachedCount': '{count} 个文件',
     'fileUpload.pasteHint': '也可以直接粘贴图片',
     'fileUpload.ariaLabel': '拖拽文件到此处，或点击/按回车选择文件',
@@ -123,13 +126,14 @@ const translations = {
     // Skills
     'skills.title': '技能',
     'skills.button': '技能',
+    'skills.buildFromPrompt': '从本次提示词创建技能',
     'skills.modalTitle': '技能管理',
-    'skills.info': '上传 Claude 技能文件 (.md)，选择的技能将作为系统指令添加到您的提示词中。',
-    'skills.uploadPrompt': '拖拽技能文件到此处，或点击选择',
-    'skills.uploadHint': '支持 .md 文件（来自 ~/.claude/skills 文件夹）',
-    'skills.listTitle': '已上传的技能',
+    'skills.info': '先发送提示词，再用 AI 基于提示词与回答生成可复用技能。',
+    'skills.uploadPrompt': '技能上传已移除',
+    'skills.uploadHint': '请使用“从本次提示词创建技能”',
+    'skills.listTitle': '已保存技能',
     'skills.clearAll': '清空全部',
-    'skills.empty': '暂无上传的技能',
+    'skills.empty': '暂无保存的技能',
     'skills.tokenWarning': '选中的技能内容较长，可能影响响应质量',
     'skills.delete': '删除',
     'skills.deleteConfirm': '确定要删除这个技能吗？',
@@ -154,7 +158,7 @@ const translations = {
 
     // Skills tabs and server skills
     'skills.tabs.mySkills': '我的技能',
-    'skills.tabs.import': '导入',
+    'skills.tabs.import': '已移除',
     'skills.searchPlaceholder': '搜索技能...',
     'skills.loading': '加载中...',
     'skills.loadError': '加载失败，请重试',
@@ -170,14 +174,14 @@ const translations = {
     'skills.filters.clear': '清除筛选',
     'skills.exportAll': '导出全部技能',
     'skills.exportEnabled': '导出已启用技能',
-    'skills.importToServer': '导入到云端',
-    'skills.importing': '导入中...',
-    'skills.importSuccess': '导入完成：新增 {created}，更新 {updated}，跳过 {skipped}',
-    'skills.importError': '导入失败，请重试',
-    'skills.importEmpty': '请选择要导入的 Markdown 文件',
+    'skills.importToServer': '导入已移除',
+    'skills.importing': '导入已移除',
+    'skills.importSuccess': '导入已移除',
+    'skills.importError': '导入已移除',
+    'skills.importEmpty': '导入已移除',
     'skills.exportError': '导出失败，请重试',
     'skills.exportSuccess': '导出已就绪',
-    'skills.migrationError': '本地技能同步失败，请稍后重试',
+    'skills.migrationError': '技能同步失败，请稍后重试',
 
     // Skills edit modal
     'skills.edit.title': '编辑技能',
@@ -207,7 +211,7 @@ const translations = {
     'login.chooseUsername': '选择用户名',
     'login.password.hint': '至少 6 个字符',
     'login.createAccount': '创建账户',
-    'login.footer': '由 GPT 和 Gemini 驱动',
+    'login.footer': '由 ChatGPT 5.2 驱动',
     
     // Confirmations
     'confirm.logout': '确定要退出登录吗？',
@@ -242,9 +246,13 @@ const translations = {
     
     // Welcome message
     'welcome.title': 'Welcome to Ask Qiao',
-    'welcome.subtitle': 'Select a model to start chatting. You can switch models anytime.',
+    'welcome.subtitle': 'Practice structured prompting to get higher-quality answers.',
     'welcome.gpt.desc': 'Most powerful reasoning and coding',
-    'welcome.gemini.desc': 'Fast and efficient multimodal responses',
+
+    // Home mission copy
+    'home.mission.title': 'Prompt Better, Get Better Answers',
+    'home.mission.line1': 'This is a prompt coaching workspace for structured requests to large language models.',
+    'home.mission.line2': 'Send your prompt first, then use AI to turn that prompt + answer into reusable markdown skills.',
     
     // Welcome modal
     'welcome.modal.title': 'Welcome to Ask Qiao',
@@ -318,8 +326,7 @@ const translations = {
     'fileUpload.unsupportedType': 'Unsupported file type: {type}',
     'fileUpload.fileTooLarge': 'File too large: {name} (max 20MB)',
     'fileUpload.processingError': 'Failed to process file: {name}',
-    'fileUpload.geminiOnlyFormat': '{type} is only supported by Gemini. Please switch to Gemini or select a different file.',
-    'fileUpload.incompatibleWarning': 'Warning: {files} is only supported by Gemini and will be ignored with GPT.',
+    'fileUpload.incompatibleWarning': 'Warning: some files will be ignored.',
     'fileUpload.attachedCount': '{count} file(s)',
     'fileUpload.pasteHint': 'You can also paste images directly',
     'fileUpload.ariaLabel': 'Drop files here, or click/press Enter to select files',
@@ -336,13 +343,14 @@ const translations = {
     // Skills
     'skills.title': 'Skills',
     'skills.button': 'Skills',
+    'skills.buildFromPrompt': 'Build Skill from this Prompt',
     'skills.modalTitle': 'Skills Manager',
-    'skills.info': 'Upload Claude skill files (.md). Selected skills will be added as system instructions to your prompts.',
-    'skills.uploadPrompt': 'Drop skill files here, or click to select',
-    'skills.uploadHint': 'Supports .md files (from ~/.claude/skills folder)',
-    'skills.listTitle': 'Uploaded Skills',
+    'skills.info': 'Send a prompt first, then use AI to generate reusable skills from prompt + answer.',
+    'skills.uploadPrompt': 'Skill upload removed',
+    'skills.uploadHint': 'Use "Build Skill from this Prompt"',
+    'skills.listTitle': 'Saved Skills',
     'skills.clearAll': 'Clear All',
-    'skills.empty': 'No skills uploaded yet',
+    'skills.empty': 'No saved skills yet',
     'skills.tokenWarning': 'Selected skills are lengthy and may affect response quality',
     'skills.delete': 'Delete',
     'skills.deleteConfirm': 'Are you sure you want to delete this skill?',
@@ -367,7 +375,7 @@ const translations = {
 
     // Skills tabs and server skills
     'skills.tabs.mySkills': 'My Skills',
-    'skills.tabs.import': 'Import',
+    'skills.tabs.import': 'Removed',
     'skills.searchPlaceholder': 'Search skills...',
     'skills.loading': 'Loading...',
     'skills.loadError': 'Failed to load skills',
@@ -383,14 +391,14 @@ const translations = {
     'skills.filters.clear': 'Clear filters',
     'skills.exportAll': 'Export All Skills',
     'skills.exportEnabled': 'Export Enabled Skills',
-    'skills.importToServer': 'Import to Server',
-    'skills.importing': 'Importing...',
-    'skills.importSuccess': 'Import complete: {created} created, {updated} updated, {skipped} skipped',
-    'skills.importError': 'Import failed. Please try again.',
-    'skills.importEmpty': 'Select Markdown files to import',
+    'skills.importToServer': 'Import removed',
+    'skills.importing': 'Import removed',
+    'skills.importSuccess': 'Import removed',
+    'skills.importError': 'Import removed',
+    'skills.importEmpty': 'Import removed',
     'skills.exportError': 'Export failed. Please try again.',
     'skills.exportSuccess': 'Export ready',
-    'skills.migrationError': 'Local skills sync failed. Please try again.',
+    'skills.migrationError': 'Skill sync failed. Please try again.',
 
     // Skills edit modal
     'skills.edit.title': 'Edit Skill',
@@ -420,7 +428,7 @@ const translations = {
     'login.chooseUsername': 'Choose Username',
     'login.password.hint': 'At least 6 characters',
     'login.createAccount': 'Create Account',
-    'login.footer': 'Powered by GPT and Gemini',
+    'login.footer': 'Powered by ChatGPT 5.2',
     
     // Confirmations
     'confirm.logout': 'Are you sure you want to logout?',

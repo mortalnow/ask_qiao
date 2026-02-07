@@ -1,14 +1,12 @@
 import { Router } from 'express';
 import { authenticateToken, checkUsageLimit, incrementUsage } from '../middleware/auth.js';
 import * as openaiService from '../services/openai.js';
-import * as geminiService from '../services/gemini.js';
 
 const router = Router();
 
-// Map of available models
+// Single supported model provider
 const models = {
-  chatgpt: openaiService,
-  gemini: geminiService
+  chatgpt: openaiService
 };
 
 /**
@@ -42,7 +40,7 @@ router.get('/models', authenticateToken, async (req, res) => {
  * Supports file attachments (images, PDFs) via base64
  */
 router.post('/', authenticateToken, checkUsageLimit, async (req, res) => {
-  const { message, model, history = [], files = [] } = req.body;
+  const { message, model = 'chatgpt', history = [], files = [] } = req.body;
 
   // Validate input
   if (!message || typeof message !== 'string') {
@@ -69,10 +67,7 @@ router.post('/', authenticateToken, checkUsageLimit, async (req, res) => {
   const MAX_EXTRACTED_TEXT_LENGTH = 50000; // Max characters for document text
 
   // Supported file types
-  const supportedImageTypes = {
-    common: ['image/png', 'image/jpeg', 'image/gif', 'image/webp'],
-    gemini: ['image/heic', 'image/heif']
-  };
+  const supportedImageTypes = ['image/png', 'image/jpeg', 'image/gif', 'image/webp'];
 
   // Document types that work with all models (text extracted client-side)
   const documentTypes = [
@@ -82,11 +77,7 @@ router.post('/', authenticateToken, checkUsageLimit, async (req, res) => {
     'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
   ];
 
-  const allowedImageTypes = model === 'gemini'
-    ? [...supportedImageTypes.common, ...supportedImageTypes.gemini]
-    : supportedImageTypes.common;
-
-  const allowedTypes = [...allowedImageTypes, ...documentTypes];
+  const allowedTypes = [...supportedImageTypes, ...documentTypes];
 
   if (files && Array.isArray(files)) {
     for (const file of files.slice(0, MAX_FILES)) {
@@ -216,4 +207,3 @@ router.post('/', authenticateToken, checkUsageLimit, async (req, res) => {
 });
 
 export default router;
-

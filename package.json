@@ -1,7 +1,7 @@
 {
   "name": "ask-qiao",
   "version": "1.0.0",
-  "description": "AI Chat Wrapper - Multi-model chat interface",
+  "description": "Prompt coaching workspace powered by ChatGPT 5.2",
   "type": "module",
   "main": "server/index.js",
   "scripts": {
@@ -10,7 +10,6 @@
     "generate-invite": "node scripts/generate-invite.js"
   },
   "dependencies": {
-    "@google/generative-ai": "^0.21.0",
     "bcrypt": "^6.0.0",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
